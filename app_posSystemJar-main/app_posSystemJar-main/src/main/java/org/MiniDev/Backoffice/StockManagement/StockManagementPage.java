@@ -15,8 +15,8 @@ import java.awt.*;
 import static UI.UserFinalSettingsVar.*;
 
 public class StockManagementPage extends CreateSettingsPanel {
-    protected LinkButton[] stockMenuButtons = new LinkButton[2];
-    protected PanelRound[] leftMenuHoldingPanels = new PanelRound[2];
+    protected LinkButton[] stockMenuButtons = new LinkButton[1];
+    protected PanelRound[] leftMenuHoldingPanels = new PanelRound[1];
     protected RoundedPanel stocksManagementPanel;
     private LinkButton lastClickedStockMenuButton;
     private PanelRound lastClickedMenuHoldingPanel;
@@ -41,7 +41,6 @@ public class StockManagementPage extends CreateSettingsPanel {
         mainMenuCardHoldingPanel.setLayout(stockMenuCardLayout);
 
         mainMenuCardHoldingPanel.add(new StockInnerPage().createStockInnerPage(), "StockInnerPage");
-        mainMenuCardHoldingPanel.add(new CounterInnerPage().createCounterInnerPage(), "CounterInnerPage");
         mainMenuCardHoldingPanel.add(new NewItemEntryPage().createNewItemEntryPagePanel(), "NewItemEntryPage");
         mainMenuCardHoldingPanel.add(new ItemBulkImport().createItemBulkPage(), "StockExcelUpload");
 
@@ -61,42 +60,30 @@ public class StockManagementPage extends CreateSettingsPanel {
         PanelRound centerMain = new PanelRound();
         PanelRound rightMain = new PanelRound();
 
-        leftMain.setLayout(new GridLayout(1, 3));
+        leftMain.setLayout(new GridLayout(1, 1));
 
         leftMain.setOpaque(false);
         rightMain.setOpaque(false);
 
         leftMenuHoldingPanels[0] = new PanelRound();
-        leftMenuHoldingPanels[1] = new PanelRound();
 
         leftMenuHoldingPanels[0].setRoundTopLeft(10);
 
         leftMenuHoldingPanels[0].setBackground(Color.WHITE);
-        leftMenuHoldingPanels[1].setBackground(Color.WHITE);
         leftMenuHoldingPanels[0].setLayout(new BorderLayout());
-        leftMenuHoldingPanels[1].setLayout(new BorderLayout());
 
         stockMenuButtons[0] = new LinkButton("Stock Management", null);
         stockMenuButtons[0].setFont(new Font("Noto Sans Myanmar", Font.BOLD, 11));
         stockMenuButtons[0].setForeground(Color.GRAY);
-        stockMenuButtons[1] = new LinkButton("Counter Management", null);
-        stockMenuButtons[1].setFont(new Font("Noto Sans Myanmar", Font.BOLD, 11));
-        stockMenuButtons[1].setForeground(Color.GRAY);
 
         stockMenuButtons[0].addActionListener(e -> {
             handleButtonActionForStockNavigation(stockMenuButtons[0], leftMenuHoldingPanels[0]);
             stockMenuCardLayout.show(mainMenuCardHoldingPanel, "StockInnerPage");
         });
-        stockMenuButtons[1].addActionListener(e -> {
-            handleButtonActionForStockNavigation(stockMenuButtons[1], leftMenuHoldingPanels[1]);
-            stockMenuCardLayout.show(mainMenuCardHoldingPanel, "CounterInnerPage");
-        });
 
         leftMenuHoldingPanels[0].add(stockMenuButtons[0], BorderLayout.CENTER);
-        leftMenuHoldingPanels[1].add(stockMenuButtons[1], BorderLayout.CENTER);
 
         leftMain.add(leftMenuHoldingPanels[0]);
-        leftMain.add(leftMenuHoldingPanels[1]);
 
         headerMenuButtonsPanel.add(leftMain);
         headerMenuButtonsPanel.add(centerMain);

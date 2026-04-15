@@ -647,7 +647,6 @@ public class TableLists {
                     SwingUtilities.invokeLater(() -> {
                         showProductNoSelectedError();
                         resetButtonColors();
-                        MiniDevPOS.refreshTableAll();
                         startAllTablesButtonAnimation();
                     });
                 }
@@ -698,7 +697,6 @@ public class TableLists {
         MiniDevPOS.startHomeButtonAnimation();
         resetButtonColors();
         startAllTablesButtonAnimation();
-        MiniDevPOS.refreshTableAll();
     }
 
     // Method to handle errors during order placement

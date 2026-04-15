@@ -14,16 +14,12 @@ public class IconManager {
 
     static {
         defaultIconMap.put(MiniDevPOS.homeButton, "/HomeIcon.svg");
-        defaultIconMap.put(MiniDevPOS.customersButton, "/CustomersIcon.svg");
-        defaultIconMap.put(MiniDevPOS.tablesButton, "/GridTableIcon.svg");
         defaultIconMap.put(MiniDevPOS.cashierButton, "/CashierIcon.svg");
         defaultIconMap.put(MiniDevPOS.ordersButton, "/OrderListsIcon.svg");
         defaultIconMap.put(MiniDevPOS.reportsButton, "/ReportIcon.svg");
         defaultIconMap.put(MiniDevPOS.settingsButton, "/SettingIcon.svg");
 
         activeIconMap.put(MiniDevPOS.homeButton, "/HomeIconActive.svg");
-        activeIconMap.put(MiniDevPOS.customersButton, "/CustomersIconActive.svg");
-        activeIconMap.put(MiniDevPOS.tablesButton, "/GridTableIconActive.svg");
         activeIconMap.put(MiniDevPOS.cashierButton, "/CashierIconActive.svg");
         activeIconMap.put(MiniDevPOS.ordersButton, "/OrderListsIconActive.svg");
         activeIconMap.put(MiniDevPOS.reportsButton, "/ReportIconActive.svg");

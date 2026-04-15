@@ -18,18 +18,15 @@ public class ButtonHandler {
 
     static {
         buttonPanelMap.put(MiniDevPOS.homeButton, "Home");
-        buttonPanelMap.put(MiniDevPOS.customersButton, "Customers");
-        buttonPanelMap.put(MiniDevPOS.tablesButton, "Tables");
         buttonPanelMap.put(MiniDevPOS.cashierButton, "Cashier");
         buttonPanelMap.put(MiniDevPOS.ordersButton, "Orders");
         buttonPanelMap.put(MiniDevPOS.reportsButton, "Reports");
         buttonPanelMap.put(MiniDevPOS.settingsButton, "Backoffice");
-        buttonPanelMap.put(MiniDevPOS.selectTablesButton, "SelectTables");
     }
 
     public static void handleButtonAction(JButton button) {
         // Reset the previous button's background and border
-        MiniDevPOS.refreshTableAll();
+
 
 
         if (MiniDevPOS.currentButton != null) {

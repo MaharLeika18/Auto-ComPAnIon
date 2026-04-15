@@ -466,7 +466,6 @@ public class CreatePaymentPanel {
             leftCenterMainPane.revalidate();
             leftCenterMainPane.repaint();
 
-            MiniDevPOS.refreshTableAll();
 
             CreateTablePanel.selectTableAndPaymentCard.show(CreateTablePanel.selectTableAndPaymentHoldingMainPane, parentBackPanelName);
             CreateHomePanel.mainCard.show(CreateHomePanel.mainAllHoldingPanel, parentBackPanelName);

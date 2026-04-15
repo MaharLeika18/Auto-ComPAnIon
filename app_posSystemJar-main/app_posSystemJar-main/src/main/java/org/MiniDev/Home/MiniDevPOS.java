@@ -8,7 +8,6 @@ import com.formdev.flatlaf.fonts.roboto.FlatRobotoFont;
 import com.formdev.flatlaf.themes.FlatMacLightLaf;
 import org.MiniDev.Cashier.CreateCashDrawerPanel;
 import org.MiniDev.Cashier.CreateCashierPanel;
-import org.MiniDev.Customer.CreateCustomerPanel;
 import org.MiniDev.Home.ButtonHandler.ButtonHandler;
 import org.MiniDev.Home.IconManager.IconManager;
 import org.MiniDev.Home.SubPopUpWindows.ProfileClickerAction;
@@ -19,8 +18,6 @@ import org.MiniDev.OOP.TellerLists;
 import org.MiniDev.Order.CreateOrderPanel;
 import org.MiniDev.Report.CreateReportsPanel;
 import org.MiniDev.Backoffice.CreateSettingsPanel;
-import org.MiniDev.Table.CreateTablePanel;
-import org.MiniDev.Table.TableLists;
 import raven.glasspanepopup.GlassPanePopup;
 import raven.swing.AvatarIcon;
 
@@ -42,27 +39,22 @@ public class MiniDevPOS extends JFrame {
     protected static CardLayout cardLayout; // CardLayout instance
     public static JFrame frame;
     public static JButton homeButton;
-    public static JButton customersButton;
-    public static JButton tablesButton;
     public static JButton cashierButton;
     public static JButton ordersButton;
     public static JButton reportsButton;
     public static JButton settingsButton;
     public static JButton currentButton; // Track the currently pressed button
-    public static JButton selectTablesButton;
     public static JPanel contentPanel; // Panel to hold dynamic content
     public static JTextField searchField;
     public static JButton searchButton;
     public static RoundedPanel mainPane;
     // Panels for each section
     protected static JPanel homePanel;
-    protected static JPanel customersPanel;
-    protected static JPanel tablesPanel;
     protected static JPanel cashierPanel;
     protected static JPanel ordersPanel;
     protected static JPanel reportsPanel;
     protected static JPanel settingsPanel;
-    protected static JPanel selectTablesPanel;
+
     public static String panelName = null;
 
     public static void main(String[] args) {
@@ -145,23 +137,18 @@ public class MiniDevPOS extends JFrame {
             cardLayout = (CardLayout) contentPanel.getLayout();
 
             homePanel = new CreateHomePanel().createHomePanel();
-            customersPanel = CreateCustomerPanel.createCustomersPanel();
-            tablesPanel = new CreateTablePanel().selectTablesPanel();
             cashierPanel = CreateCashierPanel.createCashierPanel();
             ordersPanel = new CreateOrderPanel().createOrdersPanel();
             reportsPanel = new CreateReportsPanel().createReportsPanel();
             settingsPanel = new CreateSettingsPanel().createSettingsPanel();
-            selectTablesPanel = TableLists.selectTablesPanel();
 
             // Add initial panels only
             contentPanel.add(homePanel, "Home");
-            contentPanel.add(customersPanel, "Customers");
-            contentPanel.add(tablesPanel, "Tables");
             contentPanel.add(cashierPanel, "Cashier");
             contentPanel.add(ordersPanel, "Orders");
             contentPanel.add(reportsPanel, "Reports");
             contentPanel.add(settingsPanel, "Backoffice");
-            contentPanel.add(selectTablesPanel, "SelectTables");
+
 
             Border border = BorderFactory.createMatteBorder(0, 1, 1, 1, COLOR_LINE_COLOR);
             contentPanel.setBorder(border);
@@ -173,7 +160,6 @@ public class MiniDevPOS extends JFrame {
 
             // Start the home button animation
             startHomeButtonAnimation();
-            TableLists.startAllTablesButtonAnimation();
             reportsButton.requestFocusInWindow();
             frame.setContentPane(mainPane);
             frame.pack();
@@ -309,8 +295,6 @@ public class MiniDevPOS extends JFrame {
 
         // Create navigation buttons with icons and text
         homeButton = createNavigationButton("Home", "/HomeIcon.svg");
-        customersButton = createNavigationButton("Customer", "/CustomersIcon.svg");
-        tablesButton = createNavigationButton("Tables", "/GridTableIcon.svg");
         cashierButton = createNavigationButton("Cashier", "/CashierIcon.svg");
         ordersButton = createNavigationButton("Orders", "/OrderListsIcon.svg");
         reportsButton = createNavigationButton("Reports", "/ReportIcon.svg");
@@ -318,7 +302,7 @@ public class MiniDevPOS extends JFrame {
 
 
         // Set initial font color
-        JButton[] buttons = {homeButton, customersButton, tablesButton, cashierButton, ordersButton, reportsButton, settingsButton};
+        JButton[] buttons = {homeButton, cashierButton, ordersButton, reportsButton, settingsButton};
         for (JButton button : buttons) {
             button.setForeground(COLOR_FONT_GRAY);
         }
@@ -328,8 +312,6 @@ public class MiniDevPOS extends JFrame {
 
         // Add buttons to the panel with glue for spacing
         addButtonWithGlue(navigationButtonsPanel, homeButton);
-        addButtonWithGlue(navigationButtonsPanel, customersButton);
-        addButtonWithGlue(navigationButtonsPanel, tablesButton);
         addButtonWithGlue(navigationButtonsPanel, cashierButton);
         addButtonWithGlue(navigationButtonsPanel, ordersButton);
         addButtonWithGlue(navigationButtonsPanel, reportsButton);
@@ -379,11 +361,6 @@ public class MiniDevPOS extends JFrame {
         return button;
     }
 
-
-    public static void refreshTableAll() {
-        TableLists.refreshTableLists();
-        CreateTablePanel.refreshTableLists();
-    }
 
 
 //    protected static void handleButtonAction(JButton button) {
@@ -455,7 +432,7 @@ public class MiniDevPOS extends JFrame {
         }
         button.setBorder(border);
         button.setForeground(COLOR_ORANGE);
-        resetButtonBorder(button, homeButton, customersButton, tablesButton, cashierButton, ordersButton, reportsButton, settingsButton);
+        resetButtonBorder(button, homeButton, cashierButton, ordersButton, reportsButton, settingsButton);
         frame.pack();
     }
 
@@ -483,7 +460,7 @@ public class MiniDevPOS extends JFrame {
         homeButton.setOpaque(true); // Make it opaque
         homeButton.setContentAreaFilled(true); // Ensure it fills the background
 
-        resetButtonBorder(homeButton, customersButton, tablesButton, cashierButton, ordersButton, reportsButton, settingsButton);
+        resetButtonBorder(homeButton, cashierButton, ordersButton, reportsButton, settingsButton);
         frame.pack();
     }
 
@@ -692,34 +669,6 @@ public class MiniDevPOS extends JFrame {
         gbcConnectionLabel.anchor = GridBagConstraints.CENTER; // Align center horizontally
         topRightMainPanel.add(connectionButton, gbcConnectionLabel);
 
-        // Load Select Table icon (adjust path as needed)
-
-
-        ImageIcon selectTableIcon = createResizedIcon("/SelectTableIcon.svg", 19, null);
-        selectTablesButton = new IconTextButton("Seating Map", selectTableIcon, 14, (COLOR_ORANGE), 0);
-        selectTablesButton.setBackground(COLOR_ORANGE);
-        selectTablesButton.setForeground(COLOR_WHITE);
-        selectTablesButton.setFont(new Font(FlatRobotoFont.FAMILY, Font.BOLD, 12));
-        selectTablesButton.setPreferredSize(new Dimension(130, 38)); // Adjusted size for visibility
-
-        // Set icon on the left side of the button text
-        selectTablesButton.setIcon(selectTableIcon);
-        // Set the text and icon alignment
-        selectTablesButton.setHorizontalTextPosition(SwingConstants.RIGHT); // Icon on the left
-        selectTablesButton.setVerticalTextPosition(SwingConstants.CENTER);
-        selectTablesButton.setHorizontalAlignment(SwingConstants.CENTER);
-        selectTablesButton.setVerticalAlignment(SwingConstants.CENTER);
-
-        selectTablesButton.addActionListener((ActionEvent e) -> showPanel("SelectTables"));
-        // GridBagConstraints for selectTableButton
-        GridBagConstraints gbcSelectTableButton = new GridBagConstraints();
-        gbcSelectTableButton.gridx = 2; // Rightmost column
-        gbcSelectTableButton.gridy = 0; // Top row
-        gbcSelectTableButton.insets = new Insets(0, 10, 5, 10); // Padding
-        gbcSelectTableButton.anchor = GridBagConstraints.EAST; // Align right
-
-        // Add button to the panel
-        topRightMainPanel.add(selectTablesButton, gbcSelectTableButton);
 
         return topRightMainPanel;
     }
