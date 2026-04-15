@@ -19,6 +19,8 @@ password root
 
 How to run the POS System
 
+Needs MAVEN to compile btw
+
 Idk upload the databases/sql files first too
 Have to build and compile this first for some reason
 

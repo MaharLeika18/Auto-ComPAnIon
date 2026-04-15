@@ -6,7 +6,6 @@ import UI.RoundedPanel;
 import org.MiniDev.Home.CreateHomePanel;
 import org.MiniDev.Order.CreateOrderPanel;
 import org.MiniDev.Backoffice.CustomerSupport_AboutUs.AboutUsPage;
-import org.MiniDev.Backoffice.CustomerSupport_AboutUs.PricingPage;
 import org.MiniDev.Backoffice.EmployeeManagement.EmployeeManagementPage;
 import org.MiniDev.Backoffice.ExpenseManagement.ExpenseManagementPage;
 import org.MiniDev.Backoffice.GeneralSettings.GeneralSettingsPage;
@@ -21,7 +20,7 @@ import static org.MiniDev.Cashier.CreateTodaySalePanel.GAP;
 
 public class CreateSettingsPanel {
 
-    protected final String[] navigationSettingsLabels = {"Stocks", "Expense Management", "Employee", "General Settings", "Labels", "Pricing", "About Us"};
+    protected final String[] navigationSettingsLabels = {"Stocks", "Expense Management", "Employee", "General Settings", "Labels", "About Us"};
     protected RoundedBorderButton[] navigationSettingButtons;
     protected RoundedBorderButton lastClickedButtonSetting = null;
     protected CardLayout settingsCardLayout;
@@ -45,8 +44,7 @@ public class CreateSettingsPanel {
         dynamicsPanel.add(new EmployeeManagementPage().employeeManagementPage(), navigationSettingsLabels[2]);
         dynamicsPanel.add(new GeneralSettingsPage().generalSettingsPage(), navigationSettingsLabels[3]);
         dynamicsPanel.add(new GenerateBarcodeSettings().createGenerateBarcodePage(), navigationSettingsLabels[4]);
-        dynamicsPanel.add(new PricingPage().initPricingPage(), navigationSettingsLabels[5]);
-        dynamicsPanel.add(new AboutUsPage().aboutUsPage(), navigationSettingsLabels[6]);
+        dynamicsPanel.add(new AboutUsPage().aboutUsPage(), navigationSettingsLabels[5]);
 
         mainHoldingPane.add(Box.createRigidArea(new Dimension(0, 15)), BorderLayout.NORTH);
         mainHoldingPane.add(dynamicsPanel, BorderLayout.CENTER);
@@ -76,7 +74,6 @@ public class CreateSettingsPanel {
                 resetButtonColorsForNavigationButtons();
                 lastClickedButtonSetting = navigationSettingButtons[index];
                 handleButtonActionForSettingNavigation(index);
-                checkLicenseInfoAndShowPopup(PricingPage.currentLicenseInfos.getFirst().getDaysRemaining(),settingsTopPanel);
             }));
             settingsTopPanel.add(navigationSettingButtons[i]);
         }
@@ -84,12 +81,6 @@ public class CreateSettingsPanel {
         return settingsTopPanel;
     }
 
-
-    public static void checkLicenseInfoAndShowPopup(String licenseRemainingDays, JPanel parentPanel){
-        if (licenseRemainingDays.equals("0")){
-            CustomPopUpFactory.showLicenseInvalidPopUp(parentPanel);
-        }
-    }
 
     protected void startSettingButtonAnimation() {
         // Highlight the first button and show the corresponding card

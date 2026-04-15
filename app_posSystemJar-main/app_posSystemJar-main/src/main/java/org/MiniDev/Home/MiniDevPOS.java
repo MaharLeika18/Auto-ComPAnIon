@@ -6,7 +6,6 @@ import UI.*;
 import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.fonts.roboto.FlatRobotoFont;
 import com.formdev.flatlaf.themes.FlatMacLightLaf;
-import org.MiniDev.Backoffice.CustomerSupport_AboutUs.PricingPage;
 import org.MiniDev.Cashier.CreateCashDrawerPanel;
 import org.MiniDev.Cashier.CreateCashierPanel;
 import org.MiniDev.Customer.CreateCustomerPanel;
@@ -375,7 +374,6 @@ public class MiniDevPOS extends JFrame {
         // Action listener to handle button clicks
         button.addActionListener(e -> {
             ButtonHandler.handleButtonAction(button);
-            CreateSettingsPanel.checkLicenseInfoAndShowPopup(PricingPage.currentLicenseInfos.getFirst().getDaysRemaining(), mainPane);
         });
 
         return button;
