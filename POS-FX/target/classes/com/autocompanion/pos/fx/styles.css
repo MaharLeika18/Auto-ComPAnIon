@@ -1,0 +1,11 @@
+
+/* Prompt text color (doesn't work inline in some JavaFX versions) */
+.text-field {
+    -fx-prompt-text-fill: #000000;
+    text-align: center;
+}
+
+.password-field {
+    -fx-prompt-text-fill: #000000;
+    text-align: center;
+}
