@@ -62,7 +62,7 @@
          <children>
             <Avatar radius="90.0">
                <image>
-                  <Image url="@../../../../../../../../../../../Downloads/d284b1765ee5bf7ad47b302617ce4873.jpg" />
+                  <Image url="@../img/pchan.jpg" />
                </image>
             </Avatar>
          </children></StackPane>
