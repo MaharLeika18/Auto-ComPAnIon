@@ -1,13 +1,19 @@
 package com.autocompanion.pos.fx;
 
-import java.io.IOException;
-
-import javafx.fxml.FXML;
+// IMPORT from the old package
+import org.MiniDev.Login.AuthenticationService;
+import org.MiniDev.OOP.Product;
+import org.MiniDev.DBConnection.DBConnection;
 
 public class LoginController {
-
-    @FXML
-    private void switchToSecondary() throws IOException {
-        App.setRoot("secondary");
+    
+    private void handleLogin() {
+        // Calling OLD project's authentication
+        boolean isValid = AuthenticationService.fetchAuthenticationCheckWithDatabase(username, password);
+        
+        if (isValid) {
+            // Open dashboard
+            openDashboard();
+        }
     }
 }
