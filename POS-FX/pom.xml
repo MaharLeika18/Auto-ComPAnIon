@@ -20,6 +20,21 @@
             <artifactId>javafx-fxml</artifactId>
             <version>13</version>
         </dependency>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.33</version>
+        </dependency>
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-crypto</artifactId>
+                <version>5.8.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-core</artifactId>
+                <version>5.3.22</version>
+            </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -67,6 +82,7 @@
                         <!-- Configuration for automatic IDE profiling -->
                         <id>ide-profile</id>
                         <configuration>
+                        
                             <options>
 				<option>${profiler.jvmargs.arg1}</option>
 				<option>${profiler.jvmargs.arg2}</option>

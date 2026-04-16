@@ -2,7 +2,7 @@
 package org.MiniDev.Login;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import DBConnection.DBConnection;
+import org.MiniDev.DBConnection.DBConnection;
 import java.sql.*;
 
 public class AuthenticationService {
