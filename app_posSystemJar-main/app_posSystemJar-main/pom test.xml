@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.burmamini</groupId>
+    <artifactId>POS</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+
+        <!-- ===== MySQL (Maven Central - no local jar needed) ===== -->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <version>9.2.0</version>
+        </dependency>
+
+        <!-- ===== FlatLAF (Maven Central - no local jar needed) ===== -->
+        <dependency>
+            <groupId>com.formdev</groupId>
+            <artifactId>flatlaf</artifactId>
+            <version>3.5.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.formdev</groupId>
+            <artifactId>flatlaf-extras</artifactId>
+            <version>3.5.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.formdev</groupId>
+            <artifactId>flatlaf-fonts-roboto</artifactId>
+            <version>2.137</version>
+        </dependency>
+
+        <!-- ===== Apache Batik (Maven Central - no local jar needed) ===== -->
+        <dependency>
+            <groupId>org.apache.xmlgraphics</groupId>
+            <artifactId>batik-all</artifactId>
+            <version>1.17</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.xmlgraphics</groupId>
+            <artifactId>batik-transcoder</artifactId>
+            <version>1.17</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.xmlgraphics</groupId>
+            <artifactId>xmlgraphics-commons</artifactId>
+            <version>2.9</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.xmlgraphics</groupId>
+            <artifactId>fop-transcoder-allinone</artifactId>
+            <version>2.9</version>
+        </dependency>
+
+        <!-- ===== Commons (Maven Central - no local jar needed) ===== -->
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.11.0</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+            <version>1.2</version>
+        </dependency>
+
+        <!-- ===== Gson (Maven Central - no local jar needed) ===== -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.8.9</version>
+        </dependency>
+
+        <!-- ===== Protobuf (Maven Central - no local jar needed) ===== -->
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>3.25.5</version>
+        </dependency>
+
+        <!-- ===== Spring Security Crypto (Maven Central - no local jar needed) ===== -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+            <version>6.3.10</version>
+        </dependency>
+
+        <!-- ===== Rhino (Maven Central - no local jar needed) ===== -->
+        <dependency>
+            <groupId>org.mozilla</groupId>
+            <artifactId>rhino</artifactId>
+            <version>1.7.7</version>
+        </dependency>
+
+        <!-- ===== MigLayout (local jar) ===== -->
+        <dependency>
+            <groupId>com.miglayout</groupId>
+            <artifactId>miglayout-core</artifactId>
+            <version>4.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/miglayout-4.0.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>com.miglayout</groupId>
+            <artifactId>miglayout-swing</artifactId>
+            <version>4.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/miglayout-swing.jar</systemPath>
+        </dependency>
+
+        <!-- ===== XML APIs (Maven Central - no local jar needed) ===== -->
+        <dependency>
+            <groupId>xml-apis</groupId>
+            <artifactId>xml-apis</artifactId>
+            <version>1.4.01</version>
+        </dependency>
+        <dependency>
+            <groupId>xml-apis</groupId>
+            <artifactId>xml-apis-ext</artifactId>
+            <version>1.3.04</version>
+        </dependency>
+
+        <!-- ===== SwingX (Maven Central - no local jar needed) ===== -->
+        <dependency>
+            <groupId>org.swinglabs.swingx</groupId>
+            <artifactId>swingx-all</artifactId>
+            <version>1.6.5-1</version>
+        </dependency>
+
+        <!-- ===== Timing Framework (local jar) ===== -->
+        <dependency>
+            <groupId>org.timingframework</groupId>
+            <artifactId>TimingFramework</artifactId>
+            <version>0.55</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/TimingFramework-0.55.jar</systemPath>
+        </dependency>
+
+        <!-- ===== LOCAL JARS (must exist in /lib folder in your repo) ===== -->
+        <!-- Make sure these jars are committed to GitHub under /lib -->
+
+        <dependency>
+            <groupId>com.burminidev</groupId>
+            <artifactId>picture-box</artifactId>
+            <version>1.2</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/picture-box-1.2.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>raven.chart</groupId>
+            <artifactId>swing-chart</artifactId>
+            <version>1.1.0-beta</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/swing-chart-1.1.0-beta.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>raven.crazypanel</groupId>
+            <artifactId>swing-crazy-panel</artifactId>
+            <version>1.0.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/swing-crazy-panel-1.0.0.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>com.bluecove</groupId>
+            <artifactId>bluecove-gpl</artifactId>
+            <version>2.1.1</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/bluecove-gpl-2.1.1.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>datechooser</groupId>
+            <artifactId>datechooser-swing</artifactId>
+            <version>1.4.1</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/datechooser-swing-1.4.1.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>com.formdev</groupId>
+            <artifactId>flatlaf-demo</artifactId>
+            <version>3.5</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/flatlaf-demo-3.5.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>glasspane</groupId>
+            <artifactId>glasspane-popup</artifactId>
+            <version>2.0.1</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/glasspane-popup-2.0.1.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>javase</groupId>
+            <artifactId>javase-java6</artifactId>
+            <version>3.2.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/javase-java6-3.2.0.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.batik</groupId>
+            <artifactId>jsvg</artifactId>
+            <version>1.4.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/jsvg-1.4.0.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>jxl</groupId>
+            <artifactId>jxl</artifactId>
+            <version>2.6</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/jxl-2.6.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>common-image</artifactId>
+            <version>3.9.4</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/common-image-3.9.4.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>core</artifactId>
+            <version>3.5.3</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/core-3.5.3.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>org.w3c.dom</groupId>
+            <artifactId>org.w3c.dom.svg</artifactId>
+            <version>1.1.0.v201011041433-4.8.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/org.w3c.dom.svg_1.1.0.v201011041433-4.8.0.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>serializer</groupId>
+            <artifactId>serializer</artifactId>
+            <version>2.7.2</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/serializer-2.7.2.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>spinner</groupId>
+            <artifactId>spinner-progress</artifactId>
+            <version>1.0.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/spinner-progress-1.0.0.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>com.kitfox</groupId>
+            <artifactId>svgSalamander</artifactId>
+            <version>1.1.4</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/svgSalamander-1.1.4.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>swing</groupId>
+            <artifactId>swing-datetime-picker</artifactId>
+            <version>1.4.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/swing-datetime-picker-1.4.0.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>swing</groupId>
+            <artifactId>swing-glassmorphism-icon</artifactId>
+            <version>1.0.1</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/swing-glassmorphism-icon-1.0.1.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>swing</groupId>
+            <artifactId>swing-glasspane-popup</artifactId>
+            <version>1.5.1</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/swing-glasspane-popup-1.5.1.jar</systemPath>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+        </resources>
+    </build>
+
+</project>
