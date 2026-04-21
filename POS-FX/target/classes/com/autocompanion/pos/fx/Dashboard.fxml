@@ -23,7 +23,7 @@
             </image>
         </ImageView>
         
-        <!-- Header Pane (Styled with logo and title images) -->
+        <!-- Header Pane -->
         <Pane accessibleRole="IMAGE_VIEW" disable="true" layoutX="67.0" layoutY="61.0" nodeOrientation="LEFT_TO_RIGHT" opacity="0.89" prefHeight="973.0" prefWidth="1794.0" style="-fx-background-color: #222; -fx-background-radius: 50; -fx-opacity: 50;">
             <children>
                 <ImageView fitHeight="88.0" fitWidth="572.0" layoutX="1088.0" layoutY="31.0" pickOnBounds="true" preserveRatio="true">
@@ -47,7 +47,7 @@
         <!-- Main Content Background Pane -->
         <Pane layoutX="108.0" layoutY="211.0" prefHeight="787.0" prefWidth="1720.0" style="-fx-background-color: #EEF4ED; -fx-background-radius: 40;" />
         
-        <!-- Main POS Content (Overlay) -->
+        <!-- Main POS Content) -->
         <VBox layoutX="140.0" layoutY="240.0" prefHeight="730.0" prefWidth="1660.0" spacing="20">
             <children>
                 
