@@ -7,7 +7,7 @@ CREATE TABLE `users` (
     `password_hash` VARCHAR(255) NOT NULL,
     `role` ENUM('ADMIN', 'OWNER', 'SECRETARY', 'EMPLOYEE') NOT NULL,
     `created_at` DATETIME NOT NULL,
-    `last_login` DATETIME NULL
+    `last_update` DATETIME NULL
 );
 
 -- Tables for Inventory Management Module
@@ -16,7 +16,7 @@ CREATE TABLE `product`(
     `product_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `product_name` VARCHAR(255) NOT NULL,
     `product_description` VARCHAR(255) NULL,
-    `part number` VARCHAR(200) NULL,
+    `part_number` VARCHAR(200) NULL,
     `category_id` SMALLINT NOT NULL,
     `supplier_id` SMALLINT NOT NULL,
     `current_stock_level` SMALLINT NOT NULL,
@@ -303,8 +303,12 @@ ALTER TABLE
 -- manufacturer_name is referenced row. 
 -- If it's incomprehensible, bother me about it.
 
+-- NOTE: When calling procs that edit table info, only send values that changed.
+
 -- Procedures for Acct Management Module:
 --      Register new user (Employee role ONLY)
+DROP PROCEDURE IF EXISTS register_user; 
+
 DELIMITER //
 
 CREATE PROCEDURE register_user (
@@ -314,6 +318,15 @@ CREATE PROCEDURE register_user (
     IN u_role ENUM('ADMIN', 'OWNER', 'SECRETARY', 'EMPLOYEE')
 ) 
 BEGIN
+    -- Check if username already exists
+    IF EXISTS (
+        SELECT 1 FROM users 
+        WHERE username = u_username
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Username taken.';
+    END IF;
+
     INSERT INTO users (
         username,
         name,
@@ -322,6 +335,7 @@ BEGIN
         created_at,
     ) VALUES (
         u_username,
+        u_name,
         u_password_hash,
         u_role,
         NOW()
@@ -331,10 +345,86 @@ END //
 DELIMITER;
 
 --      Remove existing user (For employee accts ONLY)
+DROP PROCEDURE IF EXISTS remove_user; 
 
+DELIMITER //
 
---      Change password of existing user 
---      View user credentials (Admin & Owner ONLY)
+CREATE PROCEDURE remove_user (
+    IN u_user_id BIGINT
+)
+BEGIN
+    -- Check if user exists
+    IF NOT EXISTS (
+        SELECT 1
+        FROM users 
+        WHERE user_id = u_user_id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'User not found';
+    END IF;
+
+    DELETE FROM users 
+    WHERE user_id = u_user_id;
+END //
+
+DELIMITER ;
+
+--      Change information of existing user (use NULL if no change)
+DROP PROCEDURE IF EXISTS edit_user; 
+
+DELIMITER //
+
+CREATE PROCEDURE edit_user (
+    IN u_user_id BIGINT,
+    IN u_username VARCHAR(100),
+    IN u_name VARCHAR(100),
+    IN u_password_hash VARCHAR(255),
+    IN u_role ENUM('ADMIN', 'OWNER', 'SECRETARY', 'EMPLOYEE')
+)
+BEGIN
+    -- Check if user exists
+    IF NOT EXISTS (
+        SELECT 1
+        FROM users
+        WHERE user_id = u_user_id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'User not found';
+    END IF;
+
+    UPDATE user
+    SET
+        username = COALESCE(u_username, username),
+        name = COALESCE(u_name, name),
+        password_hash = COALESCE(u_password_hash, password_hash),
+        role = COALESCE(u_role, role)
+        last_update = NOW()
+    WHERE user_id = u_user_id;
+
+END //
+
+DELIMITER ;
+
+--      View user credentials (Admin & Owner ONLY can use this)
+DROP PROCEDURE IF EXISTS remove_user; 
+
+DELIMITER //
+
+CREATE PROCEDURE remove_user (
+    OUT user_id
+)
+BEGIN
+    SELECT
+        u.name,
+        u.username,
+        u.password_hash,    -- Use java to show unhashed pw
+        u.role
+    FROM users u
+    GROUP BY u.role
+    ORDER BY u.name;
+END //
+
+DELIMITER ;
 
 -- Procedures for Inventory Module: 
 --      Add new product record to Main Data Tables (Refer to DC)
@@ -342,15 +432,18 @@ DELIMITER;
 --          * It will only accept existing ids for category, supplier, and compatible vehicle.
 --          * If desired info for any of those rows don't exist in db, call the proc to add new row 
 --            to the respective table. This should be handled by java function. 
+DROP PROCEDURE IF EXISTS add_product; 
 
-DELIMITER $$
+DELIMITER //
 
 CREATE PROCEDURE add_product (
     IN p_name VARCHAR(255),
     IN p_description VARCHAR(255),
+    IN p_part_number VARCHAR(200),
     IN i_image_path VARCHAR(255),
     IN c_category_name VARCHAR(255),
     IN s_supplier_name VARCHAR(255),
+    IN p_current_stock_level SMALLINT,
     IN p_location VARCHAR(255),
     IN p_unit_cost DECIMAL(12,2),
     IN p_retail_price DECIMAL(12,2),
@@ -396,10 +489,11 @@ BEGIN
     INSERT INTO product (
         product_name,
         product_description,
+        part_number,
         category_id,
         supplier_id,
+        current_stock_level,
         storage_location,
-        date_added,
         last_update,
         unit_cost,
         retail_price
@@ -407,10 +501,11 @@ BEGIN
     VALUES (
         p_name,
         p_description,
+        p_part_number,
         c_category_id,
         s_supplier_id,
+        p_current_stock_level,
         p_location,
-        NOW(),
         NOW(),
         p_unit_cost,
         p_retail_price
@@ -441,12 +536,101 @@ BEGIN
         co_comp_bottom_year,
         co_comp_top_year,
         v_vehicle_id
-    )
-END$$
+    );
+END //
+
+DELIMITER ;
+
+--      Edit information of product record in Main Data Tables 
+--          * Edit only the info provided, and only allow editing 
+--            the product info, pricing, and classification.
+DROP PROCEDURE IF EXISTS edit_product; 
+
+DELIMITER //
+
+CREATE PROCEDURE edit_product (
+    IN p_product_id INT,
+    IN p_name VARCHAR(255),
+    IN p_description VARCHAR(255),
+    IN p_part_number VARCHAR(200),    
+    IN i_image_path VARCHAR(255),
+    IN c_category_id SMALLINT,
+    IN c_category_name VARCHAR(255),
+    IN s_supplier_id SMALLINT,
+    IN s_supplier_name VARCHAR(255),
+    IN p_current_stock_level SMALLINT,
+    IN p_location VARCHAR(255),
+    IN p_unit_cost DECIMAL(12,2),
+    IN p_retail_price DECIMAL(12,2),
+    IN v_comp_manufacturer_name VARCHAR(255),
+    IN v_comp_vehicle_id SMALLINT,
+    IN v_comp_model_name VARCHAR(255),
+    IN co_comp_bottom_year SMALLINT,
+    IN co_comp_top_year SMALLINT
+)
+BEGIN
+    -- Check if product exists
+    IF NOT EXISTS (
+        SELECT 1
+        FROM product
+        WHERE product_id = p_product_id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Product not found';
+    END IF;
+
+    -- Check if category exists
+    IF c_category_id IS NOT NULL AND NOT EXISTS (
+        SELECT 1 FROM product_category WHERE category_id = c_category_id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Invalid category_id';
+    END IF;
+
+    -- Check if supplier exists
+        IF s_supplier_id IS NOT NULL AND NOT EXISTS (
+        SELECT 1 FROM supplier WHERE supplier_id = s_supplier_id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Invalid supplier_id';
+    END IF;
+
+    -- Check if vehicle exists
+        IF v_comp_vehicle_id IS NOT NULL AND NOT EXISTS (
+        SELECT 1 FROM vehicles WHERE vehicle_id = v_comp_vehicle_id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Invalid vehicle_id';
+    END IF;
+
+    -- Update info
+    UPDATE product
+    SET
+        product_name = COALESCE(p_name, product_name),
+        product_description = COALESCE(p_description, product_description),
+        part_number = COALESCE(p_part_number, part_number),
+        category_id = COALESCE(c_category_id, category_id),
+        supplier_id = COALESCE(s_supplier_id, supplier_id),
+        current_stock_level = COALESCE(p_current_stock_level, current_stock_level),
+        storage_location = COALESCE(p_location, storage_location),
+        last_update = NOW(),
+        unit_cost = COALESCE(p_unit_cost, unit_cost),
+        retail_price = COALESCE(p_retail_price, retail_price)
+    WHERE product_id = p_product_id;
+
+    UPDATE product_images
+    SET
+        image_path = COALESCE(i_image_path, image_path),
+        date_uploaded = COALESCE(p_description, product_description),
+    WHERE product_id = p_product_id;
+
+END //
 
 DELIMITER ;
 
 --      Add new product category
+DROP PROCEDURE IF EXISTS add_product_category; 
+
 DELIMITER //
 
 CREATE PROCEDURE add_product_category (
@@ -468,12 +652,14 @@ END //
 DELIMITER;
 
 --      Add new supplier
+DROP PROCEDURE IF EXISTS add_supplier; 
+
 DELIMITER //
 
 CREATE PROCEDURE add_supplier (
     IN s_supplier_name VARCHAR(255),
     IN s_supplier_address VARCHAR(255),
-    IN s_supplier_contact BIGINT,
+    IN s_supplier_contact BIGINT
 ) 
 BEGIN
     INSERT INTO supplier (
@@ -494,11 +680,13 @@ END //
 DELIMITER;
 
 --      Add new vehicle
+DROP PROCEDURE IF EXISTS add_vehicle; 
+
 DELIMITER //
 
 CREATE PROCEDURE add_vehicle (
     IN v_model_name VARCHAR(255),
-    IN v_manufacturer_name VARCHAR(255),
+    IN v_manufacturer_name VARCHAR(255)
 ) 
 BEGIN
     INSERT INTO vehicles (
@@ -517,9 +705,6 @@ DELIMITER;
 --      Remove existing supplier
 --      Remove existing vehicle
 
---      Edit information of product record in Main Data Tables 
---          * Edit only the info provided, and only allow editing 
---            the product info, pricing, and classification.
 --      Edit product category
 --      Edit supplier
 --      Edit vehicle
@@ -533,6 +718,8 @@ DELIMITER;
 
 -- Procedures for Point of Sale Module:
 --      Add new transaction to temporary transaction log
+DROP PROCEDURE IF EXISTS add_pending_transaction; 
+
 DELIMITER //
 
 CREATE PROCEDURE add_pending_transaction (
@@ -560,6 +747,8 @@ END //
 DELIMITER;
 
 --      Add items to transaction in temp transact log
+DROP PROCEDURE IF EXISTS add_pending_transaction_items; 
+
 DELIMITER //
 
 CREATE PROCEDURE add_pending_transaction_items (
@@ -623,6 +812,8 @@ DELIMITER;
 
 --      Edit transaction info in temp log
 --          * Call this proc for most UI actions in POS
+DROP PROCEDURE IF EXISTS upsert_pending_transaction_item; 
+
 DELIMITER //
 
 CREATE PROCEDURE upsert_pending_transaction_item (
@@ -634,11 +825,11 @@ CREATE PROCEDURE upsert_pending_transaction_item (
     IN p_discount DECIMAL(12,2)
 )
 BEGIN
-    SELECT unit_cost INTO p_unit_cost FROM product WHERE product_id = p_product_id;
-
     DECLARE var_existing_id BIGINT;
     DECLARE var_total_sale_value DECIMAL(12,2);
     DECLARE var_total_cost DECIMAL(12,2);
+
+    SELECT unit_cost INTO p_unit_cost FROM product WHERE product_id = p_product_id;
 
     START TRANSACTION;
 
@@ -661,7 +852,6 @@ BEGIN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Insufficient stock';
     END IF;
-
 
     -- Compute totals
     SET var_total_sale = (p_quantity * p_unit_price) - p_discount;
@@ -738,6 +928,8 @@ END //
 DELIMITER ;
 
 --      Remove items from temporary transaction log
+DROP PROCEDURE IF EXISTS cancel_pending_transaction; 
+
 DELIMITER //
 
 CREATE PROCEDURE cancel_pending_transaction (
@@ -759,6 +951,8 @@ END //
 DELIMITER ;
 
 --      Move confirmed items from temporary transaction log to transaction log, update inventory_log accordingly
+DROP PROCEDURE IF EXISTS confirm_pending_transaction; 
+
 DELIMITER //
 
 CREATE PROCEDURE confirm_pending_transaction (
@@ -886,7 +1080,9 @@ DELIMITER ;
 --      Fetch data to calculate all the computable business metrics that don't need a trained AI here
 --      Fetch data to train model for demand forecasting
 --      Create training dataset for Demand Forecasting (time series per product)
-DELIMITER $$
+DROP PROCEDURE IF EXISTS dataset_sales_timeseries; 
+
+DELIMITER //
 
 CREATE PROCEDURE dataset_sales_timeseries (
     IN p_start_date DATETIME,
@@ -904,12 +1100,14 @@ BEGIN
     WHERE t.transaction_date BETWEEN p_start_date AND p_end_date
     GROUP BY p.product_id, DATE(t.transaction_date)
     ORDER BY p.product_id, sale_date;
-END$$
+END //
 
 DELIMITER ;
 
 --      Create training dataset for Reorder Prediction (stock + demand features)
-DELIMITER $$
+DROP PROCEDURE IF EXISTS dataset_inventory_features; 
+
+DELIMITER //
 
 CREATE PROCEDURE dataset_inventory_features (
     IN p_days INT
@@ -933,12 +1131,14 @@ BEGIN
         AND t.transaction_date >= NOW() - INTERVAL p_days DAY
 
     GROUP BY p.product_id;
-END$$
+END //
 
 DELIMITER ;
 
 --      Create training dataset for Profit Optimization (per-product profit metrics)
-DELIMITER $$
+DROP PROCEDURE IF EXISTS dataset_profit_analysis; 
+
+DELIMITER //
 
 CREATE PROCEDURE dataset_profit_analysis (
     IN p_start_date DATETIME,
@@ -962,12 +1162,14 @@ BEGIN
     JOIN transactions t ON ti.transaction_id = t.transaction_id
     WHERE t.transaction_date BETWEEN p_start_date AND p_end_date
     GROUP BY p.product_id;
-END$$
+END //
 
 DELIMITER ;
 
 --      Create training dataset for ROI (aggregated financials over time)
-DELIMITER $$
+DROP PROCEDURE IF EXISTS dataset_financials; 
+
+DELIMITER //
 
 CREATE PROCEDURE dataset_financials (
     IN p_start_date DATETIME,
@@ -997,12 +1199,14 @@ BEGIN
     FROM operational_costs
     WHERE cost_date BETWEEN p_start_date AND p_end_date
     GROUP BY DATE(cost_date);
-END$$
+END //
 
 DELIMITER ;
 
 --      Create training dataset for CAGR (Yearly revenue)
-DELIMITER $$
+DROP PROCEDURE IF EXISTS dataset_yearly_revenue; 
+
+DELIMITER //
 
 CREATE PROCEDURE dataset_yearly_revenue ()
 BEGIN
@@ -1013,7 +1217,7 @@ BEGIN
     JOIN transactions t ON ti.transaction_id = t.transaction_id
     GROUP BY YEAR(t.transaction_date)
     ORDER BY year;
-END$$
+END //
 
 DELIMITER ;
 
@@ -1027,6 +1231,8 @@ DELIMITER ;
 
 
 --      Add, edit, remove row in inventory_log (Should only be adjustment)
+DROP PROCEDURE IF EXISTS add_inventory_log_entry; 
+
 DELIMITER //
 
 CREATE PROCEDURE add_inventory_log_entry (
@@ -1070,9 +1276,9 @@ END //
 
 DELIMITER;
 
-
-
 --      Add, edit, remove row in operational_costs
+DROP PROCEDURE IF EXISTS add_operational_cost_entry; 
+
 DELIMITER //
 
 CREATE PROCEDURE add_operational_cost_entry (
@@ -1098,6 +1304,8 @@ END //
 DELIMITER;
 
 --      Add, edit, remove row in investments
+DROP PROCEDURE IF EXISTS add_investments_entry; 
+
 DELIMITER //
 
 CREATE PROCEDURE add_investments_entry (
@@ -1123,6 +1331,8 @@ DELIMITER;
 
 
 --      Add, edit, remove row in purchase_orders & purchase_order_items
+DROP PROCEDURE IF EXISTS add_purchase_order_entry; 
+
 DELIMITER //
 
 CREATE PROCEDURE add_purchase_order_entry (
@@ -1158,18 +1368,20 @@ END //
 
 DELIMITER;
 
-
-
 --      Add, edit, remove row in product_batches
 --          * Ensure to update inventory_log accordingly
---      TODO: Figure out how to populate/generate barcode
+--          * Barcode should be generated using python/java script
+DROP PROCEDURE IF EXISTS add_product_batches_entry; 
+
+DELIMITER //
 
 CREATE PROCEDURE add_product_batches_entry (
     IN pb_product_name VARCHAR(255),
     IN pb_supplier_name VARCHAR(255),
     IN pb_quantity_received SMALLINT,
     IN pb_unit_cost DECIMAL(12, 2),
-    IN pb_date_received DATETIME
+    IN pb_date_received DATETIME,
+    IN pb_barcode VARCHAR(100)
 )
 BEGIN
     -- Validate product & supplier
@@ -1210,7 +1422,7 @@ BEGIN
         pb_quantity_received,
         pb_unit_cost,
         pb_date_received,
-        NULL    -- TEMPORARY
+        pb_barcode  
     );
 END //
 
@@ -1223,6 +1435,8 @@ DELIMITER;
 -- Miscellaneous Procedures for extraneous features that can be used in any module
 --      Autocomplete query (for search bar or edit fields)
 --      NOTE: This is a template only
+DROP PROCEDURE IF EXISTS autocomplete_query; 
+
 DELIMITER //
 
 CREATE PROCEDURE autocomplete_query
@@ -1238,7 +1452,9 @@ END //
 DELIMITER;
 
 -- Search for products
-DELIMITER $$
+DROP PROCEDURE IF EXISTS search_products; 
+
+DELIMITER //
 
 CREATE PROCEDURE search_products (
     IN p_search VARCHAR(255),
@@ -1308,6 +1524,6 @@ BEGIN
         CASE WHEN p_sort = 'newest' THEN p.date_added END DESC,
         CASE WHEN p_sort = 'most_purchased' THEN total_sold END DESC;
 
-END$$
+END //
 
 DELIMITER ;
