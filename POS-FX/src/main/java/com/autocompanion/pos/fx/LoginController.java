@@ -84,21 +84,21 @@ public class LoginController {
         new Thread(loginTask).start();
     }
     
-    private void openDashboard() {
-        try {
-            // Load dashboard FXML (create this next)
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("Dashboard.fxml"));
-            Parent root = loader.load();
-            Stage stage = (Stage) btnLogin.getScene().getWindow();
-            stage.setScene(new Scene(root));
-            stage.setTitle("MiniDev POS - Dashboard");
-            stage.setMaximized(true);
-        } catch (Exception e) {
-            e.printStackTrace();
-            showError("Could not open dashboard: " + e.getMessage());
-        }
+private void openDashboard() {
+    try {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("Dashboard.fxml"));
+        Parent root = loader.load();
+        Stage stage = (Stage) btnLogin.getScene().getWindow();
+        Scene scene = new Scene(root);
+        stage.setScene(scene);
+        stage.setTitle("Auto-CompAnIon");
+        stage.setMaximized(true);  // This makes it full screen
+        stage.show();
+    } catch (Exception e) {
+        e.printStackTrace();
+        showError("Could not open dashboard: " + e.getMessage());
     }
-    
+}    
     private void showError(String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Login Failed");

@@ -5,6 +5,7 @@
     <artifactId>POS-FX</artifactId>
     <version>1.0-SNAPSHOT</version>
     <properties>
+        <javafx.version>25</javafx.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
@@ -66,7 +67,7 @@
                     <release>11</release>
                 </configuration>
             </plugin>
-            
+
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>

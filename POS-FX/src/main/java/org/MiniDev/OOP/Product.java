@@ -7,10 +7,11 @@ import java.util.List;
 import java.util.Map;
 
 public class Product {
+    private String id; 
     private String name;
     private String serialCode;
     private double price;
-    private byte[] photo; // Store photo as byte array
+    private byte[] photo;
     private String foodDesc;
     private double promotionPercentage;
     private int counterId;
@@ -19,7 +20,6 @@ public class Product {
     private String mainPrinterPortName;
     private String mainPrinterPortAddress;
 
-    // In-memory repository for products
     private static Map<String, Product> productMap = new HashMap<>();
 
     // Constructor
@@ -27,7 +27,6 @@ public class Product {
         this.name = name;
         this.price = price;
         this.photo = photo;
-        // Store the product in the repository
         productMap.put(name, this);
     }
 
@@ -54,9 +53,42 @@ public class Product {
         this.counterId = counterId;
         this.StockAvailableNumber = StockAvailableNumber;
         this.serialCode = serialCode;
-        // Store the product in the repository
         productMap.put(name, this);
     }
+
+    public Product() {
+    }
+
+    public String getId() { return id;
+    }
+
+    public void setId(String id) { this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
+
+    public int getStockAvailableNumber() {
+        return StockAvailableNumber;
+    }
+
+    public void setStockAvailableNumber(int stockAvailableNumber) {
+        StockAvailableNumber = stockAvailableNumber;
+    }
+    // ===== END ADDED METHODS =====
 
     public String getSerialCode() {
         return serialCode;
@@ -66,10 +98,6 @@ public class Product {
         return productMap;
     }
 
-    public Product() {
-    }
-
-    // Getter methods
     public String getFoodDesc() {
         return foodDesc;
     }
@@ -90,14 +118,6 @@ public class Product {
         return counterId;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public double getPrice() {
-        return price;
-    }
-
     DecimalFormat decimalFormat = new DecimalFormat("#,###");
 
     public String getUnitPriceString(){
@@ -112,17 +132,12 @@ public class Product {
         return promotionPercentage;
     }
 
-    public int getStockAvailableNumber() {
-        return StockAvailableNumber;
-    }
-
     // Static method to get counter name by product name
     public static List<String> getCounterNameByProductName(String productName) {
         Product product = productMap.get(productName);
         return product != null ? Collections.singletonList(product.getCounterName()) : null;
     }
 
-    // Static method to get counter name by product name
     public String getMainPrinterPortNameByProductName(String productName) {
         Product product = productMap.get(productName);
         return product != null ? product.getMainPrinterPortName() : null;
@@ -136,8 +151,6 @@ public class Product {
         this.mainPrinterPortAddress = mainPrinterPortAddress;
     }
 
-
-    // Static method to get printer port name by counter name
     public static String getMainPrinterPortAddressByCounterName(String counterName) {
         for (Product product : productMap.values()) {
             if (product.getCounterName().equals(counterName)) {
@@ -147,16 +160,8 @@ public class Product {
         return null;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public void setSerialCode(String serialCode) {
         this.serialCode = serialCode;
-    }
-
-    public void setPrice(double price) {
-        this.price = price;
     }
 
     public void setPhoto(byte[] photo) {
@@ -173,10 +178,6 @@ public class Product {
 
     public void setCounterId(int counterId) {
         this.counterId = counterId;
-    }
-
-    public void setStockAvailableNumber(int stockAvailableNumber) {
-        StockAvailableNumber = stockAvailableNumber;
     }
 
     public void setCounterName(String counterName) {

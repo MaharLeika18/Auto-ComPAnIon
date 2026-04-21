@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.Pane?>
+
+<AnchorPane xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.autocompanion.pos.fx.DashboardController">
+   <children>
+      <!-- Background -->
+      <ImageView pickOnBounds="true" preserveRatio="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <image>
+            <Image url="@../img/loginbg.png" />
+         </image>
+      </ImageView>
+      
+      <Pane accessibleRole="IMAGE_VIEW" disable="true" layoutX="62.0" layoutY="72.0" nodeOrientation="LEFT_TO_RIGHT" opacity="0.89" prefHeight="973.0" prefWidth="1807.0" style="-fx-background-color: #222; -fx-background-radius: 50; -fx-opacity: 50;">
+         <children>
+            <ImageView fitHeight="88.0" fitWidth="572.0" layoutX="1088.0" layoutY="31.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../img/Rectangle%2063.png" />
+               </image>
+            </ImageView>
+            <ImageView fitHeight="150.0" fitWidth="214.0" layoutX="68.0" layoutY="14.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../img/logo1.png" />
+               </image>
+            </ImageView>
+            
+                  <ImageView fitHeight="154.0" fitWidth="485.0" layoutX="626.0" layoutY="2.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../img/cartab.png" />
+               </image>
+            </ImageView>
+            <ImageView fitHeight="117.0" fitWidth="355.0" layoutX="271.0" layoutY="31.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../img/Rectangle%2035.png" />
+               </image>
+            </ImageView>
+            <ImageView fitHeight="34.0" fitWidth="186.0" layoutX="789.0" layoutY="89.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../img/Inventory1.png" />
+               </image>
+            </ImageView>
+            <ImageView fitHeight="72.0" fitWidth="62.0" layoutX="710.0" layoutY="75.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../img/INVENTORY%202.png" />
+               </image>
+            </ImageView>
+         </children>
+      </Pane>
+      
+      <Pane layoutX="108.0" layoutY="211.0" prefHeight="787.0" prefWidth="1720.0" style="-fx-background-color: #EEF4ED; -fx-background-radius: 40;" />
+   </children>
+</AnchorPane>
