@@ -315,17 +315,19 @@ CREATE PROCEDURE register_user (
 ) 
 BEGIN
     INSERT INTO users (
-        username,
-        name,
-        password_hash,
-        role,
-        created_at,
-    ) VALUES (
-        u_username,
-        u_password_hash,
-        u_role,
+		username, 
+		name, 
+		password_hash, 
+		role, 
+		created_at
+	)
+	VALUES (	
+		u_username, 
+        u_name, 
+        u_password_hash, 
+        u_role, 
         NOW()
-    );
+	);
 END //
 
 DELIMITER;
@@ -441,7 +443,7 @@ BEGIN
         co_comp_bottom_year,
         co_comp_top_year,
         v_vehicle_id
-    )
+    );
 END$$
 
 DELIMITER ;
@@ -473,7 +475,7 @@ DELIMITER //
 CREATE PROCEDURE add_supplier (
     IN s_supplier_name VARCHAR(255),
     IN s_supplier_address VARCHAR(255),
-    IN s_supplier_contact BIGINT,
+    IN s_supplier_contact BIGINT
 ) 
 BEGIN
     INSERT INTO supplier (
@@ -498,7 +500,7 @@ DELIMITER //
 
 CREATE PROCEDURE add_vehicle (
     IN v_model_name VARCHAR(255),
-    IN v_manufacturer_name VARCHAR(255),
+    IN v_manufacturer_name VARCHAR(255)
 ) 
 BEGIN
     INSERT INTO vehicles (
@@ -506,7 +508,7 @@ BEGIN
         manufacturer_name
     ) VALUES (
         v_model_name,
-        v_manufacturer_name,
+        v_manufacturer_name
     );
 END //
 
@@ -634,11 +636,12 @@ CREATE PROCEDURE upsert_pending_transaction_item (
     IN p_discount DECIMAL(12,2)
 )
 BEGIN
-    SELECT unit_cost INTO p_unit_cost FROM product WHERE product_id = p_product_id;
 
-    DECLARE var_existing_id BIGINT;
+	DECLARE var_existing_id BIGINT;
     DECLARE var_total_sale_value DECIMAL(12,2);
     DECLARE var_total_cost DECIMAL(12,2);
+    
+    SELECT unit_cost INTO p_unit_cost FROM product WHERE product_id = p_product_id;
 
     START TRANSACTION;
 
@@ -765,6 +768,7 @@ CREATE PROCEDURE confirm_pending_transaction (
     IN p_transaction_id BIGINT
 )
 BEGIN
+    DECLARE var_new_transaction_id BIGINT;
     DECLARE var_total DECIMAL(12,2);
 
     START TRANSACTION;
@@ -804,7 +808,6 @@ BEGIN
         var_total
     );
 
-    DECLARE var_new_transaction_id BIGINT;
     SET var_new_transaction_id = LAST_INSERT_ID();
 
     -- Move items
@@ -1090,8 +1093,8 @@ BEGIN
     VALUES (
         oc_cost_type,
         oc_amount,
-        NOW()
-        oc_notes,
+        NOW(),
+        oc_notes
     );
 END //
 
