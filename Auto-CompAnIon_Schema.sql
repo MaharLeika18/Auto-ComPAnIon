@@ -626,6 +626,8 @@ BEGIN
     WHERE product_id = p_product_id;
 
 END //
+    );
+END$$
 
 DELIMITER ;
 
@@ -826,11 +828,12 @@ CREATE PROCEDURE upsert_pending_transaction_item (
     IN p_discount DECIMAL(12,2)
 )
 BEGIN
-    SELECT unit_cost INTO p_unit_cost FROM product WHERE product_id = p_product_id;
 
-    DECLARE var_existing_id BIGINT;
+	DECLARE var_existing_id BIGINT;
     DECLARE var_total_sale_value DECIMAL(12,2);
     DECLARE var_total_cost DECIMAL(12,2);
+    
+    SELECT unit_cost INTO p_unit_cost FROM product WHERE product_id = p_product_id;
 
     START TRANSACTION;
 
