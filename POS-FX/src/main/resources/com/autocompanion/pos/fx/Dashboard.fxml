@@ -58,7 +58,6 @@
                 <HBox spacing="10">
                     <TextField fx:id="searchField" prefHeight="39.0" prefWidth="500" promptText="Search products..." style="-fx-background-radius: 20; -fx-padding: 10; -fx-border-color: #ddd; -fx-border-radius: 20;" HBox.hgrow="ALWAYS" />
                     <Button onAction="#searchProducts" style="-fx-background-color: #2A6B8C; -fx-background-radius: 20; -fx-text-fill: white; -fx-padding: 10 20;" text="Search" />
-                    <Button onAction="#refreshProducts" style="-fx-background-color: #17a2b8; -fx-background-radius: 20; -fx-text-fill: white; -fx-padding: 10 20;" text="Refresh" />
                 </HBox>
                 
                 <!-- Products and Cart Side by Side -->
@@ -68,8 +67,8 @@
                         <!-- LEFT: Products Section -->
                         <VBox prefWidth="1000" spacing="10">
                             <children>
-                                <Label style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;" text="Products" />
-                                <ScrollPane fitToWidth="true" prefHeight="541.0" prefWidth="890.0" VBox.vgrow="ALWAYS">
+                                <Label style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;" text="Order" />
+                                <ScrollPane fitToWidth="true" prefHeight="541.0" prefWidth="890.0" style="-fx-background-radius: 50; -fx-border-radius: 50;" VBox.vgrow="ALWAYS">
                                     <FlowPane fx:id="productGrid" hgap="15" vgap="15" />
                                 </ScrollPane>
                             </children>
@@ -78,7 +77,7 @@
                         <!-- RIGHT: Cart Section -->
                         <VBox prefWidth="500" spacing="10">
                             <children>
-                                <Label style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;" text="Shopping Cart" />
+                                <Label style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;" text="Order Details" />
                                 
                                 <ScrollPane fitToWidth="true" prefHeight="450">
                                     <FlowPane fx:id="cartGrid" hgap="15" vgap="15" />
@@ -89,10 +88,7 @@
                                     <Label fx:id="totalLabel" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #28a745;" text="₱0.00" />
                                 </HBox>
                                 
-                                <HBox spacing="10">
-                                    <Button onAction="#clearCart" style="-fx-background-color: #6c757d; -fx-background-radius: 20; -fx-text-fill: white; -fx-padding: 10 20;" text="Clear Cart" HBox.hgrow="ALWAYS" />
-                                    <Button onAction="#checkout" style="-fx-background-color: #28a745; -fx-background-radius: 20; -fx-text-fill: white; -fx-padding: 10 20;" text="Checkout" HBox.hgrow="ALWAYS" />
-                                </HBox>
+                                <HBox spacing="10" />
                                 
                             </children>
                         </VBox>
