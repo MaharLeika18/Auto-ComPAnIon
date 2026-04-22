@@ -31,9 +31,8 @@ DROP TABLE IF EXISTS `product_category`;
 CREATE TABLE `product_category`(
     `category_id` SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `category_name` VARCHAR(255) NOT NULL,
-    `parent_category_id` SMALLINT NOT NULL,
-    `date_added` DATETIME NOT NULL,
-    `last_update` DATETIME NOT NULL
+    `parent_category_id` SMALLINT NULL,
+    `date_added` DATETIME NOT NULL
 );
 ALTER TABLE 
     `product_category` ADD UNIQUE (category_name);
@@ -216,11 +215,12 @@ CREATE TABLE `demand_forecasts` (
     forecast_date DATE NOT NULL COMMENT 'Date being predicted',    
     predicted_demand DECIMAL(12,2) NOT NULL,
     model_name VARCHAR(100) COMMENT 'e.g. ARIMA, LSTM',    
-    model_version VARCHAR(50),
     generated_at DATETIME NOT NULL COMMENT 'when prediction was made',
 
     FOREIGN KEY (product_id) REFERENCES product(product_id)
 );
+ALTER TABLE 
+    `demand_forecasts` ADD UNIQUE (product_id, forecast_date, model_name);
 
 DROP TABLE IF EXISTS `reorder_predictions`;
 CREATE TABLE `reorder_predictions` (
@@ -256,6 +256,8 @@ CREATE TABLE financial_predictions (
     model_name VARCHAR(100),
     generated_at DATETIME NOT NULL
 );
+ALTER TABLE 
+    `financial_predictions` ADD UNIQUE (period_start, period_end);
 
 ALTER TABLE
     `product_batches` ADD UNIQUE `product_batches_barcode_unique`(`barcode`);
@@ -1226,13 +1228,126 @@ END //
 DELIMITER ;
 
 --      Add generated prediction results into respective table
---          * We store predictions made for history and to calc accuracy in future
---          * Write proc for each table (4) (ROI & CAGR are consolidated)
---          * Add only, no need to edit or remove past predictions
+    -- Demand Forecasting
+DELIMITER //
 
+CREATE PROCEDURE add_demand_forecast (
+    IN df_product_id INT,
+    IN df_forecast_date DATE,
+    IN df_predicted_demand DECIMAL(12,2),
+    IN df_model_name VARCHAR(100)
+)
+BEGIN
+    INSERT INTO demand_forecasts (
+        product_id,
+        forecast_date,
+        predicted_demand,
+        model_name,
+        generated_at
+    )
+    VALUES (
+        df_product_id,
+        df_forecast_date,
+        df_predicted_demand,
+        df_model_name,
+        NOW()
+    );
+    ON DUPLICATE KEY UPDATE
+        predicted_demand = VALUES(predicted_demand),
+        generated_at = NOW();
+END //
 
---      Fetch prediction results (all 4, individually) for display
+DELIMITER ;
 
+    -- Reorder Predictions
+DELIMITER //
+
+CREATE PROCEDURE add_reorder_prediction (
+    IN rp_product_id INT,
+    IN rp_predicted_reorder_point DECIMAL(12,2),
+    IN rp_recommended_order_qty DECIMAL(12,2),
+    IN rp_risk_level ENUM('LOW','MEDIUM','HIGH')
+)
+BEGIN
+    INSERT INTO reorder_predictions (
+        product_id,
+        predicted_reorder_point,
+        recommended_order_qty,
+        risk_level,
+        generated_at
+    )
+    VALUES (
+        rp_product_id,
+        rp_predicted_reorder_point,
+        rp_recommended_order_qty,
+        rp_risk_level,
+        NOW()
+    );
+END //
+
+DELIMITER ;
+
+    -- Profit Optimization
+DELIMITER //
+
+CREATE PROCEDURE add_profit_prediction (
+    IN pp_product_id INT,
+    IN pp_predicted_profit DECIMAL(12,2),
+    IN pp_suggested_price DECIMAL(12,2),
+    IN pp_confidence_score DECIMAL(5,2)
+)
+BEGIN
+    INSERT INTO profit_predictions (
+        product_id,
+        predicted_profit,
+        suggested_price,
+        confidence_score,
+        generated_at
+    )
+    VALUES (
+        pp_product_id,
+        pp_predicted_profit,
+        pp_suggested_price,
+        pp_confidence_score,
+        NOW()
+    );
+END //
+
+DELIMITER ;
+
+    -- ROI and CAGR
+DELIMITER //
+
+CREATE PROCEDURE add_financial_prediction (
+    IN fp_metric_type ENUM('ROI','CAGR'),
+    IN fp_predicted_value DECIMAL(12,4),
+    IN fp_period_start DATE,
+    IN fp_period_end DATE,
+    IN fp_model_name VARCHAR(100)
+)
+BEGIN
+    INSERT INTO financial_predictions (
+        metric_type,
+        predicted_value,
+        period_start,
+        fp_period_end,
+        model_name,
+        generated_at
+    )
+    VALUES (
+        fp_metric_type,
+        fp_predicted_value,
+        fp_period_start,
+        fp_period_end,
+        fp_model_name,
+        NOW()
+    );
+    ON DUPLICATE KEY UPDATE
+        predicted_value = VALUES(predicted_value),
+        generated_at = NOW();
+END //
+
+DELIMITER ;
 
 --      Add, edit, remove row in inventory_log (Should only be adjustment)
 DROP PROCEDURE IF EXISTS add_inventory_log_entry; 
