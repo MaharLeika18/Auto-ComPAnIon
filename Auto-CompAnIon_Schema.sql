@@ -146,7 +146,6 @@ CREATE TABLE `operational_costs`(
         'UTILITIES',
         'WAGES',
         'MAINTENANCE',
-        'MARKETING',
         'OTHER'
     ) NOT NULL,
     `amount` DECIMAL(12, 2) NOT NULL,
@@ -1141,7 +1140,7 @@ END //
 
 DELIMITER ;
 
---      Create training dataset for Profit Optimization (per-product profit metrics)
+--      Create training dataset for Profit Prediction (per-product profit metrics)
 DROP PROCEDURE IF EXISTS dataset_profit_analysis; 
 
 DELIMITER //
@@ -1173,40 +1172,80 @@ END //
 DELIMITER ;
 
 --      Create training dataset for ROI (aggregated financials over time)
-DROP PROCEDURE IF EXISTS dataset_financials; 
-
+DROP PROCEDURE IF EXISTS calculate_roi; 
 DELIMITER //
 
-CREATE PROCEDURE dataset_financials (
+CREATE PROCEDURE calculate_roi (
     IN p_start_date DATETIME,
     IN p_end_date DATETIME
 )
 BEGIN
-    SELECT 
-        DATE(t.transaction_date) AS date,
+    DECLARE total_revenue DECIMAL(14,2);
+    DECLARE total_cost DECIMAL(14,2);
+    DECLARE total_investment DECIMAL(14,2);
+    DECLARE net_profit DECIMAL(14,2);
+    DECLARE roi DECIMAL(10,2);
 
-        -- revenue
-        SUM(ti.total_sale_value) AS revenue,
-
-        -- cost of goods
-        SUM(ti.total_cost) AS cost
-
+    -- Revenue
+    SELECT IFNULL(SUM(ti.total_sale_value), 0)
+    INTO total_revenue
     FROM transaction_items ti
-    JOIN transactions t ON ti.transaction_id = t.transaction_id
-    WHERE t.transaction_date BETWEEN p_start_date AND p_end_date
-    GROUP BY DATE(t.transaction_date)
+    JOIN transaction_log t 
+        ON ti.transaction_id = t.transaction_id
+    WHERE t.transaction_date BETWEEN p_start_date AND p_end_date;
 
-    UNION ALL
+    -- COGS
+    SELECT IFNULL(SUM(ti.total_cost), 0)
+    INTO total_cost
+    FROM transaction_items ti
+    JOIN transaction_log t 
+        ON ti.transaction_id = t.transaction_id
+    WHERE t.transaction_date BETWEEN p_start_date AND p_end_date;
 
-    SELECT 
-        DATE(cost_date),
-        0,
-        SUM(amount)
+    -- Investments
+    SELECT IFNULL(SUM(amount), 0)
+    INTO total_investment
+    FROM investments
+    WHERE investment_date BETWEEN p_start_date AND p_end_date;
+
+    -- Operational Costs
+    SELECT IFNULL(SUM(amount), 0)
+    INTO operational_costs_total
     FROM operational_costs
-    WHERE cost_date BETWEEN p_start_date AND p_end_date
-    GROUP BY DATE(cost_date);
-END //
+    WHERE cost_date BETWEEN p_start_date AND p_end_date;
 
+    -- Net Profit
+    SET net_profit = total_revenue - total_cost - operational_costs_total;
+
+    -- ROI
+    IF total_investment = 0 THEN
+        SET roi = NULL;
+    ELSE
+        SET roi = (net_profit / total_investment) * 100;
+    END IF;
+
+    -- Return result
+    SELECT 
+        p_start_date AS period_start,
+        p_end_date AS period_end,
+        total_revenue,
+        total_cost,
+        total_investment,
+        net_profit,
+        roi;
+    END //
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS predict_roi; 
+DELIMITER //
+CREATE PROCEDURE calculate_roi (
+    IN p_start_date DATETIME,
+    IN p_end_date DATETIME
+)
+BEGIN
+    
+
+    END //
 DELIMITER ;
 
 --      Create training dataset for CAGR (Yearly revenue)
@@ -1330,7 +1369,7 @@ BEGIN
         metric_type,
         predicted_value,
         period_start,
-        fp_period_end,
+        period_end,
         model_name,
         generated_at
     )
@@ -1401,7 +1440,7 @@ DROP PROCEDURE IF EXISTS add_operational_cost_entry;
 DELIMITER //
 
 CREATE PROCEDURE add_operational_cost_entry (
-    IN oc_cost_type ENUM('RENT', 'UTILITIES', 'WAGES', 'MAINTENANCE', 'MARKETING', 'OTHER'),
+    IN oc_cost_type ENUM('RENT', 'UTILITIES', 'WAGES', 'MAINTENANCE', 'OTHER'),
     IN oc_amount DECIMAL(12, 2),
     IN oc_notes VARCHAR(255)
 )

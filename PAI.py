@@ -20,7 +20,40 @@ def generate_barcode(product_id, supplier_id, batch_id):
     return f"{product_id:03d}-{supplier_id:02d}-{batch_id:05d}"
 
 #           Predictive AI Functions
-# ROI
+
+# ROI (Calculated)
+def fetch_calculated_roi(start_date, end_date):
+    cursor = conn.cursor()
+
+    cursor.callproc('calculate_roi', [start_date, end_date])
+
+    for result in cursor.stored_results():
+        data = result.fetchall()
+        columns = [col[0] for col in result.description]
+
+    return pd.DataFrame(data, columns=columns)
+
+def save_roi_calculation(roi_df):
+    cursor = conn.cursor()
+
+    data = [
+        (
+            "ROI",
+            float(row['roi']),
+            row['period_start'],
+            row['fp_period_end'],
+            "CALCULATED_v1"
+        )
+        for _, row in roi_df.iterrows()
+    ]
+
+    cursor.executemany("""
+        CALL add_financial_prediction(%s, %s, %s, %s, %s)
+    """, data)
+
+    conn.commit()
+
+# ROI (Predicted)
 def fetch_dataset_financials(start_date, end_date):
     cursor = conn.cursor()
     cursor.callproc('dataset_financials', [start_date, end_date])
@@ -32,32 +65,8 @@ def fetch_dataset_financials(start_date, end_date):
     roi_df = pd.DataFrame(data, columns=columns)
     return roi_df
 
-def calculate_roi(roi_df):
-    # Calculate
 
-    return pd.DataFrame(roi)
-
-def save_roi_prediction(roi_df):
-    cursor = conn.cursor()
-
-    data = [
-        (
-            "ROI",
-            int(row['predicted_value']),
-            row['period_start'],
-            row['fp_period_end'],
-            "ARIMA_v1"  # TODO: Update this
-        )
-        for _, row in roi_df.iterrows()
-    ]
-
-    cursor.executemany("""
-        CALL add_financial_prediction(%s, %s, %s, %s, %s)
-    """, data)
-
-    conn.commit()
-
-# CAGR
+# CAGR (Calculated)
 def fetch_dataset_yearly_revenue(start_date, end_date):
     cursor = conn.cursor()
     cursor.callproc('dataset_yearly_revenue')
@@ -93,6 +102,8 @@ def save_cagr_prediction(cagr_df):
     """, data)
 
     conn.commit()
+
+# CAGR (Predicted)
 
 # Demand Forecasting
 def fetch_sales_data(start_date, end_date):
