@@ -86,7 +86,7 @@ CREATE TABLE `transaction_log`(
     `transaction_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `transaction_date` DATETIME NOT NULL,
     `total_amount` DECIMAL(12, 2) NOT NULL,
-    `payment_method` ENUM('CASH', 'E-WALLET') NULL,
+    `payment_method` ENUM('CASH', 'E-WALLET', 'BANK') NULL,
     `notes` VARCHAR(255) NULL
 );
 ALTER TABLE
@@ -225,9 +225,10 @@ DROP TABLE IF EXISTS `reorder_predictions`;
 CREATE TABLE `reorder_predictions` (
     prediction_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     product_id INT NOT NULL,
+    current_stock DECIMAL(12,2),
     predicted_reorder_point DECIMAL(12,2),
     recommended_order_qty DECIMAL(12,2),
-    risk_level ENUM('LOW','MEDIUM','HIGH'),
+    model_name VARCHAR(100) COMMENT 'e.g. ARIMA, LSTM',    
     generated_at DATETIME NOT NULL,
 
     FOREIGN KEY (product_id) REFERENCES product(product_id)
@@ -237,10 +238,11 @@ DROP TABLE IF EXISTS `profit_predictions`;
 CREATE TABLE `profit_predictions` (
     prediction_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     product_id INT NOT NULL,
-    predicted_profit DECIMAL(12,2),
-    suggested_price DECIMAL(12,2),
-    confidence_score DECIMAL(5,2),
-    generated_at DATETIME NOT NULL,
+    predicted_profit DECIMAL(14,2) NOT NULL,
+    period_start DATETIME NOT NULL,
+    period_end DATETIME NOT NULL,
+    model_name VARCHAR(100),
+    generated_at DATETIME NOT NULL
 
     FOREIGN KEY (product_id) REFERENCES product(product_id)
 );
@@ -1110,32 +1112,37 @@ END //
 DELIMITER ;
 
 --      Create training dataset for Reorder Prediction (stock + demand features)
-DROP PROCEDURE IF EXISTS dataset_inventory_features; 
+DROP PROCEDURE IF EXISTS dataset_reorder; 
 
 DELIMITER //
 
-CREATE PROCEDURE dataset_inventory_features (
-    IN p_days INT
+CREATE PROCEDURE dataset_reorder (
+    IN p_start_date DATETIME,
+    IN p_end_date DATETIME
 )
 BEGIN
     SELECT 
         p.product_id,
         p.product_name,
+
+        DATE(t.transaction_date) AS sale_date,
+
+        SUM(ti.quantity_sold) AS daily_demand,
+
         p.current_stock_level,
 
-        -- demand features
-        IFNULL(SUM(ti.quantity_sold),0) AS total_sold,
-        IFNULL(SUM(ti.quantity_sold)/p_days,0) AS avg_daily_sales,
+        AVG(ti.unit_cost_at_sale) AS avg_cost
 
-        MAX(t.transaction_date) AS last_sale_date
-
-    FROM product p
-    LEFT JOIN transaction_items ti ON p.product_id = ti.product_id
-    LEFT JOIN transactions t 
+    FROM transaction_items ti
+    JOIN transaction_log t 
         ON ti.transaction_id = t.transaction_id
-        AND t.transaction_date >= NOW() - INTERVAL p_days DAY
+    JOIN product p 
+        ON ti.product_id = p.product_id
 
-    GROUP BY p.product_id;
+    WHERE t.transaction_date BETWEEN p_start_date AND p_end_date
+
+    GROUP BY p.product_id, DATE(t.transaction_date)
+    ORDER BY p.product_id, sale_date;
 END //
 
 DELIMITER ;
@@ -1152,21 +1159,29 @@ CREATE PROCEDURE dataset_profit_analysis (
 BEGIN
     SELECT 
         p.product_id,
-        p.product_name,
 
-        SUM(ti.quantity_sold) AS total_units,
+        DATE(t.transaction_date) AS sale_date,
+
+        SUM(ti.quantity_sold) AS total_quantity,
+
+        AVG(ti.unit_selling_price) AS avg_price,
+        AVG(ti.unit_cost_at_sale) AS avg_cost,
+
         SUM(ti.total_sale_value) AS revenue,
         SUM(ti.total_cost) AS cost,
 
-        (SUM(ti.total_sale_value) - SUM(ti.total_cost)) AS profit,
+        (SUM(ti.total_sale_value) - SUM(ti.total_cost)) AS profit
 
-        AVG(ti.unit_selling_price) AS avg_price
+    FROM transaction_items ti
+    JOIN transaction_log t 
+        ON ti.transaction_id = t.transaction_id
+    JOIN product p 
+        ON ti.product_id = p.product_id
 
-    FROM product p
-    JOIN transaction_items ti ON p.product_id = ti.product_id
-    JOIN transactions t ON ti.transaction_id = t.transaction_id
     WHERE t.transaction_date BETWEEN p_start_date AND p_end_date
-    GROUP BY p.product_id;
+
+    GROUP BY p.product_id, DATE(t.transaction_date)
+    ORDER BY p.product_id, sale_date;
 END //
 
 DELIMITER ;
@@ -1236,38 +1251,172 @@ BEGIN
     END //
 DELIMITER ;
 
-DROP PROCEDURE IF EXISTS predict_roi; 
+DROP PROCEDURE IF EXISTS dataset_roi_timeseries; 
 DELIMITER //
-CREATE PROCEDURE calculate_roi (
+CREATE PROCEDURE dataset_roi_timeseries (
     IN p_start_date DATETIME,
     IN p_end_date DATETIME
 )
 BEGIN
-    
+    SELECT
+        DATE(t.transaction_date) AS period_date,
+
+        -- Revenue
+        SUM(ti.total_sale_value) AS revenue,
+
+        -- Cost
+        SUM(ti.total_cost) AS cost,
+
+        -- Operational Costs (joined per day)
+        (
+            SELECT IFNULL(SUM(oc.amount), 0)
+            FROM operational_costs oc
+            WHERE DATE(oc.cost_date) = DATE(t.transaction_date)
+        ) AS operational_costs,
+
+        -- Investments (joined per day)
+        (
+            SELECT IFNULL(SUM(i.amount), 0)
+            FROM investments i
+            WHERE DATE(i.investment_date) = DATE(t.transaction_date)
+        ) AS investments,
+
+        -- Net Profit
+        (
+            SUM(ti.total_sale_value) - 
+            SUM(ti.total_cost)
+        ) AS net_profit,
+
+        -- ROI
+        CASE 
+            WHEN (
+                SELECT IFNULL(SUM(i.amount), 0)
+                FROM investments i
+                WHERE DATE(i.investment_date) = DATE(t.transaction_date)
+            ) = 0 THEN NULL
+            ELSE (
+                (SUM(ti.total_sale_value) - SUM(ti.total_cost)) /
+                (
+                    SELECT IFNULL(SUM(i.amount), 0)
+                    FROM investments i
+                    WHERE DATE(i.investment_date) = DATE(t.transaction_date)
+                )
+            ) * 100
+        END AS roi
+
+    FROM transaction_items ti
+    JOIN transaction_log t 
+        ON ti.transaction_id = t.transaction_id
+
+    WHERE t.transaction_date BETWEEN p_start_date AND p_end_date
+
+    GROUP BY YEAR(t.transaction_date), MONTH(t.transaction_date)
+    ORDER BY period_date;
 
     END //
 DELIMITER ;
 
 --      Create training dataset for CAGR (Yearly revenue)
+DELIMITER //
+
+CREATE PROCEDURE calculate_cagr (
+    IN p_start_date DATETIME,
+    IN p_end_date DATETIME
+)
+BEGIN
+    DECLARE start_value DECIMAL(14,2);
+    DECLARE end_value DECIMAL(14,2);
+    DECLARE years DECIMAL(10,4);
+    DECLARE cagr DECIMAL(10,4);
+
+    -- Start revenue
+    SELECT SUM(ti.total_sale_value)
+    INTO start_value
+    FROM transaction_items ti
+    JOIN transaction_log t 
+        ON ti.transaction_id = t.transaction_id
+    WHERE DATE(t.transaction_date) = DATE(p_start_date);
+
+    -- End revenue
+    SELECT SUM(ti.total_sale_value)
+    INTO end_value
+    FROM transaction_items ti
+    JOIN transaction_log t 
+        ON ti.transaction_id = t.transaction_id
+    WHERE DATE(t.transaction_date) = DATE(p_end_date);
+
+    -- Years difference
+    SET years = TIMESTAMPDIFF(MONTH, p_start_date, p_end_date) / 12;
+
+    IF start_value IS NULL OR start_value = 0 OR years = 0 THEN
+        SET cagr = NULL;
+    ELSE
+        SET cagr = (POWER(end_value / start_value, 1 / years) - 1) * 100;
+    END IF;
+
+    SELECT 
+        p_start_date AS period_start,
+        p_end_date AS period_end,
+        start_value,
+        end_value,
+        years,
+        cagr;
+END //
+
+DELIMITER ;
+
 DROP PROCEDURE IF EXISTS dataset_yearly_revenue; 
 
 DELIMITER //
 
-CREATE PROCEDURE dataset_yearly_revenue ()
+CREATE PROCEDURE dataset_cagr_timeseries (
+    IN p_start_date DATETIME,
+    IN p_end_date DATETIME
+)
 BEGIN
-    SELECT 
-        YEAR(t.transaction_date) AS year,
-        SUM(ti.total_sale_value) AS revenue
-    FROM transaction_items ti
-    JOIN transactions t ON ti.transaction_id = t.transaction_id
-    GROUP BY YEAR(t.transaction_date)
-    ORDER BY year;
+    -- Monthly revenue aggregation
+    WITH monthly_data AS (
+        SELECT
+            DATE_FORMAT(t.transaction_date, '%Y-%m-01') AS period_month,
+            SUM(ti.total_sale_value) AS revenue
+        FROM transaction_items ti
+        JOIN transaction_log t 
+            ON ti.transaction_id = t.transaction_id
+        WHERE t.transaction_date BETWEEN p_start_date AND p_end_date
+        GROUP BY period_month
+    ),
+    -- Lagged revenue (12 months before)
+    lagged AS (
+        SELECT
+            m1.period_month,
+            m1.revenue AS current_revenue,
+            m2.revenue AS past_revenue
+        FROM monthly_data m1
+        LEFT JOIN monthly_data m2
+            ON m2.period_month = DATE_SUB(m1.period_month, INTERVAL 12 MONTH)
+    )
+    -- Calculate CAGR
+    SELECT
+        period_month,
+        current_revenue,
+        past_revenue,
+
+        CASE 
+            WHEN past_revenue IS NULL OR past_revenue = 0 THEN NULL
+            ELSE (
+                POWER(current_revenue / past_revenue, 1.0 / 1) - 1
+            ) * 100
+        END AS cagr
+
+    FROM lagged
+    ORDER BY period_month;
 END //
 
 DELIMITER ;
 
 --      Add generated prediction results into respective table
     -- Demand Forecasting
+DROP PROCEDURE IF EXISTS add_demand_forecast; 
 DELIMITER //
 
 CREATE PROCEDURE add_demand_forecast (
@@ -1298,28 +1447,82 @@ END //
 
 DELIMITER ;
 
+DROP PROCEDURE IF EXISTS get_demand_forecasts; 
+DELIMITER //
+
+CREATE PROCEDURE get_demand_forecasts ()
+BEGIN
+    SELECT *
+    FROM demand_forecasts df
+    WHERE generated_at = (
+        SELECT MAX(generated_at)
+        FROM demand_forecasts
+    );
+END //
+
+DELIMITER ;
+
     -- Reorder Predictions
+DELIMITER //
+CREATE PROCEDURE dataset_lead_time ()
+BEGIN
+    SELECT
+        po.po_id,
+        poi.product_id,
+        po.supplier_id,
+
+        po.order_date,
+
+        -- arrival date (from inventory log)
+        MIN(il.log_date) AS received_date,
+
+        DATEDIFF(MIN(il.log_date), po.order_date) AS lead_time_days,
+
+        poi.quantity,
+        poi.unit_cost
+
+    FROM purchase_orders po
+    JOIN purchase_order_items poi 
+        ON po.po_id = poi.po_id
+
+    JOIN inventory_log il 
+        ON il.reference_id = po.po_id
+        AND il.product_id = poi.product_id
+        AND il.change_type = 'IN'
+
+    GROUP BY po.po_id, poi.product_id
+
+    HAVING lead_time_days IS NOT NULL
+    ORDER BY po.order_date;
+
+END //
+
+DELIMITER ;
+
 DELIMITER //
 
 CREATE PROCEDURE add_reorder_prediction (
     IN rp_product_id INT,
     IN rp_predicted_reorder_point DECIMAL(12,2),
     IN rp_recommended_order_qty DECIMAL(12,2),
-    IN rp_risk_level ENUM('LOW','MEDIUM','HIGH')
+    IN rp_current_stock DECIMAL(12,2),
+    IN rp_model_name VARCHAR(100)
 )
 BEGIN
     INSERT INTO reorder_predictions (
         product_id,
+        current_stock,
         predicted_reorder_point,
         recommended_order_qty,
-        risk_level,
+        model_name,
         generated_at
     )
     VALUES (
         rp_product_id,
+        rp_current_stock,
         rp_predicted_reorder_point,
         rp_recommended_order_qty,
-        rp_risk_level,
+        rp_current_stock,
         NOW()
     );
 END //
@@ -1331,23 +1534,26 @@ DELIMITER //
 
 CREATE PROCEDURE add_profit_prediction (
     IN pp_product_id INT,
-    IN pp_predicted_profit DECIMAL(12,2),
-    IN pp_suggested_price DECIMAL(12,2),
-    IN pp_confidence_score DECIMAL(5,2)
+    IN pp_predicted_profit DECIMAL(14,2),
+    IN pp_start DATETIME,
+    IN pp_end DATETIME,
+    IN pp_model VARCHAR(100)
 )
 BEGIN
     INSERT INTO profit_predictions (
         product_id,
         predicted_profit,
-        suggested_price,
-        confidence_score,
+        period_start,
+        period_end,
+        model_name,
         generated_at
     )
     VALUES (
         pp_product_id,
         pp_predicted_profit,
-        pp_suggested_price,
-        pp_confidence_score,
+        pp_start,
+        pp_end,
+        pp_model,
         NOW()
     );
 END //
@@ -1522,6 +1728,8 @@ BEGIN
         po_order_date,
         po_total_cost
     );
+
+    
 END //
 
 DELIMITER;
@@ -1556,6 +1764,7 @@ BEGIN
     WHERE LOWER(supplier_name) = LOWER(pb_supplier_name)
     LIMIT 1;
 
+    -- Check if product and supplier exists
     IF pb_product_id IS NULL THEN 
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Invalid pb_product_id';
@@ -1582,12 +1791,31 @@ BEGIN
         pb_date_received,
         pb_barcode  
     );
+
+    -- TODO UPDATE INVENTORY LOG
+    INSERT INTO inventory_log (
+        product_id,
+        change_type,
+        quantity,
+        unit_cost,
+        log_date,
+        reference_id,
+        reference_type
+    )
+    VALUES (
+        pb_product_id,
+        'IN',
+        il_quantity,
+        pb_unit_cost,
+        reference_id,
+        il_reference_type
+    );
 END //
 
 DELIMITER;
 
 
--- TODO UPDATE INVENTORY LOG
+
  
 
 -- Miscellaneous Procedures for extraneous features that can be used in any module
