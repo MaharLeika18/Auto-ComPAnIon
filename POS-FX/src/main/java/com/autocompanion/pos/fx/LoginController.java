@@ -1,109 +1,130 @@
 package com.autocompanion.pos.fx;
 
-// JavaFX imports
 import org.MiniDev.Login.AuthenticationService;
 
+import javafx.animation.FadeTransition;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 public class LoginController {
-    
-    // These MUST match the fx:id in your Login.fxml
-    @FXML private TextField txtUsername;
-    @FXML private PasswordField txtPassword;
-    @FXML private Button btnLogin;
-    @FXML private CheckBox chkRememberMe;
-    @FXML private ProgressIndicator progressIndicator;
-    
+
+    @FXML
+    private TextField txtUsername;
+
+    @FXML
+    private PasswordField txtPassword;
+
+    @FXML
+    private Button btnLogin;
+
+    @FXML
+    private ProgressIndicator progressIndicator;
+
+    @FXML
+    private StackPane overlayPane;
+
+    private Stage primaryStage;
+
     @FXML
     private void initialize() {
-        // Setup placeholder text
-        txtUsername.setPromptText("Enter your username or email");
-        txtPassword.setPromptText("Enter your password");
-        
-        // Set button action
-        btnLogin.setOnAction(event -> handleLogin());
+        // remove when done testing :3
+        //txtUsername.setText("admin");
+        //txtPassword.setText("admin123");
+
+        btnLogin.setOnAction(e -> handleLogin());
+        txtUsername.setOnAction(e -> handleLogin());
+        txtPassword.setOnAction(e -> handleLogin());
     }
-    
+
     private void handleLogin() {
         String username = txtUsername.getText().trim();
         String password = txtPassword.getText();
-        
-        // Disable button and show loading
-        btnLogin.setDisable(true);
-        btnLogin.setText("Logging in...");
-        if (progressIndicator != null) {
-            progressIndicator.setVisible(true);
-        }
-        
-        // Background task for authentication
-        Task<Boolean> loginTask = new Task<>() {
+
+        setLoginButtonState(true);
+
+        Task<Boolean> task = new Task<>() {
             @Override
             protected Boolean call() throws Exception {
-                // Call old project's authentication
                 return AuthenticationService.fetchAuthenticationCheckWithDatabase(username, password);
             }
         };
-        
-        // What happens when task succeeds
-        loginTask.setOnSucceeded(event -> {
-            boolean isValid = loginTask.getValue();
-            if (isValid) {
-                openDashboard();
+
+        task.setOnSucceeded(e -> {
+            if (task.getValue()) {
+                showOverlay("LoginSuccess.fxml", true);
             } else {
-                showError("Invalid username or password!");
-                btnLogin.setDisable(false);
-                btnLogin.setText("Login");
-                if (progressIndicator != null) {
-                    progressIndicator.setVisible(false);
+                setLoginButtonState(false);
+                showOverlay("LoginError.fxml", false);
+            }
+        });
+
+        task.setOnFailed(e -> {
+            setLoginButtonState(false);
+            showOverlay("LoginError.fxml", false);
+        });
+
+        new Thread(task).start();
+    }
+
+    private void setLoginButtonState(boolean loading) {
+        btnLogin.setDisable(loading);
+        btnLogin.setText(loading ? "Logging in..." : "Login");
+
+        if (progressIndicator != null) {
+            progressIndicator.setVisible(loading);
+        }
+    }
+
+    // overlay
+    private void showOverlay(String fxml, boolean isSuccess) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxml));
+            Parent overlay = loader.load();
+            overlay.setOpacity(0);
+            overlayPane.getChildren().add(overlay);
+
+            // fade in
+            FadeTransition fadeIn = new FadeTransition(Duration.millis(300), overlay);
+            fadeIn.setToValue(1);
+            fadeIn.play();
+
+            if (isSuccess) {
+                overlay.setOnMouseClicked(e -> openDashboard());
+            } else {
+                Button btn = (Button) overlay.lookup("#btnTryAgain");
+                if (btn != null) {
+                    btn.setOnAction(e -> removeOverlay(overlay));
                 }
             }
-        });
-        
-        // What happens when task fails
-        loginTask.setOnFailed(event -> {
-            showError("Login error: " + loginTask.getException().getMessage());
-            btnLogin.setDisable(false);
-            btnLogin.setText("Login");
-            if (progressIndicator != null) {
-                progressIndicator.setVisible(false);
-            }
-        });
-        
-        // Run the task in background thread
-        new Thread(loginTask).start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
-    
-private void openDashboard() {
-    try {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("Dashboard.fxml"));
-        Parent root = loader.load();
-        Stage stage = (Stage) btnLogin.getScene().getWindow();
-        Scene scene = new Scene(root);
-        stage.setScene(scene);
-        stage.setTitle("Auto-CompAnIon");
-        stage.setMaximized(true);  // This makes it full screen
-        stage.show();
-    } catch (Exception e) {
-        e.printStackTrace();
-        showError("Could not open dashboard: " + e.getMessage());
+
+    private void removeOverlay(Parent overlay) {
+        FadeTransition fadeOut = new FadeTransition(Duration.millis(250), overlay);
+        fadeOut.setToValue(0);
+        fadeOut.setOnFinished(e -> overlayPane.getChildren().remove(overlay));
+        fadeOut.play();
     }
-}    
-    private void showError(String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Login Failed");
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+
+    private void openDashboard() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("Dashboard.fxml"));
+            Parent root = loader.load();
+            primaryStage = (Stage) btnLogin.getScene().getWindow();
+            primaryStage.getScene().setRoot(root);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

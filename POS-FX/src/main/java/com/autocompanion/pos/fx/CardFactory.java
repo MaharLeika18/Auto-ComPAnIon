@@ -1,99 +1,192 @@
 package com.autocompanion.pos.fx;
 
 import java.text.DecimalFormat;
+import java.util.function.Consumer;
 
 import org.MiniDev.OOP.Product;
+
+import com.autocompanion.pos.fx.DashboardController.CartItem;
 
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
-
-// Import CartItem from DashboardController
-// import com.autocompanion.pos.fx.DashboardController.CartItem;
 
 public class CardFactory {
 
-    private static DecimalFormat df = new DecimalFormat("#,###.00");
+    private static final DecimalFormat df = new DecimalFormat("#,###.00");
 
-    // Create product card for grid
+    // ─────────────────────────────────────────────────────────────────
+    // PRODUCT CARD  (grid on the left)
+    // ─────────────────────────────────────────────────────────────────
     public static VBox createProductCard(Product p, Runnable onAddToCart) {
         VBox card = new VBox(8);
         card.setStyle(
-                "-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 8, 0, 0, 4);");
+            "-fx-background-color: white; " +
+            "-fx-background-radius: 15; " +
+            "-fx-padding: 12; " +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.10), 8, 0, 0, 4);");
         card.setPrefWidth(180);
         card.setAlignment(Pos.CENTER);
 
         Label nameLabel = new Label(p.getName());
-        nameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px; -fx-wrap-text: true;");
+        nameLabel.setStyle(
+            "-fx-font-family: 'Montserrat SemiBold'; " +
+            "-fx-font-size: 13px; " +
+            "-fx-wrap-text: true; " +
+            "-fx-text-fill: #1c4f43;");
         nameLabel.setPrefWidth(160);
         nameLabel.setAlignment(Pos.CENTER);
 
         Label priceLabel = new Label("₱" + df.format(p.getPrice()));
-        priceLabel.setStyle("-fx-text-fill: #2A6B8C; -fx-font-weight: bold; -fx-font-size: 16px;");
+        priceLabel.setStyle(
+            "-fx-font-family: 'Montserrat SemiBold'; " +
+            "-fx-font-size: 16px; " +
+            "-fx-text-fill: #649e8f;");
 
+        boolean lowStock = p.getStockAvailableNumber() < 5;
         Label stockLabel = new Label("Stock: " + p.getStockAvailableNumber());
-        String stockColor = p.getStockAvailableNumber() < 5 ? "red" : "#888";
-        stockLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: " + stockColor);
+        stockLabel.setStyle(
+            "-fx-font-size: 11px; " +
+            "-fx-text-fill: " + (lowStock ? "#e05252" : "#888888") + ";");
 
         Button addBtn = new Button("Add to Cart");
         addBtn.setStyle(
-                "-fx-background-color: #2A6B8C; -fx-background-radius: 20; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 6 12;");
+            "-fx-background-color: #1FFFCB; " +
+            "-fx-background-radius: 20; " +
+            "-fx-text-fill: #1c4f43; " +
+            "-fx-font-family: 'Montserrat SemiBold'; " +
+            "-fx-font-size: 12px; " +
+            "-fx-padding: 6 14;");
         addBtn.setOnAction(e -> onAddToCart.run());
+
+        if (p.getStockAvailableNumber() == 0) {
+            addBtn.setDisable(true);
+            addBtn.setStyle(addBtn.getStyle() +
+                "-fx-background-color: #cccccc; -fx-text-fill: #888888;");
+        }
 
         card.getChildren().addAll(nameLabel, priceLabel, stockLabel, addBtn);
         return card;
     }
 
-    // Create cart item card
-    public static VBox createCartCard(
-            DashboardController.CartItem item,
-            Runnable onMinus,
-            Runnable onPlus,
-            Runnable onRemove) {
+    // ─────────────────────────────────────────────────────────────────
+    // CART ROW  (receipt panel on the right)
+    //
+    //  ┌─────────────────────────────────────────────────────────┐
+    //  │  Product Name                           ₱ subtotal  [✕] │
+    //  │  [−]  [  qty field  ]  [+]                               │
+    //  └─────────────────────────────────────────────────────────┘
+    // ─────────────────────────────────────────────────────────────────
+    public static VBox createCartRow(
+            CartItem item,
+            Runnable  onMinus,
+            Runnable  onPlus,
+            Consumer<Integer> onQtyTyped,
+            Runnable  onRemove) {
 
-        VBox card = new VBox(8);
-        card.setStyle(
-                "-fx-background-color: #f8f9fa; -fx-background-radius: 15; -fx-padding: 12; -fx-border-color: #e0e0e0; -fx-border-radius: 15;");
-        card.setPrefWidth(200);
-        card.setAlignment(Pos.CENTER);
+        VBox row = new VBox(6);
+        row.setStyle(
+            "-fx-background-color: white; " +
+            "-fx-background-radius: 12; " +
+            "-fx-padding: 10 14; " +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.07), 6, 0, 0, 2);");
+        row.setPrefWidth(440);
 
+        // ── top line: name + subtotal + remove ───────────────────────
         Label nameLabel = new Label(item.getProductName());
-        nameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px; -fx-wrap-text: true;");
-        nameLabel.setAlignment(Pos.CENTER);
+        nameLabel.setStyle(
+            "-fx-font-family: 'Montserrat SemiBold'; " +
+            "-fx-font-size: 13px; " +
+            "-fx-text-fill: #1c4f43; " +
+            "-fx-wrap-text: true;");
+        nameLabel.setMaxWidth(240);
 
-        Label priceLabel = new Label("₱" + df.format(item.getPrice()));
-        priceLabel.setStyle("-fx-text-fill: #2A6B8C; -fx-font-weight: bold;");
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        // Quantity controls
-        HBox qtyBox = new HBox(8);
-        qtyBox.setAlignment(Pos.CENTER);
+        Label subtotalLabel = new Label("₱" + df.format(item.getSubtotal()));
+        subtotalLabel.setStyle(
+            "-fx-font-family: 'Montserrat SemiBold'; " +
+            "-fx-font-size: 14px; " +
+            "-fx-text-fill: #649e8f;");
 
-        Button minusBtn = new Button("-");
-        minusBtn.setStyle(
-                "-fx-background-color: #dc3545; -fx-text-fill: white; -fx-background-radius: 15; -fx-font-weight: bold; -fx-padding: 4 10;");
-        minusBtn.setOnAction(e -> onMinus.run());
-
-        Label qtyLabel = new Label(String.valueOf(item.getQuantity()));
-        qtyLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
-
-        Button plusBtn = new Button("+");
-        plusBtn.setStyle(
-                "-fx-background-color: #28a745; -fx-text-fill: white; -fx-background-radius: 15; -fx-font-weight: bold; -fx-padding: 4 10;");
-        plusBtn.setOnAction(e -> onPlus.run());
-
-        qtyBox.getChildren().addAll(minusBtn, qtyLabel, plusBtn);
-
-        Label subtotalLabel = new Label("Subtotal: ₱" + df.format(item.getSubtotal()));
-        subtotalLabel.setStyle("-fx-text-fill: #28a745; -fx-font-weight: bold; -fx-font-size: 12px;");
-
-        Button removeBtn = new Button("Remove");
+        Button removeBtn = new Button("✕");
         removeBtn.setStyle(
-                "-fx-background-color: #6c757d; -fx-text-fill: white; -fx-background-radius: 15; -fx-font-size: 11px; -fx-padding: 4 10;");
+            "-fx-background-color: transparent; " +
+            "-fx-text-fill: #e05252; " +
+            "-fx-font-size: 13px; " +
+            "-fx-cursor: hand; " +
+            "-fx-padding: 0 0 0 8;");
         removeBtn.setOnAction(e -> onRemove.run());
 
-        card.getChildren().addAll(nameLabel, priceLabel, qtyBox, subtotalLabel, removeBtn);
-        return card;
+        HBox topLine = new HBox(4, nameLabel, spacer, subtotalLabel, removeBtn);
+        topLine.setAlignment(Pos.CENTER_LEFT);
+
+        // ── bottom line: − | qty | + ──────────────────────────────────
+        Button minusBtn = makeQtyBtn("−");
+        minusBtn.setOnAction(e -> onMinus.run());
+
+        TextField qtyField = new TextField(String.valueOf(item.getQuantity()));
+        qtyField.setPrefWidth(52);
+        qtyField.setAlignment(Pos.CENTER);
+        qtyField.setStyle(
+            "-fx-font-family: 'Montserrat Regular'; " +
+            "-fx-font-size: 13px; " +
+            "-fx-background-radius: 8; " +
+            "-fx-border-color: #bdbdbd; " +
+            "-fx-border-radius: 8; " +
+            "-fx-text-fill: #1c4f43;");
+
+        // commit on Enter or focus-lost
+        qtyField.setOnAction(e -> commitQty(qtyField, onQtyTyped));
+        qtyField.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
+            if (!isFocused) commitQty(qtyField, onQtyTyped);
+        });
+
+        Button plusBtn = makeQtyBtn("+");
+        plusBtn.setOnAction(e -> onPlus.run());
+
+        // unit price hint
+        Label unitPrice = new Label("@ ₱" + df.format(item.getPrice()) + " each");
+        unitPrice.setStyle("-fx-font-size: 11px; -fx-text-fill: #aaaaaa;");
+
+        Region spacer2 = new Region();
+        HBox.setHgrow(spacer2, Priority.ALWAYS);
+
+        HBox bottomLine = new HBox(6, minusBtn, qtyField, plusBtn, spacer2, unitPrice);
+        bottomLine.setAlignment(Pos.CENTER_LEFT);
+
+        row.getChildren().addAll(topLine, bottomLine);
+        return row;
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // HELPERS
+    // ─────────────────────────────────────────────────────────────────
+    private static Button makeQtyBtn(String text) {
+        Button btn = new Button(text);
+        btn.setPrefSize(30, 30);
+        btn.setStyle(
+            "-fx-background-color: #EEF4ED; " +
+            "-fx-background-radius: 50; " +
+            "-fx-text-fill: #1c4f43; " +
+            "-fx-font-size: 16px; " +
+            "-fx-cursor: hand;");
+        return btn;
+    }
+
+    private static void commitQty(TextField field, Consumer<Integer> onQtyTyped) {
+        try {
+            int val = Integer.parseInt(field.getText().trim());
+            if (val >= 1) onQtyTyped.accept(val);
+            else field.setText("1");
+        } catch (NumberFormatException ex) {
+            field.setText("1");
+        }
     }
 }

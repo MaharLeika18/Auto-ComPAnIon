@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
-<?import javafx.scene.control.ProgressIndicator?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
@@ -10,41 +10,97 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.text.Font?>
 
-<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="522.0" prefWidth="938.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.autocompanion.pos.fx.LoginController">
+<StackPane prefHeight="1080.0" prefWidth="1920.0"
+           xmlns="http://javafx.com/javafx/25"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.autocompanion.pos.fx.LoginController">
+
    <children>
-      <ImageView fitHeight="522.0" fitWidth="999.0" pickOnBounds="true" preserveRatio="true">
-         <image>
-            <Image url="@../img/UserAuth_Background.png" />
-         </image>
-      </ImageView>
-      
-      <!-- Username Field -->
-      <TextField fx:id="txtUsername" alignment="CENTER" layoutX="379.0" layoutY="341.0" prefHeight="45.0" prefWidth="217.0" promptText="Enter Username" style="-fx-background-radius: 70; -fx-background-color: #b3b3b3; -fx-text-fill: black; -fx-prompt-text-fill: #4a4a4a;" stylesheets="@styles.css">
-         <font>
-            <Font size="11.0" />
-         </font>
-      </TextField>
-      
-      <!-- Password Field -->
-      <PasswordField fx:id="txtPassword" alignment="CENTER" layoutX="379.0" layoutY="393.0" prefHeight="45.0" prefWidth="217.0" promptText="Enter Password" style="-fx-background-color: #B3B3B3; -fx-background-radius: 70; -fx-text-fill: black; -fx-prompt-text-fill: #4a4a4a;" />
-      
-      <!-- Login Button -->
-      <Button fx:id="btnLogin" layoutX="379.0" layoutY="443.0" prefHeight="40.0" prefWidth="217.0" style="-fx-background-color: #1FFFCB; -fx-background-radius: 70; -fx-text-fill: black;" stylesheets="@styles.css" text="LOGIN">
-         <font>
-            <Font name="Montserrat Bold" size="14.0" />
-         </font>
-      </Button>
-      
-      <!-- Progress Indicator -->
-      <ProgressIndicator fx:id="progressIndicator" layoutX="540.0" layoutY="438.0" prefHeight="25.0" prefWidth="25.0" visible="false" />
-      <StackPane layoutX="366.0" layoutY="136.0" prefHeight="175.0" prefWidth="244.0">
+
+      <!-- ================= MAIN LOGIN UI ================= -->
+      <Pane prefHeight="1080.0" prefWidth="1920.0">
+
          <children>
-            <ImageView fitHeight="196.0" fitWidth="265.0" pickOnBounds="true" preserveRatio="true">
+
+            <!-- Background -->
+            <ImageView fitHeight="1080.0" fitWidth="1920.0" pickOnBounds="true" preserveRatio="true">
                <image>
-                  <Image url="@../img/usericon.png" />
+                  <Image url="@../img/UserAuth_Background.png" />
                </image>
             </ImageView>
-         </children></StackPane>
-      
+
+            <!-- Username -->
+            <TextField fx:id="txtUsername"
+                       alignment="CENTER"
+                       layoutX="784.0"
+                       layoutY="782.0"
+                       prefHeight="53.0"
+                       prefWidth="363.0"
+                       promptText="Enter Username"
+                       style="-fx-background-radius: 70; -fx-background-color: #b3b3b3; -fx-text-fill: black; -fx-prompt-text-fill: #4a4a4a; -fx-border-width: 0;"
+                       stylesheets="@styles.css">
+               <font>
+                  <Font name="Montserrat SemiBold" size="17.0" />
+               </font>
+            </TextField>
+
+            <!-- Password -->
+            <PasswordField fx:id="txtPassword"
+                           alignment="CENTER"
+                           layoutX="783.0"
+                           layoutY="846.0"
+                           prefHeight="53.0"
+                           prefWidth="363.0"
+                           promptText="Enter Password"
+                           style="-fx-background-color: #B3B3B3; -fx-background-radius: 70; -fx-text-fill: black; -fx-prompt-text-fill: #4a4a4a; -fx-border-width: 0;">
+               <font>
+                  <Font name="Montserrat SemiBold" size="17.0" />
+               </font>
+            </PasswordField>
+
+            <!-- Login Button -->
+            <Button fx:id="btnLogin"
+                    layoutX="783.0"
+                    layoutY="914.0"
+                    prefHeight="41.0"
+                    prefWidth="363.0"
+                    style="-fx-background-color: #1FFFCB; -fx-background-radius: 70; -fx-text-fill: black; -fx-border-width: 0;"
+                    stylesheets="@styles.css"
+                    text="Log In">
+               <font>
+                  <Font name="Orbitron Regular" size="14.0" />
+               </font>
+            </Button>
+
+            <!-- Icon -->
+            <StackPane layoutX="689.0" layoutY="267.0" prefHeight="450.0" prefWidth="552.0">
+               <children>
+                  <ImageView fitHeight="400.0" fitWidth="433.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../img/usericon.png" />
+                     </image>
+                  </ImageView>
+               </children>
+            </StackPane>
+
+            <!-- Label -->
+            <Label layoutX="823.0"
+                   layoutY="738.0"
+                   text="User Authentication Needed"
+                   textFill="WHITE">
+               <font>
+                  <Font name="Montserrat Regular" size="20.0" />
+               </font>
+            </Label>
+
+         </children>
+      </Pane>
+
+      <!-- ================= OVERLAY LAYER ================= -->
+      <StackPane fx:id="overlayPane"
+                 prefWidth="1920.0"
+                 prefHeight="1080.0"
+                 pickOnBounds="false"/>
+
    </children>
-</Pane>
+</StackPane>
