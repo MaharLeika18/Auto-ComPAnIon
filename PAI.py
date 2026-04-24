@@ -126,6 +126,9 @@ def save_roi_predictions(forecast_df, period_start, period_end):
 
     conn.commit()
 
+# ROI Prediction (When will the user see a return on investment)
+
+
 # CAGR (Calculated)
 def fetch_calculated_cagr(start_date, end_date):
     cursor = conn.cursor()
@@ -618,6 +621,27 @@ def build_profit_pareto(df):
 
 def aggregate_predicted_profit(df_pred):
     return df_pred.groupby('product_id')['predicted_profit'].sum().reset_index()
+
+# EBITDA (Calculated) KPI
+
+
+# EBITDA (Predicted) Timeseries
+
+# EBITDA Expense vs Efficiency 
+
+# Net Profit (Calculated) KPI
+
+# Net Profit (Predicted) Timeseries
+
+# Net Profit Impact Factors (by product category)
+
+# Gross Profit (Calculated)
+    # KPI
+
+    # Predicted
+
+    # Profit Contributors
+
 
 # Main Execution (for testing)
 if __name__ == "__main__":

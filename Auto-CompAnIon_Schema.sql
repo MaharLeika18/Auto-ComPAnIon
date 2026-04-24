@@ -166,7 +166,7 @@ CREATE TABLE `inventory_log`(
     `unit_cost` DECIMAL(8, 2) NOT NULL,
     `log_date` DATETIME NOT NULL,
     `reference_id` BIGINT NULL COMMENT 'Links to transaction id/batch id',
-    `reference_type` ENUM('TRANSACTION', 'PURCHASE') NULL
+    `reference_type` ENUM('TRANSACTION', 'PURCHASE', 'BATCH') NULL
 );
 ALTER TABLE
     `inventory_log` ADD INDEX `inventory_log_log_date_index`(`log_date`);
@@ -202,6 +202,7 @@ CREATE TABLE `product_batches`(
     `product_id` INT NOT NULL,
     `supplier_id` BIGINT NOT NULL,
     `quantity_received` SMALLINT NOT NULL,
+    `quantity_remaining` SMALLINT NOT NULL,
     `unit_cost` DECIMAL(12, 2) NOT NULL,
     `date_received` DATETIME NOT NULL,
     `barcode` VARCHAR(100) NOT NULL UNIQUE 
@@ -259,6 +260,8 @@ CREATE TABLE financial_predictions (
 );
 ALTER TABLE 
     `financial_predictions` ADD UNIQUE (period_start, period_end);
+
+
 
 ALTER TABLE
     `product_batches` ADD UNIQUE `product_batches_barcode_unique`(`barcode`);
@@ -1750,10 +1753,11 @@ CREATE PROCEDURE add_product_batches_entry (
     IN pb_barcode VARCHAR(100)
 )
 BEGIN
-    -- Validate product & supplier
     DECLARE pb_product_id INT;
     DECLARE pb_supplier_id SMALLINT;
+    DECLARE pb_batch_id BIGINT;
 
+    -- Validate product & supplier
     SELECT product_id INTO pb_product_id
     FROM product
     WHERE LOWER(product_name) = LOWER(pb_product_name)
@@ -1792,7 +1796,9 @@ BEGIN
         pb_barcode  
     );
 
-    -- TODO UPDATE INVENTORY LOG
+    -- Update Inventory Log
+    SET pb_batch_id = LAST_INSERT_ID();
+
     INSERT INTO inventory_log (
         product_id,
         change_type,
@@ -1805,18 +1811,161 @@ BEGIN
     VALUES (
         pb_product_id,
         'IN',
-        il_quantity,
+        pb_quantity_received,
         pb_unit_cost,
-        reference_id,
-        il_reference_type
+        pb_date_received,
+        pb_batch_id,
+        'BATCH'
     );
+
+    -- Update product stock level
+    UPDATE product
+    SET current_stock_level = current_stock_level + pb_quantity_received,
+        last_update = NOW()
+    WHERE product_id = pb_product_id;
+    
 END //
 
 DELIMITER;
 
+DROP PROCEDURE IF EXISTS edit_product_batches_entry; 
+DELIMITER //
 
+CREATE PROCEDURE edit_product_batches_entry (
+    IN pb_batch_id BIGINT,
+    IN pb_new_quantity SMALLINT,
+    IN pb_new_unit_cost DECIMAL(12, 2),
+    IN pb_new_date_received DATETIME,
+    IN pb_new_barcode VARCHAR(100)
+)
+BEGIN
+    DECLARE var_product_id INT;
+    DECLARE var_old_quantity SMALLINT;
+    DECLARE var_old_unit_cost DECIMAL(12,2);
 
- 
+    -- Check if entry exists and is valid
+    SELECT 
+        product_id,
+        quantity_received,
+        unit_cost
+    INTO 
+        v_product_id,
+        v_old_quantity,
+        v_old_unit_cost
+    FROM product_batches
+    WHERE batch_id = pb_batch_id;
+
+    IF v_product_id IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Batch not found';
+    END IF;
+
+    -- Remove old data
+    UPDATE product
+    SET current_stock_level = current_stock_level - v_old_quantity,
+        last_update = NOW()
+    WHERE product_id = v_product_id;
+
+    -- Update tables
+    UPDATE product_batches
+    SET 
+        quantity_received = pb_new_quantity,
+        unit_cost = pb_new_unit_cost,
+        date_received = pb_new_date_received,
+        barcode = pb_new_barcode
+    WHERE batch_id = pb_batch_id;
+
+    UPDATE product
+    SET current_stock_level = current_stock_level + pb_new_quantity,
+        last_update = NOW()
+    WHERE product_id = v_product_id;
+
+    INSERT INTO inventory_log (
+        product_id,
+        change_type,
+        quantity,
+        unit_cost,
+        log_date,
+        reference_id,
+        reference_type
+    )
+    VALUES (
+        v_product_id,
+        'ADJUSTMENT',
+        pb_new_quantity - v_old_quantity,
+        pb_new_unit_cost,
+        NOW(),
+        pb_batch_id,
+        'BATCH'
+    );
+
+END //
+
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS remove_product_batch_entry;
+DELIMITER //
+
+CREATE PROCEDURE remove_product_batch_entry(
+    IN pb_batch_id BIGINT
+)
+BEGIN
+    DECLARE v_product_id INT;
+    DECLARE v_quantity SMALLINT;
+    DECLARE v_remaining_stock SMALLINT;
+
+    -- Fetch and validate entry
+    SELECT 
+        product_id,
+        quantity_received
+    INTO 
+        v_product_id,
+        v_quantity
+    FROM product_batches
+    WHERE batch_id = pb_batch_id;
+
+    IF v_product_id IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Batch not found';
+    END IF;
+
+    -- Cancel if used in POS
+    IF EXISTS (
+        SELECT 1
+        FROM transaction_items
+        WHERE batch_id = pb_batch_id
+        LIMIT 1
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Cannot delete batch: already used in sales';
+    END IF;
+
+    -- Prevent negative stock
+    SELECT current_stock_level INTO v_remaining_stock
+    FROM product
+    WHERE product_id = v_product_id;
+
+    IF v_remaining_stock < v_quantity THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Stock inconsistency detected';
+    END IF;
+
+    -- Remove entry across tables
+    UPDATE product
+    SET current_stock_level = current_stock_level - v_quantity,
+        last_update = NOW()
+    WHERE product_id = v_product_id;
+
+    DELETE FROM inventory_log
+    WHERE reference_id = pb_batch_id
+      AND reference_type = 'BATCH';
+
+    DELETE FROM product_batches
+    WHERE batch_id = pb_batch_id;
+
+END //
+
+DELIMITER //
 
 -- Miscellaneous Procedures for extraneous features that can be used in any module
 --      Autocomplete query (for search bar or edit fields)
