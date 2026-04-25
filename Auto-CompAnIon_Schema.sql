@@ -425,7 +425,7 @@ BEGIN
         username = COALESCE(u_username, username),
         name = COALESCE(u_name, name),
         password_hash = COALESCE(u_password_hash, password_hash),
-        role = COALESCE(u_role, role)
+        role = COALESCE(u_role, role), -- needed a comma
         last_update = NOW()
     WHERE user_id = u_user_id;
 
@@ -647,7 +647,7 @@ BEGIN
     UPDATE product_images
     SET
         image_path = COALESCE(i_image_path, image_path),
-        date_uploaded = COALESCE(p_description, product_description),
+        date_uploaded = COALESCE(p_description, product_description) -- took off unneeded comma
     WHERE product_id = p_product_id;
 
 END //
@@ -2363,7 +2363,7 @@ BEGIN
         df_predicted_demand,
         df_model_name,
         NOW()
-    );
+    ) -- removed semicolon
     ON DUPLICATE KEY UPDATE
         predicted_demand = VALUES(predicted_demand),
         generated_at = NOW();
@@ -2510,7 +2510,7 @@ BEGIN
         fp_period_end,
         fp_model_name,
         NOW()
-    );
+    ) -- removed semicolon
     ON DUPLICATE KEY UPDATE
         predicted_value = VALUES(predicted_value),
         generated_at = NOW();
