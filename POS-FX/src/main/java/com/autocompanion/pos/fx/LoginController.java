@@ -37,8 +37,8 @@ public class LoginController {
     @FXML
     private void initialize() {
         // remove when done testing :3
-        //txtUsername.setText("admin");
-        //txtPassword.setText("admin123");
+        txtUsername.setText("admin");
+        txtPassword.setText("admin123");
 
         btnLogin.setOnAction(e -> handleLogin());
         txtUsername.setOnAction(e -> handleLogin());

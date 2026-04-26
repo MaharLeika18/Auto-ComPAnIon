@@ -40,7 +40,7 @@ public class PaiController {
     @FXML private CheckBox cbAllQuarters;
 
     // ── Year checkboxes ───────────────────────────────────────────────────────
-    @FXML private CheckBox cb2024, cb2025, cb2026, cb2027, cb2028;
+    @FXML private CheckBox cb2026, cb2027, cb2028;
     @FXML private CheckBox cbAllYears;
 
     // ── FXML paths ────────────────────────────────────────────────────────────
@@ -123,7 +123,7 @@ public class PaiController {
     // DATE RANGE
     // ─────────────────────────────────────────────────────────────────────────
     private LocalDate[] getDateRange() {
-        int[] yearVals = {2024, 2025, 2026, 2027, 2028};
+        int[] yearVals = {2026, 2027, 2028};
         CheckBox[] ybs = yearBoxes();
         int minY = Integer.MAX_VALUE, maxY = Integer.MIN_VALUE;
         for (int i = 0; i < ybs.length; i++) {
@@ -209,7 +209,7 @@ public class PaiController {
     // ─────────────────────────────────────────────────────────────────────────
     private CheckBox[] monthBoxes()   { return new CheckBox[]{cbJan,cbFeb,cbMar,cbApr,cbMay,cbJun,cbJul,cbAug,cbSep,cbOct,cbNov,cbDec}; }
     private CheckBox[] quarterBoxes() { return new CheckBox[]{cbQ1,cbQ2,cbQ3,cbQ4}; }
-    private CheckBox[] yearBoxes()    { return new CheckBox[]{cb2024,cb2025,cb2026,cb2027,cb2028}; }
+    private CheckBox[] yearBoxes()    { return new CheckBox[]{cb2026,cb2027,cb2028}; }
 
     private void showAlert(String msg) {
         Alert a = new Alert(Alert.AlertType.ERROR);

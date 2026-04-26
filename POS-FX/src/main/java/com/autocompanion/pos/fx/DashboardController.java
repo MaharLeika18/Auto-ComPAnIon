@@ -72,7 +72,7 @@ public class DashboardController {
     // ─────────────────────────────── FXML paths ───────────────────────────────
     private static final String FXML_BASE      = "/com/autocompanion/pos/fx/";
     private static final String FXML_INVENTORY = FXML_BASE + "Inventory.fxml";
-    private static final String FXML_PAI       = FXML_BASE + "pai/PaiSpeedChart.fxml";
+    private static final String FXML_PAI       = FXML_BASE + "Pai.fxml";
 
     // ──────────────────────────────── INIT ────────────────────────────────────
     @FXML
@@ -276,7 +276,10 @@ private void openPai(ActionEvent event) {
 private void goToInventory(ActionEvent event) {
     openInventory(event); // reuse existing logic
 }
-
+@FXML
+private void goToPai(ActionEvent event) {
+    openPai(event); // reuse existing logic
+}
 @FXML
 private void goToDashboard(ActionEvent event) {
     // Already in dashboard → do nothing
@@ -294,27 +297,30 @@ private void navigate(ActionEvent event, String fxmlPath) {
     URL resource = getClass().getResource(fxmlPath);
 
     if (resource == null) {
-        showAlert("Navigation Error",
-            "Cannot find FXML file:\n" + fxmlPath +
-            "\n\nMake sure it's inside resources folder.");
+        showAlert("Navigation Error", "Cannot find FXML file:\n" + fxmlPath);
         return;
     }
 
     try {
         FXMLLoader loader = new FXMLLoader(resource);
         Parent root = loader.load();
-
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         stage.setScene(new Scene(root));
         stage.show();
 
     } catch (IOException e) {
+        // Print the ROOT cause, not just the surface message
+        Throwable cause = e;
+        while (cause.getCause() != null) cause = cause.getCause();
+
         showAlert("Navigation Error",
-            "Failed to load:\n" + fxmlPath + "\n\n" + e.getMessage());
-        e.printStackTrace();
+            "Failed to load: " + fxmlPath +
+            "\n\nRoot cause: " + cause.getClass().getSimpleName() +
+            "\n" + cause.getMessage());
+
+        e.printStackTrace(); // full trace in console
     }
 }
-
     // ──────────────────────────────── UTIL ────────────────────────────────────
     private void showAlert(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);

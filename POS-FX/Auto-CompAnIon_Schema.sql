@@ -1,4 +1,8 @@
--- Tables for User Authenticator Module
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+--                      Tables for User Authenticator Module
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
     `user_id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -10,7 +14,11 @@ CREATE TABLE `users` (
     `last_update` DATETIME NULL
 );
 
--- Tables for Inventory Management Module
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+--                      Main Tables for Inventory Information
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 DROP TABLE IF EXISTS `product`;
 CREATE TABLE `product`(
     `product_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -23,9 +31,12 @@ CREATE TABLE `product`(
     `storage_location` VARCHAR(255) NULL,
     `date_added` DATETIME NOT NULL,
     `last_update` DATETIME NOT NULL,
+    `status` ENUM('ACTIVE','INACTIVE') DEFAULT 'ACTIVE',
     `unit_cost` DECIMAL(12, 2) NOT NULL COMMENT 'Latest supplier price; regularly update this.',
     `retail_price` DECIMAL(12, 2) NOT NULL COMMENT 'Latest selling price; regularly update this.'
 );
+ALTER TABLE
+    `product` ADD INDEX `idx_product_name`(`product_name`);    
 
 DROP TABLE IF EXISTS `product_category`;
 CREATE TABLE `product_category`(
@@ -36,9 +47,11 @@ CREATE TABLE `product_category`(
 );
 ALTER TABLE 
     `product_category` ADD UNIQUE (category_name);
+ALTER TABLE
+    `product_category` ADD INDEX `idx_product_category`(`category_id`);    
 
 DROP TABLE IF EXISTS `product_images`;
-CREATE TABLE product_images (
+CREATE TABLE `product_images` (
     `image_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `product_id` INT NOT NULL,
     `image_path` VARCHAR(255) NULL,
@@ -70,27 +83,58 @@ ALTER TABLE
     `compatibility` ADD INDEX `compatibility_product_id_index`(`product_id`);
 ALTER TABLE
     `compatibility` ADD INDEX `compatibility_vehicle_id_index`(`vehicle_id`);
+ALTER TABLE `compatibility`
+    ADD UNIQUE (product_id, vehicle_id, bottom_year, top_year); 
+
+DROP TABLE IF EXISTS `manufacturers`;
+CREATE TABLE manufacturers (
+    `manufacturer_id` SMALLINT PRIMARY KEY AUTO_INCREMENT,
+    `manufacturer_name` VARCHAR(255) UNIQUE
+);
 
 DROP TABLE IF EXISTS `vehicles`;
 CREATE TABLE `vehicles`(
     `vehicle_id` SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `model_name` VARCHAR(255) NOT NULL,
     `manufacturer_name` VARCHAR(255) NOT NULL
+
+    FOREIGN KEY (manufacturer_name) REFERENCES manufacturers(manufacturer_name)
 );
 ALTER TABLE
     `vehicles` ADD INDEX `vehicles_manufacturer_name_index`(`manufacturer_name`);
 
--- Tables for Point of Sale Module
+DROP TABLE IF EXISTS `product_batches`;
+CREATE TABLE `product_batches`(
+    `batch_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `product_id` INT NOT NULL,
+    `supplier_id` SMALLINT NOT NULL,
+    `quantity_received` SMALLINT NOT NULL,
+    `quantity_remaining` SMALLINT NOT NULL,
+    `unit_cost` DECIMAL(12, 2) NOT NULL,
+    `date_received` DATETIME NOT NULL,
+    `barcode` VARCHAR(100) NOT NULL UNIQUE 
+);
+
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+--                              Transactional Tables
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 DROP TABLE IF EXISTS `transaction_log`;
 CREATE TABLE `transaction_log`(
     `transaction_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `parent_transaction_id` BIGINT NULL,
     `transaction_date` DATETIME NOT NULL,
+    `receipt_num` INT NOT NULL,
     `total_amount` DECIMAL(12, 2) NOT NULL,
     `payment_method` ENUM('CASH', 'E-WALLET', 'BANK') NULL,
+    `status` ENUM('PENDING', 'CONFIRMED', 'CANCELLED', 'REFUNDED') NOT NULL DEFAULT 'PENDING',
     `notes` VARCHAR(255) NULL
 );
 ALTER TABLE
     `transaction_log` ADD INDEX `transaction_log_transaction_date_index`(`transaction_date`);
+ALTER TABLE
+    `transaction_log` ADD INDEX `transaction_log_transaction_status_date`(`status`);
 
 DROP TABLE IF EXISTS `transaction_items`;
 CREATE TABLE `transaction_items`(
@@ -105,39 +149,48 @@ CREATE TABLE `transaction_items`(
     `total_sale_value` DECIMAL(12, 2) NOT NULL COMMENT 'Total revenue: (quantity_sold * unit_selling_price) - (quantity_sold * discount_applied)',
     `total_cost` DECIMAL(12, 2) NOT NULL COMMENT 'Total cost of goods sold (COGS): quantity_sold * unit_cost_at_sale'
 );
-ALTER TABLE `transaction_items`
-    ADD FOREIGN KEY (`batch_id`) REFERENCES `product_batches`(`batch_id`);
+ALTER TABLE 
+    `transaction_items` ADD FOREIGN KEY (`batch_id`) REFERENCES `product_batches`(`batch_id`);
+ALTER TABLE
+    `transaction_items` ADD INDEX `transaction_items_tx`(`transaction_id`, `product_id`);
 
-DROP TABLE IF EXISTS `pending_transactions_log`;
-CREATE TABLE `pending_transactions_log`(
-    `pending_transaction_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `creation_date` DATETIME NOT NULL,
-    `total_amount` DECIMAL(12, 2) NOT NULL,
-    `payment_method` ENUM('CASH', 'E-WALLET', 'BANK') NULL,
-    `notes` VARCHAR(255) NULL
+DROP TABLE IF EXISTS `inventory_log`;
+CREATE TABLE `inventory_log`(
+    `log_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `product_id` INT NOT NULL,
+    `change_type` ENUM('IN', 'OUT', 'ADJUSTMENT') NOT NULL,
+    `quantity` SMALLINT NOT NULL,
+    `unit_cost` DECIMAL(8, 2) NOT NULL,
+    `log_date` DATETIME NOT NULL,
+    `reference_id` BIGINT NULL COMMENT 'Links to transaction id/batch id',
+    `reference_type` ENUM('SALE','PURCHASE','REFUND','ADJUSTMENT') NULL
 );
 ALTER TABLE
-    `pending_transactions_log` ADD INDEX `pending_transactions_log_creation_date_index`(`creation_date`);
+    `inventory_log` ADD INDEX `inventory_log_log_date_index`(`log_date`);
 
-DROP TABLE IF EXISTS `pending_transaction_items`;
-CREATE TABLE `pending_transaction_items`(
-    `pending_item_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `transaction_id` BIGINT NOT NULL,
+DROP TABLE IF EXISTS `purchase_orders`;
+CREATE TABLE `purchase_orders`(
+    `po_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `supplier_id` SMALLINT NOT NULL,
+    `order_date` DATETIME NOT NULL,
+    `total_cost` DECIMAL(12, 2) NOT NULL
+);
+
+DROP TABLE IF EXISTS `purchase_order_items`;
+CREATE TABLE `purchase_order_items`(
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `po_id` BIGINT NOT NULL,
     `product_id` INT NOT NULL,
-    `batch_id` BIGINT NOT NULL,
-    `quantity_sold` SMALLINT NOT NULL,
-    `unit_selling_price` DECIMAL(12, 2) NOT NULL COMMENT 'Retail price per unit at the moment of sale',
-    `unit_cost_at_sale` DECIMAL(12, 2) NOT NULL COMMENT 'Cost per unit from supplier at the moment of sale',
-    `discount_applied` DECIMAL(12, 2) NOT NULL,
-    `total_sale_value` DECIMAL(12, 2) NOT NULL COMMENT 'Total revenue: (quantity_sold * unit_selling_price) - (quantity_sold * discount_applied)',
-    `total_cost` DECIMAL(12, 2) NOT NULL COMMENT 'Total cost of goods sold (COGS): quantity_sold * unit_cost_at_sale'
+    `quantity` SMALLINT NOT NULL,
+    `unit_cost` DECIMAL(12, 2) NOT NULL
 );
 ALTER TABLE 
-    `pending_transaction_items` ADD UNIQUE (`transaction_id`, `product_id`, `batch_id`);
-ALTER TABLE
-    `pending_transaction_items` ADD INDEX `idx_pending_tx`(`transaction_id`);
-
--- Tables for Predictive AI Module
+    `purchase_order_items` ADD UNIQUE (po_id, product_id);
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+--                          Business and Prediction Tables
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 DROP TABLE IF EXISTS `operational_costs`;
 CREATE TABLE `operational_costs`(
     `cost_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -157,20 +210,6 @@ ALTER TABLE
 ALTER TABLE
     `operational_costs` COMMENT = 'For calculating total_operating_costs & total_costs (COGS + operating_costs)';
 
-DROP TABLE IF EXISTS `inventory_log`;
-CREATE TABLE `inventory_log`(
-    `log_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `product_id` INT NOT NULL,
-    `change_type` ENUM('IN', 'OUT', 'ADJUSTMENT') NOT NULL,
-    `quantity` SMALLINT NOT NULL,
-    `unit_cost` DECIMAL(8, 2) NOT NULL,
-    `log_date` DATETIME NOT NULL,
-    `reference_id` BIGINT NULL COMMENT 'Links to transaction id/batch id',
-    `reference_type` ENUM('TRANSACTION', 'PURCHASE') NULL
-);
-ALTER TABLE
-    `inventory_log` ADD INDEX `inventory_log_log_date_index`(`log_date`);
-
 DROP TABLE IF EXISTS `investments`;
 CREATE TABLE `investments`(
     `investment_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -179,42 +218,14 @@ CREATE TABLE `investments`(
     `description` VARCHAR(255) NULL
 );
 
-DROP TABLE IF EXISTS `purchase_orders`;
-CREATE TABLE `purchase_orders`(
-    `po_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `supplier_id` SMALLINT NOT NULL,
-    `order_date` DATETIME NOT NULL,
-    `total_cost` DECIMAL(12, 2) NOT NULL
-);
-
-DROP TABLE IF EXISTS `purchase_order_items`;
-CREATE TABLE `purchase_order_items`(
-    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `po_id` BIGINT NOT NULL,
-    `product_id` INT NOT NULL,
-    `quantity` SMALLINT NOT NULL,
-    `unit_cost` DECIMAL(12, 2) NOT NULL
-);
-
-DROP TABLE IF EXISTS `product_batches`;
-CREATE TABLE `product_batches`(
-    `batch_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `product_id` INT NOT NULL,
-    `supplier_id` BIGINT NOT NULL,
-    `quantity_received` SMALLINT NOT NULL,
-    `unit_cost` DECIMAL(12, 2) NOT NULL,
-    `date_received` DATETIME NOT NULL,
-    `barcode` VARCHAR(100) NOT NULL UNIQUE 
-);
-
 DROP TABLE IF EXISTS `demand_forecasts`;
 CREATE TABLE `demand_forecasts` (
     forecast_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     product_id INT NOT NULL,
-    forecast_date DATE NOT NULL COMMENT 'Date being predicted',    
+    forecast_date DATE NOT NULL,    
     predicted_demand DECIMAL(12,2) NOT NULL,
     model_name VARCHAR(100) COMMENT 'e.g. ARIMA, LSTM',    
-    generated_at DATETIME NOT NULL COMMENT 'when prediction was made',
+    generated_at DATETIME NOT NULL COMMENT 'when prediction was made'
 
     FOREIGN KEY (product_id) REFERENCES product(product_id)
 );
@@ -239,8 +250,7 @@ CREATE TABLE `profit_predictions` (
     prediction_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     product_id INT NOT NULL,
     predicted_profit DECIMAL(14,2) NOT NULL,
-    period_start DATETIME NOT NULL,
-    period_end DATETIME NOT NULL,
+    forecast_date DATE NOT NULL,
     model_name VARCHAR(100),
     generated_at DATETIME NOT NULL
 
@@ -249,17 +259,37 @@ CREATE TABLE `profit_predictions` (
 
 DROP TABLE IF EXISTS `financial_predictions`;
 CREATE TABLE financial_predictions (
-    prediction_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    metric_type ENUM('ROI','CAGR'),
-    predicted_value DECIMAL(12,4),
-    period_start DATE,
-    period_end DATE,
-    model_name VARCHAR(100),
+    prediction_id BIGINT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    metric_type ENUM('ROI','CAGR', 'NET_PROFIT', 'GROSS_PROFIT') NOT NULL,
+    predicted_value DECIMAL(12,4) NOT NULL,
+    forecast_date DATE NOT NULL,
+    model_name VARCHAR(100) NOT NULL,
     generated_at DATETIME NOT NULL
 );
 ALTER TABLE 
-    `financial_predictions` ADD UNIQUE (period_start, period_end);
+    `financial_predictions` ADD UNIQUE (forecast_date);
 
+DROP TABLE IF EXISTS `roi_break_even_predictions`;
+CREATE TABLE `roi_break_even_predictions` (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    investment_id BIGINT NOT NULL,
+    predicted_break_even_date DATE NOT NULL,
+    investment_amount DECIMAL(14,2) NOT NULL,
+    model_name VARCHAR(100) NOT NULL,
+    generated_at DATETIME NOT NULL
+);
+
+DROP TABLE IF EXISTS `ebit_predictions`;
+CREATE TABLE `ebit_predictions` (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    forecast_date DATE NOT NULL,
+    predicted_ebit DECIMAL(14,2) NOT NULL,
+    model_name VARCHAR(100) NOT NULL,
+    generated_at DATETIME NOT NULL
+);
+
+ALTER TABLE
+    `product` ADD CONSTRAINT `product_supplier_id_foreign` FOREIGN KEY(`supplier_id`) REFERENCES `supplier`(`supplier_id`);
 ALTER TABLE
     `product_batches` ADD UNIQUE `product_batches_barcode_unique`(`barcode`);
 ALTER TABLE
@@ -267,15 +297,7 @@ ALTER TABLE
 ALTER TABLE
     `product_category` ADD CONSTRAINT `product_category_parent_category_id_foreign` FOREIGN KEY(`parent_category_id`) REFERENCES `product_category`(`category_id`);
 ALTER TABLE
-    `pending_transaction_items` ADD CONSTRAINT `pending_transaction_items_product_id_foreign` FOREIGN KEY(`product_id`) REFERENCES `product`(`product_id`);
-ALTER TABLE
-    `pending_transaction_items` ADD CONSTRAINT `pending_transaction_items_batch_id_foreign` FOREIGN KEY(`batch_id`) REFERENCES `product_batches`(`batch_id`);
-ALTER TABLE
-    `pending_transaction_items` ADD CONSTRAINT `pending_transaction_items_transaction_id_foreign` FOREIGN KEY(`transaction_id`) REFERENCES `pending_transactions_log`(`pending_transaction_id`);
-ALTER TABLE
     `purchase_order_items` ADD CONSTRAINT `purchase_order_items_po_id_foreign` FOREIGN KEY(`po_id`) REFERENCES `purchase_orders`(`po_id`);
-ALTER TABLE
-    `product` ADD CONSTRAINT `product_supplier_id_foreign` FOREIGN KEY(`supplier_id`) REFERENCES `supplier`(`supplier_id`);
 ALTER TABLE
     `purchase_order_items` ADD CONSTRAINT `purchase_order_items_product_id_foreign` FOREIGN KEY(`product_id`) REFERENCES `product`(`product_id`);
 ALTER TABLE
@@ -284,8 +306,6 @@ ALTER TABLE
     `inventory_log` ADD CONSTRAINT `inventory_log_product_id_foreign` FOREIGN KEY(`product_id`) REFERENCES `product`(`product_id`);
 ALTER TABLE
     `transaction_items` ADD CONSTRAINT `transaction_items_product_id_foreign` FOREIGN KEY(`product_id`) REFERENCES `product`(`product_id`);
-ALTER TABLE
-    `transaction_items` ADD CONSTRAINT `transaction_items_quantity_sold_foreign` FOREIGN KEY(`quantity_sold`) REFERENCES `product_batches`(`batch_id`);
 ALTER TABLE
     `transaction_items` ADD CONSTRAINT `transaction_items_transaction_id_foreign` FOREIGN KEY(`transaction_id`) REFERENCES `transaction_log`(`transaction_id`);
 ALTER TABLE
@@ -296,10 +316,12 @@ ALTER TABLE
     `compatibility` ADD CONSTRAINT `compatibility_product_id_foreign` FOREIGN KEY(`product_id`) REFERENCES `product`(`product_id`);
 ALTER TABLE
     `product_images` ADD CONSTRAINT `product_images_product_id_foreign` FOREIGN KEY(`product_id`) REFERENCES `product`(`product_id`);
+ALTER TABLE 
+    `transaction_log`ADD CONSTRAINT `fk_parent_transaction` FOREIGN KEY (`parent_transaction_id`) REFERENCES `transaction_log`(`transaction_id`);
 
 
-------------------------------------------------------------
-------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 -- NOTE: The syntax I will be using for the naming conventions of input variables is:
 -- (initial(s) of referenced table)_(optionaly clarifying info)_(referenced row)
 -- e.g. v_comp_manufacturer_name = v for the 'vehicle' table, comp for compatible (for clarity), 
@@ -307,8 +329,11 @@ ALTER TABLE
 -- If it's incomprehensible, bother me about it.
 
 -- NOTE: When calling procs that edit table info, only send values that changed.
-
--- Procedures for Acct Management Module:
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+--                      Procedures for Acct Management Module:
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 --      Register new user (Employee role ONLY)
 DROP PROCEDURE IF EXISTS register_user; 
 
@@ -401,7 +426,7 @@ BEGIN
         username = COALESCE(u_username, username),
         name = COALESCE(u_name, name),
         password_hash = COALESCE(u_password_hash, password_hash),
-        role = COALESCE(u_role, role)
+        role = COALESCE(u_role, role), -- needed a comma
         last_update = NOW()
     WHERE user_id = u_user_id;
 
@@ -410,11 +435,11 @@ END //
 DELIMITER ;
 
 --      View user credentials (Admin & Owner ONLY can use this)
-DROP PROCEDURE IF EXISTS remove_user; 
+DROP PROCEDURE IF EXISTS view_user_details; 
 
 DELIMITER //
 
-CREATE PROCEDURE remove_user (
+CREATE PROCEDURE view_user_details (
     OUT user_id
 )
 BEGIN
@@ -430,12 +455,12 @@ END //
 
 DELIMITER ;
 
--- Procedures for Inventory Module: 
---      Add new product record to Main Data Tables (Refer to DC)
---          * Must include all the relevant fields from all tables that references 'product' table
---          * It will only accept existing ids for category, supplier, and compatible vehicle.
---          * If desired info for any of those rows don't exist in db, call the proc to add new row 
---            to the respective table. This should be handled by java function. 
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+--                          Procedures for Inventory Module: 
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+--      Add new product record to Main Data Tables 
 DROP PROCEDURE IF EXISTS add_product; 
 
 DELIMITER //
@@ -546,8 +571,6 @@ END //
 DELIMITER ;
 
 --      Edit information of product record in Main Data Tables 
---          * Edit only the info provided, and only allow editing 
---            the product info, pricing, and classification.
 DROP PROCEDURE IF EXISTS edit_product; 
 
 DELIMITER //
@@ -625,12 +648,10 @@ BEGIN
     UPDATE product_images
     SET
         image_path = COALESCE(i_image_path, image_path),
-        date_uploaded = COALESCE(p_description, product_description),
+        date_uploaded = COALESCE(p_description, product_description) -- took off unneeded comma
     WHERE product_id = p_product_id;
 
 END //
-    );
-END$$
 
 DELIMITER ;
 
@@ -706,199 +727,680 @@ END //
 
 DELIMITER;
 
+--      Add/edit image to product
+DROP PROCEDURE IF NOT EXISTS add_or_update_product_image;
+DELIMITER //
+
+CREATE PROCEDURE add_or_update_product_image (
+    IN p_product_id INT,
+    IN p_image_path VARCHAR(255)
+)
+BEGIN
+    DECLARE existing_count INT;
+
+    -- Check if product exists
+    IF NOT EXISTS (
+        SELECT 1 FROM product WHERE product_id = p_product_id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Invalid product_id';
+    END IF;
+
+    -- Check if image already exists
+    SELECT COUNT(*) INTO existing_count
+    FROM product_images
+    WHERE product_id = p_product_id;
+
+    IF existing_count > 0 THEN
+        -- Replace existing image
+        UPDATE product_images
+        SET image_path = p_image_path,
+            date_uploaded = NOW()
+        WHERE product_id = p_product_id;
+    ELSE
+        -- Insert new image
+        INSERT INTO product_images (
+            product_id,
+            image_path,
+            date_uploaded
+        ) VALUES (
+            p_product_id,
+            p_image_path,
+            NOW()
+        );
+    END IF;
+END //
+
+DELIMITER ;
+
 --      Remove selected existing product record(s) from Main Data Tables
---      Remove existing product category
---      Remove existing supplier
---      Remove existing vehicle
+DELIMITER //
+
+CREATE PROCEDURE remove_product (
+    IN p_product_id INT
+)
+BEGIN
+    DECLARE v_exists INT;
+    DECLARE v_has_stock INT;
+    DECLARE v_used_in_transactions INT;
+
+    START TRANSACTION;
+
+    -- Check if product exists
+    SELECT COUNT(*) INTO v_exists
+    FROM product
+    WHERE product_id = p_product_id;
+
+    IF v_exists = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Product does not exist';
+    END IF;
+
+    -- Check if product still has stock
+    SELECT COUNT(*) INTO v_has_stock
+    FROM product_batches
+    WHERE product_id = p_product_id
+      AND quantity_remaining > 0;
+
+    IF v_has_stock > 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Cannot remove product with remaining stock';
+    END IF;
+
+    -- Check if used in transactions
+    SELECT COUNT(*) INTO v_used_in_transactions
+    FROM transaction_items
+    WHERE product_id = p_product_id;
+
+    -- If used, soft delete
+    IF v_used_in_transactions > 0 THEN
+
+        UPDATE product
+        SET status = 'INACTIVE',
+            last_update = NOW()
+        WHERE product_id = p_product_id;
+
+    ELSE
+        -- If never used, hard delete
+
+        DELETE FROM product_images
+        WHERE product_id = p_product_id;
+
+        DELETE FROM compatibility
+        WHERE product_id = p_product_id;
+
+        DELETE FROM product
+        WHERE product_id = p_product_id;
+
+    END IF;
+
+    COMMIT;
+
+END //
+
+DELIMITER ;
 
 --      Edit product category
+DROP PROCEDURE IF EXISTS update_product_category;
+DELIMITER //
+
+CREATE PROCEDURE update_product_category (
+    IN p_category_id SMALLINT,
+    IN p_category_name VARCHAR(255),
+    IN p_parent_category_id SMALLINT
+)
+BEGIN
+    -- Validate existence
+    IF NOT EXISTS (
+        SELECT 1 FROM product_category WHERE category_id = p_category_id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Category not found';
+    END IF;
+
+    UPDATE product_category
+    SET
+        category_name = COALESCE(p_category_name, category_name),
+        parent_category_id = COALESCE(p_parent_category_id, parent_category_id)
+    WHERE category_id = p_category_id;
+
+END //
+
+DELIMITER ;
+
 --      Edit supplier
+DROP PROCEDURE IF EXISTS update_supplier;
+DELIMITER //
+
+CREATE PROCEDURE update_supplier (
+    IN p_supplier_id SMALLINT,
+    IN p_supplier_name VARCHAR(255),
+    IN p_supplier_address VARCHAR(255),
+    IN p_supplier_contact BIGINT
+)
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM supplier WHERE supplier_id = p_supplier_id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Supplier not found';
+    END IF;
+
+    UPDATE supplier
+    SET
+        supplier_name = COALESCE(p_supplier_name, supplier_name),
+        supplier_address = COALESCE(p_supplier_address, supplier_address),
+        supplier_contact = COALESCE(p_supplier_contact, supplier_contact),
+        last_update = NOW()
+    WHERE supplier_id = p_supplier_id;
+
+END //
+
+DELIMITER ;
+
 --      Edit vehicle
+DROP PROCEDURE IF EXISTS update_vehicle;
+DELIMITER //
 
---      Fetch list of product(s) & basic info based on search params
---          * This is the initial load on page
---          * Ensure to add pagination for all of these
---      Fetch expanded product information based on selection
---      Query list of product(s) based on search and/or filter + sorting
+CREATE PROCEDURE update_vehicle (
+    IN p_vehicle_id SMALLINT,
+    IN p_model_name VARCHAR(255),
+    IN p_manufacturer_name VARCHAR(255)
+)
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM vehicles WHERE vehicle_id = p_vehicle_id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Vehicle not found';
+    END IF;
 
+    UPDATE vehicles
+    SET
+        model_name = COALESCE(p_model_name, model_name),
+        manufacturer_name = COALESCE(p_manufacturer_name, manufacturer_name)
+    WHERE vehicle_id = p_vehicle_id;
 
+END //
+
+DELIMITER ;
+
+--      Remove existing product category
+DROP PROCEDURE IF EXISTS delete_product_category;
+DELIMITER //
+
+CREATE PROCEDURE delete_product_category (
+    IN p_category_id SMALLINT
+)
+BEGIN
+    -- Check if used by products
+    IF EXISTS (
+        SELECT 1 FROM product WHERE category_id = p_category_id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Category is in use by products';
+    END IF;
+
+    -- Check if has child categories
+    IF EXISTS (
+        SELECT 1 FROM product_category WHERE parent_category_id = p_category_id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Category has child categories';
+    END IF;
+
+    DELETE FROM product_category
+    WHERE category_id = p_category_id;
+
+END //
+
+DELIMITER ;
+
+--      Remove existing supplier
+DROP PROCEDURE IF EXISTS delete_supplier;
+DELIMITER //
+
+CREATE PROCEDURE delete_supplier (
+    IN p_supplier_id SMALLINT
+)
+BEGIN
+    -- Check product dependency
+    IF EXISTS (
+        SELECT 1 FROM product WHERE supplier_id = p_supplier_id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Supplier is linked to products';
+    END IF;
+
+    -- Check purchase orders
+    IF EXISTS (
+        SELECT 1 FROM purchase_orders WHERE supplier_id = p_supplier_id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Supplier has purchase orders';
+    END IF;
+
+    DELETE FROM supplier
+    WHERE supplier_id = p_supplier_id;
+
+END //
+
+DELIMITER ;
+
+--      Remove existing vehicle
+DROP PROCEDURE IF EXISTS delete_vehicle;
+DELIMITER //
+
+CREATE PROCEDURE delete_vehicle (
+    IN p_vehicle_id SMALLINT
+)
+BEGIN
+    -- Check compatibility usage
+    IF EXISTS (
+        SELECT 1 FROM compatibility WHERE vehicle_id = p_vehicle_id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Vehicle is used in compatibility table';
+    END IF;
+
+    DELETE FROM vehicles
+    WHERE vehicle_id = p_vehicle_id;
+
+END //
+
+DELIMITER ;
+
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 -- Procedures for Point of Sale Module:
---      Add new transaction to temporary transaction log
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+--      Add new pending transaction 
 DROP PROCEDURE IF EXISTS add_pending_transaction; 
 
 DELIMITER //
 
 CREATE PROCEDURE add_pending_transaction (
-    IN pt_total_amount DECIMAL(12, 2),
-    IN pt_payment_method ENUM('CASH', 'E-WALLET', 'BANK'),
-    IN pt_notes VARCHAR(255),
-    OUT pt_transaction_id BIGINT
+    IN tl_receipt_num INT,
+    IN tl_total_amount DECIMAL(12, 2),
+    IN tl_payment_method ENUM('CASH', 'E-WALLET', 'BANK'),
+    IN tl_notes VARCHAR(255)
 ) 
 BEGIN
     INSERT INTO pending_transactions_log (
-        creation_date,
+        transaction_date,
+        receipt_num,
         total_amount,
         payment_method,
+        status,
         notes
     ) VALUES (
         NOW(),
-        pt_total_amount,        
-        pt_payment_method,
-        pt_notes
+        tl_receipt_num,
+        tl_total_amount,        
+        tl_payment_method,
+        'PENDING',
+        tl_notes
     );
-    
-    SET pt_transaction_id = LAST_INSERT_ID();
 END //
 
 DELIMITER;
 
---      Add items to transaction in temp transact log
-DROP PROCEDURE IF EXISTS add_pending_transaction_items; 
+--      Cancel pending transaction 
+DROP PROCEDURE IF EXISTS cancel_pending_transaction; 
 
 DELIMITER //
 
-CREATE PROCEDURE add_pending_transaction_items (
-    IN pi_transaction_id BIGINT,
-    IN pi_product_id INT,
-    IN pi_batch_id BIGINT,
-    IN pi_quantity_sold SMALLINT,
-    IN pi_unit_selling_price DECIMAL(12, 2),
-    IN pi_unit_cost_at_sale DECIMAL(12, 2),
-    IN pi_discount_applied DECIMAL(12, 2)
-) 
+CREATE PROCEDURE cancel_pending_transaction (
+    IN tl_transaction_id BIGINT,) 
 BEGIN
-    -- Check if transaction_id is valid
-    IF NOT EXISTS (
-        SELECT 1 FROM pending_transactions_log 
-        WHERE pending_transaction_id = pi_transaction_id
-    ) THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Invalid pending_transaction_id';
-    END IF;
-
-    -- Check if stock is sufficient
-    IF EXISTS (
-        SELECT 1
-        FROM pending_transaction_items pti
-        JOIN product p ON pti.product_id = p.product_id
-        WHERE pti.quantity_sold > p.current_stock_level
-    ) THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Insufficient stock';
-    END IF;
-
-    -- Compute totals
-    SET var_total_sale_value = (pi_quantity_sold * pi_unit_selling_price) - pi_discount_applied;
-    SET var_total_cost = pi_quantity_sold * pi_unit_cost_at_sale;
-
-    INSERT INTO pending_transaction_items (
-        transaction_id,
-        product_id,
-        batch_id,
-        quantity_sold,
-        unit_selling_price,
-        unit_cost_at_sale,
-        discount_applied,
-        total_sale_value,
-        total_cost
-    ) VALUES (
-        @pi_transaction_id,
-        pi_product_id,
-        pi_batch_id,
-        pi_quantity_sold,
-        pi_unit_selling_price,
-        pi_unit_cost_at_sale,
-        pi_discount_applied,
-        var_total_sale_value,
-        var_total_cost
-    );
+UPDATE transaction_log
+SET 
+    status = 'CANCELLED',
+    transaction_date = NOW()
+WHERE transaction_id = tl_transaction_id;
 END //
 
 DELIMITER;
 
---      Edit transaction info in temp log
---          * Call this proc for most UI actions in POS
-DROP PROCEDURE IF EXISTS upsert_pending_transaction_item; 
-
+--      Confirm transaction
 DELIMITER //
 
-CREATE PROCEDURE upsert_pending_transaction_item (
+CREATE PROCEDURE confirm_transaction (
     IN p_transaction_id BIGINT,
-    IN p_product_id INT,
-    IN p_batch_id BIGINT,
-    IN p_quantity INT,
-    IN p_unit_price DECIMAL(12,2),
-    IN p_discount DECIMAL(12,2)
+    IN p_payment_method ENUM('CASH','E-WALLET','BANK'),
+    IN p_receipt_num INT
 )
 BEGIN
+    DECLARE done INT DEFAULT 0;
 
-	DECLARE var_existing_id BIGINT;
-    DECLARE var_total_sale_value DECIMAL(12,2);
-    DECLARE var_total_cost DECIMAL(12,2);
-    
-    SELECT unit_cost INTO p_unit_cost FROM product WHERE product_id = p_product_id;
+    DECLARE v_product_id INT;
+    DECLARE v_batch_id BIGINT;
+    DECLARE v_quantity SMALLINT;
+    DECLARE v_unit_cost DECIMAL(12,2);
+
+    DECLARE cur_items CURSOR FOR
+        SELECT 
+            product_id,
+            batch_id,
+            quantity_sold,
+            unit_cost_at_sale
+        FROM transaction_items
+        WHERE transaction_id = p_transaction_id;
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+
+    START TRANSACTION;
+
+    -- Validate transaction is PENDING
+    IF NOT EXISTS (
+        SELECT 1 FROM transaction_log
+        WHERE transaction_id = p_transaction_id
+          AND status = 'PENDING'
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Transaction is not in PENDING state';
+    END IF;
+
+    -- Validate stock availability
+    IF EXISTS (
+        SELECT 1
+        FROM transaction_items ti
+        JOIN product_batches pb ON ti.batch_id = pb.batch_id
+        WHERE ti.transaction_id = p_transaction_id
+          AND pb.quantity_received < ti.quantity_sold
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Insufficient stock in one or more batches';
+    END IF;
+
+    -- Deduct inventory per item
+    OPEN cur_items;
+
+    read_loop: LOOP
+        FETCH cur_items INTO 
+            v_product_id,
+            v_batch_id,
+            v_quantity,
+            v_unit_cost;
+
+        IF done THEN
+            LEAVE read_loop;
+        END IF;
+
+        -- Deduct from batch
+        UPDATE product_batches
+        SET quantity_remaining = quantity_remaining - v_quantity
+        WHERE batch_id = v_batch_id;
+
+        -- Log inventory OUT
+        INSERT INTO inventory_log (
+            product_id,
+            change_type,
+            quantity,
+            unit_cost,
+            log_date,
+            reference_id,
+            reference_type
+        ) VALUES (
+            v_product_id,
+            'OUT',
+            v_quantity,
+            v_unit_cost,
+            NOW(),
+            p_transaction_id,
+            'SALE'
+        );
+
+    END LOOP;
+
+    CLOSE cur_items;
+
+    -- Update total_amount (recalculate for safety)
+    UPDATE transaction_log tl
+    SET total_amount = (
+        SELECT IFNULL(SUM(total_sale_value), 0)
+        FROM transaction_items
+        WHERE transaction_id = p_transaction_id
+    )
+    WHERE transaction_id = p_transaction_id;
+
+    -- Finalize transaction
+    UPDATE transaction_log
+    SET 
+        status = 'CONFIRMED',
+        payment_method = p_payment_method,
+        receipt_num = p_receipt_num,
+        transaction_date = NOW()
+    WHERE transaction_id = p_transaction_id;
+
+    COMMIT;
+
+END //
+
+DELIMITER ;
+
+--      Set transaction to refunded
+DROP PROCEDURE IF EXISTS refund_transaction; 
+
+DELIMITER //
+
+CREATE PROCEDURE refund_transaction (
+    IN tl_original_transaction_id BIGINT
+) 
+BEGIN
+    DECLARE var_new_transaction_id BIGINT;
+    DECLARE var_receipt_num INT;
+    DECLARE var_total_amount DECIMAL(12,2);
+
+    -- Cursor variables
+    DECLARE done INT DEFAULT 0;
+
+    DECLARE var_product_id INT;
+    DECLARE var_batch_id BIGINT;
+    DECLARE var_quantity SMALLINT;
+    DECLARE var_unit_price DECIMAL(12,2);
+    DECLARE var_unit_cost DECIMAL(12,2);
+    DECLARE var_discount DECIMAL(12,2);
+
+    DECLARE cur_items CURSOR FOR
+        SELECT 
+            product_id,
+            batch_id,
+            quantity_sold,
+            unit_selling_price,
+            unit_cost_at_sale,
+            discount_applied
+        FROM transaction_items
+        WHERE transaction_id = tl_original_transaction_id;
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
 
     START TRANSACTION;
 
     -- Validate transaction
     IF NOT EXISTS (
-        SELECT 1 FROM pending_transactions_log 
-        WHERE pending_transaction_id = p_transaction_id
+        SELECT 1 FROM transaction_log
+        WHERE transaction_id = tl_original_transaction_id
+          AND status = 'CONFIRMED'
     ) THEN
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Invalid pending_transaction_id';
+        SET MESSAGE_TEXT = 'Invalid or already confirmed transaction';
     END IF;
 
-    -- Check if stock is sufficient
     IF EXISTS (
-        SELECT 1
-        FROM pending_transaction_items pti
-        JOIN product p ON pti.product_id = p.product_id
-        WHERE pti.quantity_sold > p.current_stock_level
+        SELECT 1 FROM transaction_log
+        WHERE parent_transaction_id = tl_original_transaction_id
     ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Transaction already refunded';
+    END IF;
+
+    -- Create refund transaction
+    INSERT INTO transaction_log (
+        transaction_date,
+        receipt_num,
+        total_amount,
+        payment_method,
+        status,
+        parent_transaction_id,
+        notes
+    )
+    SELECT
+        NOW(),
+        NULL,
+        0,
+        payment_method,
+        'REFUNDED',
+        transaction_id,
+        CONCAT('Refund for transaction ', transaction_id)
+    FROM transaction_log
+    WHERE transaction_id = tl_original_transaction_id;
+
+    SET var_new_transaction_id = LAST_INSERT_ID();
+
+    -- Copy items as negative values
+    OPEN cur_items;
+
+    read_loop: LOOP
+        FETCH cur_items INTO
+            var_product_id,
+            var_batch_id,
+            var_quantity,
+            var_unit_price,
+            var_unit_cost,
+            var_discount;
+
+        IF done THEN
+            LEAVE read_loop;
+        END IF;
+
+        INSERT INTO transaction_items (
+            transaction_id,
+            product_id,
+            batch_id,
+            quantity_sold,
+            unit_selling_price,
+            unit_cost_at_sale,
+            discount_applied,
+            total_sale_value,
+            total_cost
+        ) VALUES (
+            var_new_transaction_id,
+            var_product_id,
+            var_batch_id,
+            -var_quantity,  
+            var_unit_price,
+            var_unit_cost,
+            var_discount,
+            -(var_quantity * var_unit_price - var_quantity * var_discount),
+            -(var_quantity * var_unit_cost)
+        );
+
+        -- Restore inventory
+        INSERT INTO inventory_log (
+            product_id,
+            change_type,
+            quantity,
+            unit_cost,
+            log_date,
+            reference_id,
+            reference_type
+        ) VALUES (
+            var_product_id,
+            'IN', 
+            var_quantity,
+            var_unit_cost,
+            NOW(),
+            var_new_transaction_id,
+            'TRANSACTION'
+        );
+
+    END LOOP;
+
+    CLOSE cur_items;
+
+    -- Update total_amount of refund transaction
+    SELECT IFNULL(SUM(total_sale_value), 0)
+    INTO var_total_amount
+    FROM transaction_items
+    WHERE transaction_id = var_new_transaction_id;
+
+    UPDATE transaction_log
+    SET total_amount = var_total_amount
+    WHERE transaction_id = var_new_transaction_id;
+
+    COMMIT;
+END //
+
+DELIMITER;
+
+--      Add selected items to transaction, update inv log (stock out)
+DELIMITER //
+
+CREATE PROCEDURE add_item_to_transaction (
+    IN p_transaction_id BIGINT,
+    IN p_product_id INT,
+    IN p_batch_id BIGINT,
+    IN p_quantity SMALLINT,
+    IN p_unit_price DECIMAL(12,2),
+    IN p_discount DECIMAL(12,2)
+)
+BEGIN
+    DECLARE v_status VARCHAR(20);
+    DECLARE v_stock SMALLINT;
+    DECLARE v_unit_cost DECIMAL(12,2);
+
+    -- Validate transaction
+    SELECT status INTO v_status
+    FROM transaction_log
+    WHERE transaction_id = p_transaction_id;
+
+    IF v_status != 'PENDING' THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Transaction is not editable';
+    END IF;
+
+    -- Validate batch & stock
+    SELECT quantity_remaining, unit_cost
+    INTO v_stock, v_unit_cost
+    FROM product_batches
+    WHERE batch_id = p_batch_id
+      AND product_id = p_product_id;
+
+    IF v_stock IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Invalid product or batch';
+    END IF;
+
+    IF v_stock < p_quantity THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Insufficient stock';
     END IF;
 
-    -- Compute totals
-    SET var_total_sale = (p_quantity * p_unit_price) - p_discount;
-    SET var_total_cost = (p_quantity * p_unit_cost);
+    -- Insert or update existing item
+    IF EXISTS (
+        SELECT 1 FROM transaction_items
+        WHERE transaction_id = p_transaction_id
+          AND product_id = p_product_id
+          AND batch_id = p_batch_id
+    ) THEN
 
-    -- Handle negative total
-    IF var_total_sale_value < 0 THEN
-        SET var_total_sale_value = 0;
-    END IF;
-
-    -- Check if item already exists
-    SELECT pending_item_id INTO var_existing_id
-    FROM pending_transaction_items
-    WHERE transaction_id = p_transaction_id
-      AND product_id = p_product_id
-      AND batch_id = p_batch_id
-    LIMIT 1;
-
-    -- Remove item if quantity <= 0
-    IF p_quantity <= 0 THEN
-        DELETE FROM pending_transaction_items
+        UPDATE transaction_items
+        SET 
+            quantity_sold = quantity_sold + p_quantity,
+            total_sale_value = 
+                ((quantity_sold + p_quantity) * p_unit_price) -
+                ((quantity_sold + p_quantity) * p_discount),
+            total_cost = 
+                (quantity_sold + p_quantity) * v_unit_cost
         WHERE transaction_id = p_transaction_id
           AND product_id = p_product_id
           AND batch_id = p_batch_id;
 
-    -- Update existing item
-    ELSEIF var_existing_id IS NOT NULL THEN
-        UPDATE pending_transaction_items
-        SET
-            quantity_sold = p_quantity,
-            unit_selling_price = p_unit_price,
-            unit_cost_at_sale = p_unit_cost,
-            discount_applied = p_discount,
-            total_sale_value = var_total_sale_value,
-            total_cost = var_total_cost
-        WHERE item_id = var_existing_id;
-
-    -- Insert new item
     ELSE
-        INSERT INTO pending_transaction_items (
+
+        INSERT INTO transaction_items (
             transaction_id,
             product_id,
             batch_id,
@@ -914,18 +1416,19 @@ BEGIN
             p_batch_id,
             p_quantity,
             p_unit_price,
-            p_unit_cost,
+            v_unit_cost,
             p_discount,
-            var_total_sale_value,
-            var_total_cost
+            (p_quantity * p_unit_price) - (p_quantity * p_discount),
+            p_quantity * v_unit_cost
         );
+
     END IF;
 
-    -- Recalculate transaction total
-    UPDATE pending_transactions_log
+    -- Update transaction total
+    UPDATE transaction_log
     SET total_amount = (
         SELECT IFNULL(SUM(total_sale_value), 0)
-        FROM pending_transaction_items
+        FROM transaction_items
         WHERE transaction_id = p_transaction_id
     )
     WHERE transaction_id = p_transaction_id;
@@ -934,158 +1437,336 @@ END //
 
 DELIMITER ;
 
---      Remove items from temporary transaction log
-DROP PROCEDURE IF EXISTS cancel_pending_transaction; 
-
+--      Remove selected items from transaction, update inv log (stock out)
 DELIMITER //
 
-CREATE PROCEDURE cancel_pending_transaction (
-    IN p_transaction_id BIGINT
+CREATE PROCEDURE remove_item_from_transaction (
+    IN p_transaction_id BIGINT,
+    IN p_product_id INT,
+    IN p_batch_id BIGINT,
+    IN p_quantity SMALLINT
 )
 BEGIN
-    START TRANSACTION;
+    DECLARE v_status VARCHAR(20);
+    DECLARE v_current_qty SMALLINT;
+    DECLARE v_unit_price DECIMAL(12,2);
+    DECLARE v_discount DECIMAL(12,2);
+    DECLARE v_unit_cost DECIMAL(12,2);
 
-    DELETE FROM pending_transaction_items
+    -- Validate transaction
+    SELECT status INTO v_status
+    FROM transaction_log
     WHERE transaction_id = p_transaction_id;
 
-    DELETE FROM pending_transactions_log
-    WHERE pending_transaction_id = p_transaction_id;
-
-    COMMIT;
-
-END //
-
-DELIMITER ;
-
---      Move confirmed items from temporary transaction log to transaction log, update inventory_log accordingly
-DROP PROCEDURE IF EXISTS confirm_pending_transaction; 
-
-DELIMITER //
-
-CREATE PROCEDURE confirm_pending_transaction (
-    IN p_transaction_id BIGINT
-)
-BEGIN
-    DECLARE var_new_transaction_id BIGINT;
-    DECLARE var_total DECIMAL(12,2);
-
-    START TRANSACTION;
-
-    -- Validate pending transaction exists
-    IF NOT EXISTS (
-        SELECT 1 FROM pending_transactions_log
-        WHERE pending_transaction_id = p_transaction_id
-    ) THEN
+    IF v_status != 'PENDING' THEN
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Pending transaction not found';
+        SET MESSAGE_TEXT = 'Transaction is not editable';
     END IF;
 
-    -- Check if stock is sufficient
-    IF EXISTS (
-        SELECT 1
-        FROM pending_transaction_items pti
-        JOIN product p ON pti.product_id = p.product_id
-        WHERE pti.quantity_sold > p.current_stock_level
-    ) THEN
+    -- Get current item
+    SELECT quantity_sold, unit_selling_price, discount_applied, unit_cost_at_sale
+    INTO v_current_qty, v_unit_price, v_discount, v_unit_cost
+    FROM transaction_items
+    WHERE transaction_id = p_transaction_id
+      AND product_id = p_product_id
+      AND batch_id = p_batch_id;
+
+    IF v_current_qty IS NULL THEN
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Insufficient stock';
+        SET MESSAGE_TEXT = 'Item not found in transaction';
     END IF;
 
-    -- Get total
-    SELECT total_amount INTO var_total
-    FROM pending_transactions_log
-    WHERE pending_transaction_id = p_transaction_id;
+    -- Remove or reduce
+    IF p_quantity >= v_current_qty THEN
 
-    -- Insert into final transaction table
-    INSERT INTO transaction_log (
-        transaction_date,
-        total_amount
+        DELETE FROM transaction_items
+        WHERE transaction_id = p_transaction_id
+          AND product_id = p_product_id
+          AND batch_id = p_batch_id;
+
+    ELSE
+
+        UPDATE transaction_items
+        SET 
+            quantity_sold = v_current_qty - p_quantity,
+            total_sale_value = 
+                ((v_current_qty - p_quantity) * v_unit_price) -
+                ((v_current_qty - p_quantity) * v_discount),
+            total_cost = 
+                (v_current_qty - p_quantity) * v_unit_cost
+        WHERE transaction_id = p_transaction_id
+          AND product_id = p_product_id
+          AND batch_id = p_batch_id;
+
+    END IF;
+
+    -- Update transaction total
+    UPDATE transaction_log
+    SET total_amount = (
+        SELECT IFNULL(SUM(total_sale_value), 0)
+        FROM transaction_items
+        WHERE transaction_id = p_transaction_id
     )
-    VALUES (
-        NOW(),
-        var_total
-    );
-
-    SET var_new_transaction_id = LAST_INSERT_ID();
-
-    -- Move items
-    INSERT INTO transaction_items (
-        transaction_id,
-        product_id,
-        batch_id,
-        quantity_sold,
-        unit_selling_price,
-        unit_cost_at_sale,
-        discount_applied,
-        total_sale_value,
-        total_cost
-    )
-    SELECT
-        var_new_transaction_id,
-        product_id,
-        batch_id,
-        quantity_sold,
-        unit_selling_price,
-        unit_cost_at_sale,
-        discount_applied,
-        total_sale_value,
-        total_cost
-    FROM pending_transaction_items
-    WHERE pending_item_id = p_transaction_id;
-
-    -- Update inventory (OUT)
-    INSERT INTO inventory_log (
-        product_id,
-        change_type,
-        quantity,
-        unit_cost,
-        log_date,
-        reference_id
-    )
-    SELECT
-        product_id,
-        'OUT',
-        quantity_sold,
-        unit_cost_at_sale,
-        NOW(),
-        var_new_transaction_id
-    FROM pending_transaction_items
     WHERE transaction_id = p_transaction_id;
-
-    -- Update current stock
-    UPDATE product p
-    JOIN pending_transaction_items pti
-        ON p.product_id = pti.product_id
-    SET p.current_stock_level = p.current_stock_level - pti.quantity_sold
-    WHERE pti.transaction_id = p_transaction_id;
-
-    -- Delete pending items
-    DELETE FROM pending_transaction_items
-    WHERE transaction_id = p_transaction_id;
-
-    -- Delete pending transaction
-    DELETE FROM pending_transactions_log
-    WHERE pending_transaction_id = p_transaction_id;
-
-    COMMIT;
 
 END //
 
 DELIMITER ;
 
 --      Fetch transaction details to display on screen
+DROP PROCEDURE IF EXISTS get_transaction_history;
+DELIMITER //
 
---      Fetch list of product(s) & basic info based on search params
---          * This and the following procs are similar to the ones for the Inventory mod
---          * Ensure to add pagination for this and the following
+CREATE PROCEDURE get_transaction_history (
+    IN p_start_date DATETIME,
+    IN p_end_date DATETIME,
+    IN p_status VARCHAR(20),
+    IN p_product_id INT,
+    IN p_category_id SMALLINT,
+    IN p_payment_method VARCHAR(20),
+    IN p_search VARCHAR(255),
+    IN p_sort_by VARCHAR(20), -- 'date', 'amount'
+    IN p_limit INT,
+    IN p_offset INT
+)
+BEGIN
 
---      Fetch expanded product information based on selection
+    SELECT
+        t.transaction_id,
+        t.transaction_date,
+        t.receipt_num,
+        t.payment_method,
+        t.total_amount,
+        t.status,
 
+        -- computed fields
+        IFNULL(SUM(ti.total_cost), 0) AS total_cost,
+        (t.total_amount - IFNULL(SUM(ti.total_cost), 0)) AS profit,
 
--- Procedures for Business Analytics & Predictive AI
--- Note: The following may span multiple procs
---      Fetch data to calculate all the computable business metrics that don't need a trained AI here
---      Fetch data to train model for demand forecasting
+        COUNT(DISTINCT ti.item_id) AS total_items
+
+    FROM transaction_log t
+
+    LEFT JOIN transaction_items ti 
+        ON t.transaction_id = ti.transaction_id
+
+    LEFT JOIN product p 
+        ON ti.product_id = p.product_id
+
+    LEFT JOIN product_category pc
+        ON p.category_id = pc.category_id
+
+    # Filters
+    WHERE
+        (p_start_date IS NULL OR t.transaction_date >= p_start_date)
+        AND (p_end_date IS NULL OR t.transaction_date <= p_end_date)
+        AND (p_status IS NULL OR t.status = p_status)
+        AND (p_payment_method IS NULL OR t.payment_method = p_payment_method)
+        AND (
+            p_product_id IS NULL 
+            OR EXISTS (
+                SELECT 1
+                FROM transaction_items ti2
+                WHERE ti2.transaction_id = t.transaction_id
+                  AND ti2.product_id = p_product_id
+            )
+        )
+        AND (
+            p_category_id IS NULL
+            OR EXISTS (
+                SELECT 1
+                FROM transaction_items ti3
+                JOIN product p3 ON ti3.product_id = p3.product_id
+                WHERE ti3.transaction_id = t.transaction_id
+                  AND p3.category_id = p_category_id
+            )
+        )
+        AND (
+            p_search IS NULL
+            OR EXISTS (
+                SELECT 1
+                FROM transaction_items ti4
+                JOIN product p4 ON ti4.product_id = p4.product_id
+                WHERE ti4.transaction_id = t.transaction_id
+                  AND LOWER(p4.product_name) LIKE CONCAT('%', LOWER(p_search), '%')
+            )
+        )
+
+    GROUP BY 
+        t.transaction_id,
+        t.transaction_date,
+        t.receipt_num,
+        t.payment_method,
+        t.total_amount,
+        t.status
+
+    ORDER BY
+        CASE 
+            WHEN p_sort_by = 'amount' THEN t.total_amount
+            ELSE t.transaction_date
+        END DESC
+
+    LIMIT p_limit OFFSET p_offset;
+END //
+
+DELIMITER ;
+
+-- Fetch detailed transaction information
+DROP PROCEDURE IF EXISTS get_transaction_details;
+DELIMITER //
+
+CREATE PROCEDURE get_transaction_details (
+    IN p_transaction_id BIGINT
+)
+BEGIN
+
+    SELECT
+        ti.item_id,
+        p.product_name,
+        ti.quantity_sold,
+        ti.unit_selling_price,
+        ti.discount_applied,
+        ti.total_sale_value,
+        ti.total_cost
+    FROM transaction_items ti
+    JOIN product p ON ti.product_id = p.product_id
+    WHERE ti.transaction_id = p_transaction_id;
+
+END //
+
+DELIMITER ;
+
+-- Transaction Log Dashboard Proc
+DROP PROCEDURE IF EXISTS get_transaction_dashboard;    
+DELIMITER //
+
+CREATE PROCEDURE get_transaction_dashboard ()
+BEGIN
+    DECLARE v_today_start DATETIME;
+    DECLARE v_today_end DATETIME;
+    DECLARE v_yesterday_start DATETIME;
+    DECLARE v_yesterday_end DATETIME;
+    DECLARE v_week_start DATETIME;
+
+    SET v_today_start = CURDATE();
+    SET v_today_end = NOW();
+
+    SET v_yesterday_start = CURDATE() - INTERVAL 1 DAY;
+    SET v_yesterday_end = CURDATE();
+
+    SET v_week_start = CURDATE() - INTERVAL WEEKDAY(CURDATE()) DAY;
+
+    -- Daily KPIs
+    SELECT
+        IFNULL(SUM(t.total_amount), 0) AS total_sales,
+        COUNT(t.transaction_id) AS total_transactions,
+        IFNULL(AVG(t.total_amount), 0) AS avg_sale
+    FROM transaction_log t
+    WHERE t.status = 'CONFIRMED'
+      AND t.transaction_date BETWEEN v_today_start AND v_today_end;
+
+    -- Trend
+    SELECT
+        today.total_sales,
+        yesterday.total_sales AS prev_sales,
+        (today.total_sales - yesterday.total_sales) AS sales_diff,
+
+        today.total_transactions,
+        yesterday.total_transactions AS prev_transactions,
+        (today.total_transactions - yesterday.total_transactions) AS transactions_diff,
+
+        today.avg_sale,
+        yesterday.avg_sale AS prev_avg_sale,
+        (today.avg_sale - yesterday.avg_sale) AS avg_sale_diff
+
+    FROM
+    (
+        SELECT
+            IFNULL(SUM(total_amount), 0) AS total_sales,
+            COUNT(*) AS total_transactions,
+            IFNULL(AVG(total_amount), 0) AS avg_sale
+        FROM transaction_log
+        WHERE status = 'CONFIRMED'
+          AND transaction_date BETWEEN v_today_start AND v_today_end
+    ) today,
+
+    (
+        SELECT
+            IFNULL(SUM(total_amount), 0) AS total_sales,
+            COUNT(*) AS total_transactions,
+            IFNULL(AVG(total_amount), 0) AS avg_sale
+        FROM transaction_log
+        WHERE status = 'CONFIRMED'
+          AND transaction_date BETWEEN v_yesterday_start AND v_yesterday_end
+    ) yesterday;
+
+    -- Top 3 products today
+    SELECT
+        p.product_id,
+        p.product_name,
+        SUM(ti.quantity_sold) AS total_quantity,
+        SUM(ti.total_sale_value) AS total_sales
+    FROM transaction_items ti
+    JOIN transaction_log t ON ti.transaction_id = t.transaction_id
+    JOIN product p ON ti.product_id = p.product_id
+    WHERE t.status = 'CONFIRMED'
+      AND t.transaction_date BETWEEN v_today_start AND v_today_end
+    GROUP BY p.product_id
+    ORDER BY total_quantity DESC
+    LIMIT 3;
+
+    -- Top 3 products this week
+    SELECT
+        p.product_id,
+        p.product_name,
+        SUM(ti.quantity_sold) AS total_quantity,
+        SUM(ti.total_sale_value) AS total_sales
+    FROM transaction_items ti
+    JOIN transaction_log t ON ti.transaction_id = t.transaction_id
+    JOIN product p ON ti.product_id = p.product_id
+    WHERE t.status = 'CONFIRMED'
+      AND t.transaction_date BETWEEN v_week_start AND v_today_end
+    GROUP BY p.product_id
+    ORDER BY total_quantity DESC
+    LIMIT 3;
+
+    -- Categorical sales today
+    SELECT
+        pc.category_id,
+        pc.category_name,
+        SUM(ti.total_sale_value) AS total_sales
+    FROM transaction_items ti
+    JOIN transaction_log t ON ti.transaction_id = t.transaction_id
+    JOIN product p ON ti.product_id = p.product_id
+    JOIN product_category pc ON p.category_id = pc.category_id
+    WHERE t.status = 'CONFIRMED'
+      AND t.transaction_date BETWEEN v_today_start AND v_today_end
+    GROUP BY pc.category_id
+    ORDER BY total_sales DESC;
+
+    -- Categorical sales this week
+    SELECT
+        pc.category_id,
+        pc.category_name,
+        SUM(ti.total_sale_value) AS total_sales
+    FROM transaction_items ti
+    JOIN transaction_log t ON ti.transaction_id = t.transaction_id
+    JOIN product p ON ti.product_id = p.product_id
+    JOIN product_category pc ON p.category_id = pc.category_id
+    WHERE t.status = 'CONFIRMED'
+      AND t.transaction_date BETWEEN v_week_start AND v_today_end
+    GROUP BY pc.category_id
+    ORDER BY total_sales DESC;
+
+END //
+
+DELIMITER ;
+
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+--              Procedures for Business Analytics & Predictive AI
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 --      Create training dataset for Demand Forecasting (time series per product)
 DROP PROCEDURE IF EXISTS dataset_sales_timeseries; 
 
@@ -1093,20 +1774,34 @@ DELIMITER //
 
 CREATE PROCEDURE dataset_sales_timeseries (
     IN p_start_date DATETIME,
-    IN p_end_date DATETIME
+    IN p_end_date DATETIME,
+    IN p_mode ENUM('PRODUCT', 'CATEGORY')
 )
 BEGIN
     SELECT 
-        p.product_id,
-        p.product_name,
+        CASE 
+            WHEN p_mode = 'CATEGORY' THEN pc.category_id
+            ELSE p.product_id
+        END AS entity_id,
+
+        CASE 
+            WHEN p_mode = 'CATEGORY' THEN pc.category_name
+            ELSE p.product_name
+        END AS entity_name,
+
         DATE(t.transaction_date) AS sale_date,
         SUM(ti.quantity_sold) AS total_quantity
+
     FROM transaction_items ti
     JOIN transaction_log t ON ti.transaction_id = t.transaction_id
     JOIN product p ON ti.product_id = p.product_id
+    JOIN product_category pc ON p.category_id = pc.category_id
+
     WHERE t.transaction_date BETWEEN p_start_date AND p_end_date
-    GROUP BY p.product_id, DATE(t.transaction_date)
-    ORDER BY p.product_id, sale_date;
+        AND t.status = 'CONFIRMED'
+
+    GROUP BY entity_id, DATE(t.transaction_date)
+    ORDER BY entity_id, sale_date;
 END //
 
 DELIMITER ;
@@ -1140,6 +1835,7 @@ BEGIN
         ON ti.product_id = p.product_id
 
     WHERE t.transaction_date BETWEEN p_start_date AND p_end_date
+        AND t.status = 'CONFIRMED'
 
     GROUP BY p.product_id, DATE(t.transaction_date)
     ORDER BY p.product_id, sale_date;
@@ -1147,38 +1843,113 @@ END //
 
 DELIMITER ;
 
+DROP PROCEDURE IF EXISTS get_products_below_reorder_prediction
+DELIMITER //
+
+CREATE PROCEDURE get_products_below_reorder_prediction ()
+BEGIN
+
+    SELECT
+        p.product_id,
+        p.product_name,
+        rp.current_stock,
+        rp.predicted_reorder_point,
+        rp.recommended_order_qty,
+        s.supplier_id,
+        s.supplier_name
+
+    FROM reorder_predictions rp
+
+    -- get latest prediction per product
+    JOIN (
+        SELECT product_id, MAX(generated_at) AS latest
+        FROM reorder_predictions
+        GROUP BY product_id
+    ) latest_rp
+        ON rp.product_id = latest_rp.product_id
+        AND rp.generated_at = latest_rp.latest
+
+    JOIN product p ON rp.product_id = p.product_id
+    JOIN supplier s ON p.supplier_id = s.supplier_id
+
+    WHERE rp.current_stock <= rp.predicted_reorder_point
+
+    ORDER BY rp.current_stock ASC;
+
+END //
+
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS get_reorder_list_by_supplier
+DELIMITER //
+
+CREATE PROCEDURE get_reorder_list_by_supplier ()
+BEGIN
+
+    SELECT
+        s.supplier_id,
+        s.supplier_name,
+
+        p.product_id,
+        p.product_name,
+
+        rp.current_stock,
+        rp.predicted_reorder_point,
+        rp.recommended_order_qty
+
+    FROM reorder_predictions rp
+
+    JOIN (
+        SELECT product_id, MAX(generated_at) AS latest
+        FROM reorder_predictions
+        GROUP BY product_id
+    ) latest_rp
+        ON rp.product_id = latest_rp.product_id
+        AND rp.generated_at = latest_rp.latest
+
+    JOIN product p ON rp.product_id = p.product_id
+    JOIN supplier s ON p.supplier_id = s.supplier_id
+
+    WHERE rp.current_stock <= rp.predicted_reorder_point
+
+    ORDER BY s.supplier_name, p.product_name;
+
+END //
+
+DELIMITER ;
+
 --      Create training dataset for Profit Prediction (per-product profit metrics)
-DROP PROCEDURE IF EXISTS dataset_profit_analysis; 
+DROP PROCEDURE IF EXISTS dataset_profit_prediction; 
 
 DELIMITER //
 
-CREATE PROCEDURE dataset_profit_analysis (
+CREATE PROCEDURE dataset_profit_prediction (
     IN p_start_date DATETIME,
     IN p_end_date DATETIME
 )
 BEGIN
     SELECT 
         p.product_id,
-
+        p.product_name,
         DATE(t.transaction_date) AS sale_date,
 
         SUM(ti.quantity_sold) AS total_quantity,
 
-        AVG(ti.unit_selling_price) AS avg_price,
+        AVG(ti.unit_selling_price - ti.discount_applied) AS avg_price,
+
         AVG(ti.unit_cost_at_sale) AS avg_cost,
 
-        SUM(ti.total_sale_value) AS revenue,
-        SUM(ti.total_cost) AS cost,
-
-        (SUM(ti.total_sale_value) - SUM(ti.total_cost)) AS profit
+        SUM(
+            (ti.unit_selling_price - ti.discount_applied - ti.unit_cost_at_sale)
+            * ti.quantity_sold
+        ) AS profit
 
     FROM transaction_items ti
-    JOIN transaction_log t 
-        ON ti.transaction_id = t.transaction_id
-    JOIN product p 
-        ON ti.product_id = p.product_id
+    JOIN transaction_log t ON ti.transaction_id = t.transaction_id
+    JOIN product p ON ti.product_id = p.product_id
 
     WHERE t.transaction_date BETWEEN p_start_date AND p_end_date
+        AND t.status = 'CONFIRMED'
 
     GROUP BY p.product_id, DATE(t.transaction_date)
     ORDER BY p.product_id, sale_date;
@@ -1208,6 +1979,7 @@ BEGIN
     JOIN transaction_log t 
         ON ti.transaction_id = t.transaction_id
     WHERE t.transaction_date BETWEEN p_start_date AND p_end_date;
+        AND t.status = 'CONFIRMED'
 
     -- COGS
     SELECT IFNULL(SUM(ti.total_cost), 0)
@@ -1216,6 +1988,7 @@ BEGIN
     JOIN transaction_log t 
         ON ti.transaction_id = t.transaction_id
     WHERE t.transaction_date BETWEEN p_start_date AND p_end_date;
+        AND t.status = 'CONFIRMED'
 
     -- Investments
     SELECT IFNULL(SUM(amount), 0)
@@ -1261,33 +2034,26 @@ BEGIN
     SELECT
         DATE(t.transaction_date) AS period_date,
 
-        -- Revenue
         SUM(ti.total_sale_value) AS revenue,
-
-        -- Cost
         SUM(ti.total_cost) AS cost,
 
-        -- Operational Costs (joined per day)
         (
             SELECT IFNULL(SUM(oc.amount), 0)
             FROM operational_costs oc
             WHERE DATE(oc.cost_date) = DATE(t.transaction_date)
         ) AS operational_costs,
 
-        -- Investments (joined per day)
         (
             SELECT IFNULL(SUM(i.amount), 0)
             FROM investments i
             WHERE DATE(i.investment_date) = DATE(t.transaction_date)
         ) AS investments,
 
-        -- Net Profit
         (
             SUM(ti.total_sale_value) - 
             SUM(ti.total_cost)
         ) AS net_profit,
 
-        -- ROI
         CASE 
             WHEN (
                 SELECT IFNULL(SUM(i.amount), 0)
@@ -1309,6 +2075,7 @@ BEGIN
         ON ti.transaction_id = t.transaction_id
 
     WHERE t.transaction_date BETWEEN p_start_date AND p_end_date
+        AND t.status = 'CONFIRMED'
 
     GROUP BY YEAR(t.transaction_date), MONTH(t.transaction_date)
     ORDER BY period_date;
@@ -1316,7 +2083,27 @@ BEGIN
     END //
 DELIMITER ;
 
+DROP PROCEDURE IF EXISTS dataset_cumulative_profit_forecast;
+DELIMITER //
+
+CREATE PROCEDURE dataset_cumulative_profit_forecast (
+    IN p_start_date DATETIME,
+    IN p_end_date DATETIME
+)
+BEGIN
+    SELECT
+        DATE(forecast_date) AS forecast_date,
+        SUM(predicted_profit) AS daily_predicted_profit
+    FROM profit_predictions
+    WHERE forecast_date BETWEEN p_start_date AND p_end_date
+    GROUP BY DATE(forecast_date)
+    ORDER BY forecast_date;
+
+END //
+DELIMITER ;
+
 --      Create training dataset for CAGR (Yearly revenue)
+DROP PROCEDURE IF EXISTS calculate_cagr;
 DELIMITER //
 
 CREATE PROCEDURE calculate_cagr (
@@ -1336,6 +2123,7 @@ BEGIN
     JOIN transaction_log t 
         ON ti.transaction_id = t.transaction_id
     WHERE DATE(t.transaction_date) = DATE(p_start_date);
+        AND t.status = 'CONFIRMED'
 
     -- End revenue
     SELECT SUM(ti.total_sale_value)
@@ -1344,6 +2132,7 @@ BEGIN
     JOIN transaction_log t 
         ON ti.transaction_id = t.transaction_id
     WHERE DATE(t.transaction_date) = DATE(p_end_date);
+        AND t.status = 'CONFIRMED'
 
     -- Years difference
     SET years = TIMESTAMPDIFF(MONTH, p_start_date, p_end_date) / 12;
@@ -1365,7 +2154,7 @@ END //
 
 DELIMITER ;
 
-DROP PROCEDURE IF EXISTS dataset_yearly_revenue; 
+DROP PROCEDURE IF EXISTS dataset_cagr_timeseries; 
 
 DELIMITER //
 
@@ -1383,6 +2172,7 @@ BEGIN
         JOIN transaction_log t 
             ON ti.transaction_id = t.transaction_id
         WHERE t.transaction_date BETWEEN p_start_date AND p_end_date
+            AND t.status = 'CONFIRMED'
         GROUP BY period_month
     ),
     -- Lagged revenue (12 months before)
@@ -1414,8 +2204,455 @@ END //
 
 DELIMITER ;
 
+--      KPI Metrics
+--  EBIT
+DELIMITER //
+
+CREATE PROCEDURE dataset_ebit (
+    IN p_start_date DATETIME,
+    IN p_end_date DATETIME
+)
+BEGIN
+    SELECT
+        DATE(t.transaction_date) AS period,
+        SUM(ti.total_cost) AS cogs,
+
+        SUM(ti.total_sale_value) AS revenue,
+
+        (
+            SELECT IFNULL(SUM(amount), 0) / 
+                GREATEST(DATEDIFF(p_end_date, p_start_date), 1)
+            FROM operational_costs oc
+            WHERE oc.cost_date BETWEEN p_start_date AND p_end_date
+        ) AS operating_expenses
+
+        (
+            SUM(ti.total_sale_value)
+            - SUM(ti.total_cost)
+            - (
+                SELECT IFNULL(SUM(amount), 0) / 
+                       GREATEST(DATEDIFF(p_end_date, p_start_date), 1)
+                FROM operational_costs oc
+                WHERE oc.cost_date BETWEEN p_start_date AND p_end_date
+            )
+        ) AS ebit
+
+        -- EBIT Margin
+        CASE 
+            WHEN SUM(ti.total_sale_value) = 0 THEN 0
+            ELSE (
+                (
+                    SUM(ti.total_sale_value) 
+                    - SUM(ti.total_cost)
+                    - (
+                        SELECT IFNULL(SUM(oc.amount), 0)
+                        FROM operational_costs oc
+                        WHERE DATE(oc.cost_date) = DATE(t.transaction_date)
+                    )
+                ) / SUM(ti.total_sale_value)
+            )
+        END AS ebit_margin
+
+    FROM transaction_items ti
+    JOIN transaction_log t 
+        ON ti.transaction_id = t.transaction_id
+
+    WHERE t.transaction_date BETWEEN p_start_date AND p_end_date
+        AND t.status = 'CONFIRMED'
+
+    GROUP BY DATE(t.transaction_date)
+    ORDER BY period;
+
+END //
+
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS get_current_ebit;
+DELIMITER //
+
+CREATE PROCEDURE get_current_ebit (
+    IN p_start_date DATETIME,
+    IN p_end_date DATETIME
+)
+BEGIN
+    SELECT
+        IFNULL(SUM(ti.total_sale_value), 0) AS revenue,
+        IFNULL(SUM(ti.total_cost), 0) AS cogs,
+
+        (
+            SELECT IFNULL(SUM(amount), 0)
+            FROM operational_costs oc
+            WHERE oc.cost_date BETWEEN p_start_date AND p_end_date
+        ) AS operating_expenses,
+
+        (
+            IFNULL(SUM(ti.total_sale_value), 0)
+            - IFNULL(SUM(ti.total_cost), 0)
+            - (
+                SELECT IFNULL(SUM(amount), 0)
+                FROM operational_costs oc
+                WHERE oc.cost_date BETWEEN p_start_date AND p_end_date
+            )
+        ) AS ebit
+
+    FROM transaction_items ti
+    JOIN transaction_log t 
+        ON ti.transaction_id = t.transaction_id
+
+    WHERE t.transaction_date BETWEEN p_start_date AND p_end_date;
+        AND t.status = 'CONFIRMED'
+
+END //
+
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS get_current_ebit_margin;
+DELIMITER //
+
+CREATE PROCEDURE get_current_ebit_margin (
+    IN p_start_date DATETIME,
+    IN p_end_date DATETIME
+)
+BEGIN
+    DECLARE v_revenue DECIMAL(14,2);
+    DECLARE v_cogs DECIMAL(14,2);
+    DECLARE v_opex DECIMAL(14,2);
+    DECLARE v_ebit DECIMAL(14,2);
+
+    -- Revenue
+    SELECT IFNULL(SUM(ti.total_sale_value), 0)
+    INTO v_revenue
+    FROM transaction_items ti
+    JOIN transaction_log t 
+        ON ti.transaction_id = t.transaction_id
+    WHERE t.transaction_date BETWEEN p_start_date AND p_end_date;
+        AND t.status = 'CONFIRMED'
+
+    -- COGS
+    SELECT IFNULL(SUM(ti.total_cost), 0)
+    INTO v_cogs
+    FROM transaction_items ti
+    JOIN transaction_log t 
+        ON ti.transaction_id = t.transaction_id
+    WHERE t.transaction_date BETWEEN p_start_date AND p_end_date;
+        AND t.status = 'CONFIRMED'
+
+    -- Operating Expenses
+    SELECT IFNULL(SUM(amount), 0)
+    INTO v_opex
+    FROM operational_costs
+    WHERE cost_date BETWEEN p_start_date AND p_end_date;
+
+    -- EBIT
+    SET v_ebit = v_revenue - v_cogs - v_opex;
+
+    -- Result
+    SELECT
+        p_start_date AS period_start,
+        p_end_date AS period_end,
+        v_revenue AS revenue,
+        v_ebit AS ebit,
+        CASE 
+            WHEN v_revenue = 0 THEN 0
+            ELSE v_ebit / v_revenue
+        END AS ebit_margin;
+
+END //
+
+DELIMITER ;
+
+-- Net Profit (Current)
+DELIMITER //
+
+CREATE PROCEDURE calculate_current_net_profit (
+    IN p_start_date DATETIME,
+    IN p_end_date DATETIME
+)
+BEGIN
+    DECLARE v_revenue DECIMAL(14,2);
+    DECLARE v_cogs DECIMAL(14,2);
+    DECLARE v_operational DECIMAL(14,2);
+    DECLARE v_net_profit DECIMAL(14,2);
+
+    -- Revenue
+    SELECT IFNULL(SUM(ti.total_sale_value), 0)
+    INTO v_revenue
+    FROM transaction_items ti
+    JOIN transaction_log t ON ti.transaction_id = t.transaction_id
+    WHERE t.status = 'CONFIRMED'
+      AND t.transaction_date BETWEEN p_start_date AND p_end_date;
+
+    -- COGS
+    SELECT IFNULL(SUM(ti.total_cost), 0)
+    INTO v_cogs
+    FROM transaction_items ti
+    JOIN transaction_log t ON ti.transaction_id = t.transaction_id
+    WHERE t.status = 'CONFIRMED'
+      AND t.transaction_date BETWEEN p_start_date AND p_end_date;
+
+    -- Operational Costs
+    SELECT IFNULL(SUM(amount), 0)
+    INTO v_operational
+    FROM operational_costs
+    WHERE cost_date BETWEEN p_start_date AND p_end_date;
+
+    SET v_net_profit = v_revenue - v_cogs - v_operational;
+
+    SELECT 
+        p_start_date AS period_start,
+        p_end_date AS period_end,
+        v_revenue AS revenue,
+        v_cogs AS cost,
+        v_operational AS operational_cost,
+        v_net_profit AS net_profit;
+
+END //
+
+DELIMITER ;
+
+-- Net Profit (Predicted)
+DELIMITER //
+
+CREATE PROCEDURE dataset_net_profit_timeseries (
+    IN p_start_date DATETIME,
+    IN p_end_date DATETIME
+)
+BEGIN
+    SELECT
+        DATE(t.transaction_date) AS period,
+
+        SUM(ti.total_sale_value) AS revenue,
+        SUM(ti.total_cost) AS cost,
+
+        (
+            SELECT IFNULL(SUM(oc.amount), 0)
+            FROM operational_costs oc
+            WHERE DATE(oc.cost_date) = DATE(t.transaction_date)
+        ) AS operational_cost,
+
+        (
+            SUM(ti.total_sale_value) - 
+            SUM(ti.total_cost)
+        ) AS gross_profit,
+
+        (
+            SUM(ti.total_sale_value) - 
+            SUM(ti.total_cost) -
+            (
+                SELECT IFNULL(SUM(oc.amount), 0)
+                FROM operational_costs oc
+                WHERE DATE(oc.cost_date) = DATE(t.transaction_date)
+            )
+        ) AS net_profit
+
+    FROM transaction_items ti
+    JOIN transaction_log t ON ti.transaction_id = t.transaction_id
+    WHERE t.status = 'CONFIRMED'
+      AND t.transaction_date BETWEEN p_start_date AND p_end_date
+    GROUP BY DATE(t.transaction_date)
+    ORDER BY period;
+
+END //
+
+DELIMITER ;
+
+-- Save Net Profit Prediction
+DELIMITER //
+
+CREATE PROCEDURE add_net_profit_prediction (
+    IN p_date DATETIME,
+    IN p_value DECIMAL(14,2),
+    IN p_model VARCHAR(100)
+)
+BEGIN
+    INSERT INTO financial_predictions (
+        metric_type,
+        predicted_value,
+        forecast_date
+        model_name,
+        generated_at
+    ) VALUES (
+        'NET_PROFIT',
+        p_value,
+        p_date,
+        p_model,
+        NOW()
+    );
+END //
+
+DELIMITER ;
+
+-- Net Profit Impact Factors
+DELIMITER //
+
+CREATE PROCEDURE net_profit_by_category (
+    IN p_start_date DATETIME,
+    IN p_end_date DATETIME
+)
+BEGIN
+
+    SELECT
+        pc.category_id,
+        pc.category_name,
+
+        SUM(ti.total_sale_value) AS revenue,
+        SUM(ti.total_cost) AS cost,
+
+        (SUM(ti.total_sale_value) - SUM(ti.total_cost)) AS gross_profit,
+
+        (
+            SUM(ti.total_sale_value) - 
+            SUM(ti.total_cost)
+        ) AS net_profit_contribution
+
+    FROM transaction_items ti
+    JOIN transaction_log t ON ti.transaction_id = t.transaction_id
+    JOIN product p ON ti.product_id = p.product_id
+    JOIN product_category pc ON p.category_id = pc.category_id
+
+    WHERE t.status = 'CONFIRMED'
+      AND t.transaction_date BETWEEN p_start_date AND p_end_date
+
+    GROUP BY pc.category_id
+    ORDER BY net_profit_contribution DESC;
+
+END //
+
+DELIMITER ;
+
+-- Gross Profit (Current)
+DELIMITER //
+
+CREATE PROCEDURE calculate_current_gross_profit (
+    IN p_start_date DATETIME,
+    IN p_end_date DATETIME
+)
+BEGIN
+    DECLARE v_revenue DECIMAL(14,2);
+    DECLARE v_cogs DECIMAL(14,2);
+    DECLARE v_gross_profit DECIMAL(14,2);
+
+    -- Revenue
+    SELECT IFNULL(SUM(ti.total_sale_value), 0)
+    INTO v_revenue
+    FROM transaction_items ti
+    JOIN transaction_log t ON ti.transaction_id = t.transaction_id
+    WHERE t.status = 'CONFIRMED'
+      AND t.transaction_date BETWEEN p_start_date AND p_end_date;
+
+    -- COGS
+    SELECT IFNULL(SUM(ti.total_cost), 0)
+    INTO v_cogs
+    FROM transaction_items ti
+    JOIN transaction_log t ON ti.transaction_id = t.transaction_id
+    WHERE t.status = 'CONFIRMED'
+      AND t.transaction_date BETWEEN p_start_date AND p_end_date;
+
+    SET v_gross_profit = v_revenue - v_cogs;
+
+    SELECT 
+        p_start_date AS period_start,
+        p_end_date AS period_end,
+        v_revenue AS revenue,
+        v_cogs AS cost,
+        v_gross_profit AS gross_profit;
+
+END //
+
+DELIMITER ;
+
+-- Gross Profit (Predicted)
+DELIMITER //
+
+CREATE PROCEDURE dataset_gross_profit_timeseries (
+    IN p_start_date DATETIME,
+    IN p_end_date DATETIME
+)
+BEGIN
+    SELECT
+        DATE(t.transaction_date) AS period,
+
+        SUM(ti.total_sale_value) AS revenue,
+        SUM(ti.total_cost) AS cost,
+
+        (SUM(ti.total_sale_value) - SUM(ti.total_cost)) AS gross_profit
+
+    FROM transaction_items ti
+    JOIN transaction_log t ON ti.transaction_id = t.transaction_id
+
+    WHERE t.status = 'CONFIRMED'
+      AND t.transaction_date BETWEEN p_start_date AND p_end_date
+
+    GROUP BY DATE(t.transaction_date)
+    ORDER BY period;
+
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE add_gross_profit_prediction (
+    IN p_date DATETIME,
+    IN p_value DECIMAL(14,2),
+    IN p_model VARCHAR(100)
+)
+BEGIN
+    INSERT INTO financial_predictions (
+        metric_type,
+        predicted_value,
+        period_start,
+        period_end,
+        model_name,
+        generated_at
+    ) VALUES (
+        'GROSS_PROFIT',
+        p_value,
+        p_date,
+        p_date,
+        p_model,
+        NOW()
+    );
+END //
+
+DELIMITER ;
+
+-- Gross Profit Contributors
+DELIMITER //
+
+CREATE PROCEDURE gross_profit_by_category (
+    IN p_start_date DATETIME,
+    IN p_end_date DATETIME
+)
+BEGIN
+    SELECT
+        pc.category_id,
+        pc.category_name,
+
+        SUM(ti.total_sale_value) AS revenue,
+        SUM(ti.total_cost) AS cost,
+
+        (SUM(ti.total_sale_value) - SUM(ti.total_cost)) AS gross_profit
+
+    FROM transaction_items ti
+    JOIN transaction_log t ON ti.transaction_id = t.transaction_id
+    JOIN product p ON ti.product_id = p.product_id
+    JOIN product_category pc ON p.category_id = pc.category_id
+
+    WHERE t.status = 'CONFIRMED'
+      AND t.transaction_date BETWEEN p_start_date AND p_end_date
+
+    GROUP BY pc.category_id
+    ORDER BY gross_profit DESC;
+
+END //
+
+DELIMITER ;
+
+-- ----------------------------------------------------------------------------------
 --      Add generated prediction results into respective table
-    -- Demand Forecasting
+-- ---------------------------------------------------------------------------------
+-- Demand Forecasting
 DROP PROCEDURE IF EXISTS add_demand_forecast; 
 DELIMITER //
 
@@ -1439,7 +2676,7 @@ BEGIN
         df_predicted_demand,
         df_model_name,
         NOW()
-    );
+    ) -- removed semicolon
     ON DUPLICATE KEY UPDATE
         predicted_demand = VALUES(predicted_demand),
         generated_at = NOW();
@@ -1586,7 +2823,7 @@ BEGIN
         fp_period_end,
         fp_model_name,
         NOW()
-    );
+    ) -- removed semicolon
     ON DUPLICATE KEY UPDATE
         predicted_value = VALUES(predicted_value),
         generated_at = NOW();
@@ -1594,7 +2831,62 @@ END //
 
 DELIMITER ;
 
---      Add, edit, remove row in inventory_log (Should only be adjustment)
+DROP PROCEDURE IF EXISTS add_break_even_prediction;
+DELIMITER //
+
+CREATE PROCEDURE add_break_even_prediction (
+    IN p_investment_id BIGINT,
+    IN p_date DATETIME,
+    IN p_amount DECIMAL(14,2),
+    IN p_model VARCHAR(100)
+)
+BEGIN
+    INSERT INTO roi_break_even_predictions (
+        investment_id,
+        predicted_break_even_date,
+        investment_amount,
+        model_name,
+        generated_at
+    )
+    VALUES (
+        p_investment_id,
+        p_date,
+        p_amount,
+        p_model,
+        NOW()
+    );
+END //
+
+DELIMITER ;
+
+    -- EBIT
+DROP PROCEDURE IF EXISTS add_ebit_prediction
+DELIMITER //
+
+CREATE PROCEDURE add_ebit_prediction (
+    IN p_date DATETIME,
+    IN p_value DECIMAL(14,2),
+    IN p_model VARCHAR(100)
+)
+BEGIN
+    INSERT INTO ebit_predictions (
+        forecast_date,
+        predicted_ebit,
+        model_name,
+        generated_at
+    )
+    VALUES (
+        p_date,
+        p_value,
+        p_model,
+        NOW()
+    );
+END //
+
+DELIMITER ;
+
+
+--      Add adjustment row in inventory_log (Should only be adjustment)
 DROP PROCEDURE IF EXISTS add_inventory_log_entry; 
 
 DELIMITER //
@@ -1640,7 +2932,7 @@ END //
 
 DELIMITER;
 
---      Add, edit, remove row in operational_costs
+--      Add row in operational_costs
 DROP PROCEDURE IF EXISTS add_operational_cost_entry; 
 
 DELIMITER //
@@ -1648,6 +2940,7 @@ DELIMITER //
 CREATE PROCEDURE add_operational_cost_entry (
     IN oc_cost_type ENUM('RENT', 'UTILITIES', 'WAGES', 'MAINTENANCE', 'OTHER'),
     IN oc_amount DECIMAL(12, 2),
+    IN oc_cost_date DATETIME,
     IN oc_notes VARCHAR(255)
 )
 BEGIN
@@ -1667,7 +2960,67 @@ END //
 
 DELIMITER;
 
---      Add, edit, remove row in investments
+--      Edit row in operational_costs
+DROP PROCEDURE IF EXISTS edit_operational_cost
+DELIMITER //
+
+CREATE PROCEDURE edit_operational_cost (
+    IN oc_cost_id BIGINT,
+    IN oc_cost_type ENUM('RENT', 'UTILITIES', 'WAGES', 'MAINTENANCE', 'OTHER'),
+    IN oc_amount DECIMAL(12, 2),
+    IN oc_cost_date DATETIME,
+    IN oc_notes VARCHAR(255)
+)
+BEGIN
+    -- Check if entry exists
+    IF NOT EXISTS (
+        SELECT 1
+        FROM operational_costs
+        WHERE cost_id = oc_cost_id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Operational cost entry not found';
+    END IF;
+
+    UPDATE operational_costs
+    SET
+        cost_type = COALESCE(oc_cost_type, cost_type),
+        amount = COALESCE(oc_amount, amount),
+        cost_date = COALESCE(oc_cost_date, cost_date),
+        notes = COALESCE(oc_notes, notes)
+    WHERE cost_id = oc_cost_id;
+
+END //
+
+DELIMITER ;
+
+--      Remove row in operational_costs
+DROP PROCEDURE IF EXISTS remove_operational_cost; 
+
+DELIMITER //
+
+CREATE PROCEDURE remove_operational_cost (
+    IN oc_cost_id BIGINT
+)
+BEGIN
+    -- Check if entry exists
+    IF NOT EXISTS (
+        SELECT 1
+        FROM operational_costs 
+        WHERE cost_id = oc_cost_id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Operational cost entry not found';
+    END IF;
+
+    DELETE FROM operational_costs 
+    WHERE cost_id = oc_cost_id;
+END //
+
+DELIMITER ;
+
+
+--      Add row in investments
 DROP PROCEDURE IF EXISTS add_investments_entry; 
 
 DELIMITER //
@@ -1692,9 +3045,63 @@ END //
 
 DELIMITER;
 
+--      Edit row in investments
+DROP PROCEDURE IF EXISTS edit_operational_cost
+DELIMITER //
 
+CREATE PROCEDURE edit_operational_cost (
+    IN in_investment_id BIGINT,
+    IN in_amount DECIMAL(12, 2),
+    IN in_investment_date DATETIME,
+    IN description VARCHAR(255)
+)
+BEGIN
+    -- Check if entry exists
+    IF NOT EXISTS (
+        SELECT 1
+        FROM investments
+        WHERE investment_id = in_investment_id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Investment entry not found';
+    END IF;
 
---      Add, edit, remove row in purchase_orders & purchase_order_items
+    UPDATE investments
+    SET
+        amount = COALESCE(in_amount, amount),
+        investment_date = COALESCE(in_investment_date, investment_date),
+        description = COALESCE(in_investment_date, description),
+    WHERE cost_id = oc_cost_id;
+
+END //
+
+DELIMITER ;
+
+--      Remove row in investments
+DROP PROCEDURE IF EXISTS remove_investment; 
+DELIMITER //
+
+CREATE PROCEDURE remove_investment (
+    IN in_investment_id BIGINT
+)
+BEGIN
+    -- Check if entry exists
+    IF NOT EXISTS (
+        SELECT 1
+        FROM investments 
+        WHERE investment_id = investment_id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Investment entry not found';
+    END IF;
+
+    DELETE FROM investments 
+    WHERE investment_id = investment_id;
+END //
+
+DELIMITER ;
+
+--      Add row in purchase_orders
 DROP PROCEDURE IF EXISTS add_purchase_order_entry; 
 
 DELIMITER //
@@ -1734,6 +3141,163 @@ END //
 
 DELIMITER;
 
+--      Edit row in purchase_orders
+DROP PROCEDURE IF NOT EXISTS edit_purchase_order;
+DELIMITER //
+
+CREATE PROCEDURE edit_purchase_order (
+    IN po_po_id BIGINT,
+    IN po_supplier_name VARCHAR(255),
+    IN po_order_date DATETIME,
+    IN po_total_cost DECIMAL(12, 2)
+)
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM purchase_orders WHERE po_id = po_po_id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'PO entry not found';
+    END IF;
+
+    -- Check if supplier id is valid
+    DECLARE po_supplier_id SMALLINT;
+
+    SELECT supplier_id INTO po_supplier_id
+    FROM supplier
+    WHERE LOWER(supplier_name) = LOWER(po_supplier_name)
+    LIMIT 1;
+
+    IF po_supplier_id IS NULL THEN 
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Invalid po_supplier_id';
+    END IF;
+
+    UPDATE purchase_orders
+    SET
+        supplier_id = COALESCE(po_supplier_id, supplier_id),
+        order_date = COALESCE(po_order_date, order_date)
+        total_cost = COALESCE(po_total_cost, total_cost)
+    WHERE po_id = po_po_id;
+
+END //
+
+DELIMITER ;
+
+--      Remove row in purchase_orders & purchase_order_items
+DROP PROCEDURE IF EXISTS remove_purchase_order; 
+DELIMITER //
+
+CREATE PROCEDURE remove_purchase_order (
+    IN po_po_id BIGINT
+)
+BEGIN
+    -- Check if entry exists
+    IF NOT EXISTS (
+        SELECT 1
+        FROM purchase_orders 
+        WHERE po_id = po_po_id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Purchase order not found';
+    END IF;
+
+    DELETE FROM purchase_order_items 
+    WHERE po_id = po_po_id;
+
+    DELETE FROM purchase_orders 
+    WHERE po_id = po_po_id;
+END //
+
+DELIMITER ;
+
+
+--      Add or edit row in purchase_order_items
+DROP PROCEDURE IF EXISTS upsert_purchase_order_item;
+DELIMITER //
+
+CREATE PROCEDURE upsert_purchase_order_item (
+    IN p_po_id BIGINT,
+    IN p_product_id INT,
+    IN p_quantity SMALLINT,
+    IN p_unit_cost DECIMAL(12,2),
+    IN p_mode ENUM('ADD','SET') -- ADD = increment, SET = overwrite
+)
+BEGIN
+    DECLARE existing_qty SMALLINT DEFAULT 0;
+    DECLARE row_exists INT DEFAULT 0;
+
+    -- Validate PO exists
+    IF NOT EXISTS (
+        SELECT 1 FROM purchase_orders WHERE po_id = p_po_id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Invalid purchase order ID';
+    END IF;
+
+    -- Validate product exists
+    IF NOT EXISTS (
+        SELECT 1 FROM product WHERE product_id = p_product_id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Invalid product ID';
+    END IF;
+
+    -- Check if item already exists
+    SELECT COUNT(*), IFNULL(MAX(quantity),0)
+    INTO row_exists, existing_qty
+    FROM purchase_order_items
+    WHERE po_id = p_po_id
+      AND product_id = p_product_id;
+
+    IF row_exists = 0 THEN
+
+        -- INSERT new item
+        INSERT INTO purchase_order_items (
+            po_id,
+            product_id,
+            quantity,
+            unit_cost
+        ) VALUES (
+            p_po_id,
+            p_product_id,
+            p_quantity,
+            p_unit_cost
+        );
+
+    ELSE
+
+        -- UPDATE existing item
+        UPDATE purchase_order_items
+        SET
+            quantity = CASE 
+                WHEN p_mode = 'ADD' THEN existing_qty + p_quantity
+                ELSE p_quantity
+            END,
+            unit_cost = COALESCE(p_unit_cost, unit_cost)
+        WHERE po_id = p_po_id
+          AND product_id = p_product_id;
+
+    END IF;
+
+    -- Auto-remove if quantity becomes 0
+    DELETE FROM purchase_order_items
+    WHERE po_id = p_po_id
+    AND product_id = p_product_id
+    AND quantity <= 0;
+
+    -- Recalculate total_cost
+    UPDATE purchase_orders po
+    SET total_cost = (
+        SELECT SUM(quantity * unit_cost)
+        FROM purchase_order_items
+        WHERE po_id = p_po_id
+    )
+    WHERE po_id = p_po_id;
+
+END //
+
+DELIMITER ;
+
 --      Add, edit, remove row in product_batches
 --          * Ensure to update inventory_log accordingly
 --          * Barcode should be generated using python/java script
@@ -1750,10 +3314,11 @@ CREATE PROCEDURE add_product_batches_entry (
     IN pb_barcode VARCHAR(100)
 )
 BEGIN
-    -- Validate product & supplier
     DECLARE pb_product_id INT;
     DECLARE pb_supplier_id SMALLINT;
+    DECLARE pb_batch_id BIGINT;
 
+    -- Validate product & supplier
     SELECT product_id INTO pb_product_id
     FROM product
     WHERE LOWER(product_name) = LOWER(pb_product_name)
@@ -1792,7 +3357,9 @@ BEGIN
         pb_barcode  
     );
 
-    -- TODO UPDATE INVENTORY LOG
+    -- Update Inventory Log
+    SET pb_batch_id = LAST_INSERT_ID();
+
     INSERT INTO inventory_log (
         product_id,
         change_type,
@@ -1805,38 +3372,167 @@ BEGIN
     VALUES (
         pb_product_id,
         'IN',
-        il_quantity,
+        pb_quantity_received,
         pb_unit_cost,
-        reference_id,
-        il_reference_type
+        pb_date_received,
+        pb_batch_id,
+        'BATCH'
     );
+
+    -- Update product stock level
+    UPDATE product
+    SET current_stock_level = current_stock_level + pb_quantity_received,
+        last_update = NOW()
+    WHERE product_id = pb_product_id;
+    
 END //
 
 DELIMITER;
 
+DROP PROCEDURE IF EXISTS edit_product_batches_entry; 
+DELIMITER //
 
+CREATE PROCEDURE edit_product_batches_entry (
+    IN pb_batch_id BIGINT,
+    IN pb_new_quantity SMALLINT,
+    IN pb_new_unit_cost DECIMAL(12, 2),
+    IN pb_new_date_received DATETIME,
+    IN pb_new_barcode VARCHAR(100)
+)
+BEGIN
+    DECLARE var_product_id INT;
+    DECLARE var_old_quantity SMALLINT;
+    DECLARE var_old_unit_cost DECIMAL(12,2);
 
- 
+    -- Check if entry exists and is valid
+    SELECT 
+        product_id,
+        quantity_received,
+        unit_cost
+    INTO 
+        v_product_id,
+        v_old_quantity,
+        v_old_unit_cost
+    FROM product_batches
+    WHERE batch_id = pb_batch_id;
 
--- Miscellaneous Procedures for extraneous features that can be used in any module
---      Autocomplete query (for search bar or edit fields)
---      NOTE: This is a template only
-DROP PROCEDURE IF EXISTS autocomplete_query; 
+    IF v_product_id IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Batch not found';
+    END IF;
+
+    -- Remove old data
+    UPDATE product
+    SET current_stock_level = current_stock_level - v_old_quantity,
+        last_update = NOW()
+    WHERE product_id = v_product_id;
+
+    -- Update tables
+    UPDATE product_batches
+    SET 
+        quantity_received = pb_new_quantity,
+        unit_cost = pb_new_unit_cost,
+        date_received = pb_new_date_received,
+        barcode = pb_new_barcode
+    WHERE batch_id = pb_batch_id;
+
+    UPDATE product
+    SET current_stock_level = current_stock_level + pb_new_quantity,
+        last_update = NOW()
+    WHERE product_id = v_product_id;
+
+    INSERT INTO inventory_log (
+        product_id,
+        change_type,
+        quantity,
+        unit_cost,
+        log_date,
+        reference_id,
+        reference_type
+    )
+    VALUES (
+        v_product_id,
+        'ADJUSTMENT',
+        pb_new_quantity - v_old_quantity,
+        pb_new_unit_cost,
+        NOW(),
+        pb_batch_id,
+        'BATCH'
+    );
+
+END //
+
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS remove_product_batch_entry;
+DELIMITER //
+
+CREATE PROCEDURE remove_product_batch_entry(
+    IN pb_batch_id BIGINT
+)
+BEGIN
+    DECLARE v_product_id INT;
+    DECLARE v_quantity SMALLINT;
+    DECLARE v_remaining_stock SMALLINT;
+
+    -- Fetch and validate entry
+    SELECT 
+        product_id,
+        quantity_received
+    INTO 
+        v_product_id,
+        v_quantity
+    FROM product_batches
+    WHERE batch_id = pb_batch_id;
+
+    IF v_product_id IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Batch not found';
+    END IF;
+
+    -- Cancel if used in POS
+    IF EXISTS (
+        SELECT 1
+        FROM transaction_items
+        WHERE batch_id = pb_batch_id
+        LIMIT 1
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Cannot delete batch: already used in sales';
+    END IF;
+
+    -- Prevent negative stock
+    SELECT current_stock_level INTO v_remaining_stock
+    FROM product
+    WHERE product_id = v_product_id;
+
+    IF v_remaining_stock < v_quantity THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Stock inconsistency detected';
+    END IF;
+
+    -- Remove entry across tables
+    UPDATE product
+    SET current_stock_level = current_stock_level - v_quantity,
+        last_update = NOW()
+    WHERE product_id = v_product_id;
+
+    DELETE FROM inventory_log
+    WHERE reference_id = pb_batch_id
+      AND reference_type = 'BATCH';
+
+    DELETE FROM product_batches
+    WHERE batch_id = pb_batch_id;
+
+END //
 
 DELIMITER //
 
-CREATE PROCEDURE autocomplete_query
-    IN param1 datatype,
-    IN param2 datatype
-BEGIN
-    SELECT column1, column2
-    FROM table_name
-    WHERE column1 LIKE CONCAT('%', ?, '%')
-    LIMIT 10;
-END //
-
-DELIMITER;
-
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+-- Miscellaneous Procedures for extraneous features that can be used in any module
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 -- Search for products
 DROP PROCEDURE IF EXISTS search_products; 
 
@@ -1851,28 +3547,27 @@ CREATE PROCEDURE search_products (
 )
 BEGIN
     SELECT 
-        p.product_id,
         p.product_name,
-        p.product_description,
-        p.current_stock_level,
-        p.unit_cost,
-
+        pi.image_path,
+        p.product_id,
         pc.category_name,
         s.supplier_name,
-
-        IFNULL(SUM(ti.quantity_sold), 0) AS total_sold
+        p.storage_location,
+        p.current_stock_level,
+        p.retail_price,
 
     FROM product p
     LEFT JOIN product_category pc 
         ON p.category_id = pc.category_id
     LEFT JOIN supplier s 
         ON p.supplier_id = s.supplier_id
-    LEFT JOIN transaction_items ti 
-        ON p.product_id = ti.product_id
     LEFT JOIN compatibility c 
         ON p.product_id = c.product_id
     LEFT JOIN vehicles v 
         ON c.vehicle_id = v.vehicle_id
+    LEFT JOIN product_images pi 
+        ON p.product_id = pi.product_id
+        
 
     WHERE
         -- Search name or description
@@ -1909,7 +3604,171 @@ BEGIN
         CASE WHEN p_sort = 'stock' THEN p.current_stock_level END ASC,
         CASE WHEN p_sort = 'newest' THEN p.date_added END DESC,
         CASE WHEN p_sort = 'most_purchased' THEN total_sold END DESC;
+END //
+
+DELIMITER ;
+
+--      Fetch expanded product information based on selection
+DROP PROCEDURE IF EXISTS get_product_details;
+DELIMITER //
+
+CREATE PROCEDURE get_product_details (
+    IN p_product_id INT
+)
+BEGIN
+
+    SELECT 
+        p.product_id,
+        p.part_number,
+        p.product_name,
+        p.product_description,
+        pc.category_name,
+        s.supplier_name,
+        p.storage_location,
+        p.unit_cost,
+        p.retail_price,
+        p.current_stock_level,
+        v.manufacturer_name,
+        v.model_name,
+        c.bottom_year,
+        c.top_year
+    FROM product p
+    LEFT JOIN product_category pc 
+        ON p.category_id = pc.category_id
+    LEFT JOIN supplier s 
+        ON p.supplier_id = s.supplier_id
+    LEFT JOIN compatibility c 
+        ON p.product_id = c.product_id
+    LEFT JOIN vehicles v 
+        ON c.vehicle_id = v.vehicle_id
 
 END //
 
 DELIMITER ;
+
+
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+--                  Triggers to maintain db-wide consistency
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+
+-- Maintain product stock level on changes to product_batches
+DROP TRIGGER IF EXISTS trg_update_product_stock_after_batch_update;
+DELIMITER //
+
+CREATE TRIGGER trg_update_product_stock_after_batch_update
+AFTER UPDATE ON product_batches
+FOR EACH ROW
+BEGIN
+    DECLARE v_total_stock INT;
+
+    -- Recalculate total stock from all batches
+    SELECT IFNULL(SUM(quantity_remaining), 0)
+    INTO v_total_stock
+    FROM product_batches
+    WHERE product_id = NEW.product_id;
+
+    -- Update product table
+    UPDATE product
+    SET current_stock_level = v_total_stock,
+        last_update = NOW()
+    WHERE product_id = NEW.product_id;
+
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE TRIGGER trg_update_product_stock_after_batch_insert
+AFTER INSERT ON product_batches
+FOR EACH ROW
+BEGIN
+    DECLARE v_total_stock INT;
+
+    SELECT IFNULL(SUM(quantity_remaining), 0)
+    INTO v_total_stock
+    FROM product_batches
+    WHERE product_id = NEW.product_id;
+
+    UPDATE product
+    SET current_stock_level = v_total_stock,
+        last_update = NOW()
+    WHERE product_id = NEW.product_id;
+
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE TRIGGER trg_update_product_stock_after_batch_delete
+AFTER DELETE ON product_batches
+FOR EACH ROW
+BEGIN
+    DECLARE v_total_stock INT;
+
+    SELECT IFNULL(SUM(quantity_remaining), 0)
+    INTO v_total_stock
+    FROM product_batches
+    WHERE product_id = OLD.product_id;
+
+    UPDATE product
+    SET current_stock_level = v_total_stock,
+        last_update = NOW()
+    WHERE product_id = OLD.product_id;
+
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE TRIGGER trg_prevent_negative_stock
+BEFORE UPDATE ON product_batches
+FOR EACH ROW
+BEGIN
+    IF NEW.quantity_remaining < 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Stock cannot go negative';
+    END IF;
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE TRIGGER trg_auto_inventory_log
+AFTER UPDATE ON product_batches
+FOR EACH ROW
+BEGIN
+    DECLARE v_change INT;
+
+    SET v_change = NEW.quantity_remaining - OLD.quantity_remaining;
+
+    IF v_change != 0 THEN
+        INSERT INTO inventory_log (
+            product_id,
+            change_type,
+            quantity,
+            unit_cost,
+            log_date,
+            reference_id,
+            reference_type
+        ) VALUES (
+            NEW.product_id,
+            IF(v_change > 0, 'IN', 'OUT'),
+            ABS(v_change),
+            NEW.unit_cost,
+            NOW(),
+            NEW.batch_id,
+            'ADJUSTMENT'
+        );
+    END IF;
+
+END //
+
+DELIMITER ;
+
+-- Trigger for 
