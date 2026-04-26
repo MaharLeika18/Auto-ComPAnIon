@@ -26,7 +26,7 @@ public class CardFactory {
     public static VBox createProductCard(Product p, Runnable onAddToCart) {
         VBox card = new VBox(8);
         card.setStyle(
-            "-fx-background-color: white; " +
+            "-fx-background-color: #EEF4ED; " +
             "-fx-background-radius: 15; " +
             "-fx-padding: 12; " +
             "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.10), 8, 0, 0, 4);");
@@ -91,7 +91,7 @@ public class CardFactory {
 
         VBox row = new VBox(6);
         row.setStyle(
-            "-fx-background-color: white; " +
+            "-fx-background-color: #EEF4ED; " +
             "-fx-background-radius: 12; " +
             "-fx-padding: 10 14; " +
             "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.07), 6, 0, 0, 2);");

@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 
 import org.MiniDev.DBConnection.DBConnection;
 import org.MiniDev.OOP.Product;
@@ -31,6 +32,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -93,11 +95,52 @@ public class DashboardController {
         searchField.textProperty().addListener((obs, oldVal, newVal) -> filterProducts(newVal));
 
         setupDiscountListener();
+        setupTotalClick();  // ← ADDED: Initialize total click listener
 
         receiptNoField.setText(generateReceiptNumber());
 
         loadProductsFromDatabase();
         updateSummary();
+    }
+
+    // ─────────────────────────────── TOTAL CLICK ──────────────────────────────
+    private void setupTotalClick() {
+        totalLabel.setOnMouseClicked(event -> {
+            double subtotal = cart.stream().mapToDouble(CartItem::getSubtotal).sum();
+            double currentTotal = subtotal - getDiscount();
+            
+            TextInputDialog dialog = new TextInputDialog(String.format("%.2f", currentTotal));
+            dialog.setTitle("Adjust Total");
+            dialog.setHeaderText("Enter new total amount");
+            dialog.setContentText("Total (₱):");
+            
+            Optional<String> result = dialog.showAndWait();
+            result.ifPresent(value -> {
+                try {
+                    double newTotal = Double.parseDouble(value.trim());
+                    if (newTotal >= 0 && newTotal <= subtotal) {
+                        double newDiscount = subtotal - newTotal;
+                        boolean isPercentage = discountField.getText().contains("%");
+                        
+                        if (isPercentage && subtotal > 0) {
+                            double newPercentage = (newDiscount / subtotal) * 100;
+                            discountField.setText(String.format("%.2f", newPercentage) + "%");
+                        } else {
+                            discountField.setText(String.format("%.2f", newDiscount));
+                        }
+                        updateSummary();
+                    } else {
+                        showAlert("Invalid Total", "Total must be between ₱0 and ₱" + String.format("%.2f", subtotal));
+                    }
+                } catch (NumberFormatException e) {
+                    showAlert("Error", "Please enter a valid number");
+                }
+            });
+        });
+        
+        // Make totalLabel look clickable
+        totalLabel.setStyle("-fx-text-fill: #2c3e50; -fx-font-weight: bold; -fx-cursor: hand;");
+        totalLabel.setUnderline(true);
     }
 
     // ─────────────────────────────── DISCOUNT ─────────────────────────────────
@@ -128,7 +171,6 @@ public class DashboardController {
             return 0;
         }
     }
-
     // ──────────────────────────────── CLOCK ───────────────────────────────────
     private void startClock() {
         DateTimeFormatter dateFmt = DateTimeFormatter.ofPattern("MMM dd, yyyy");
@@ -256,71 +298,74 @@ public class DashboardController {
         // TODO: implement payment logic here
     }
 
-  // ─────────────────────────────── NAVIGATION ───────────────────────────────
+    // ─────────────────────────────── NAVIGATION ───────────────────────────────
 
-@FXML
-private void openInventory(ActionEvent event) {
-    navigate(event, FXML_INVENTORY);
-}
-
-@FXML
-private void openPai(ActionEvent event) {
-    navigate(event, FXML_PAI);
-}
-
-/**
- * These are aliases so your FXML won't crash
- * (in case it's using different method names)
- */
-@FXML
-private void goToInventory(ActionEvent event) {
-    openInventory(event); // reuse existing logic
-}
-@FXML
-private void goToPai(ActionEvent event) {
-    openPai(event); // reuse existing logic
-}
-@FXML
-private void goToDashboard(ActionEvent event) {
-    // Already in dashboard → do nothing
-}
-
-/**
- * Filter trigger (for ComboBox / Button if used in FXML)
- */
-@FXML
-private void onFilterChange() {
-    filterProducts(searchField.getText());
-}
-
-private void navigate(ActionEvent event, String fxmlPath) {
-    URL resource = getClass().getResource(fxmlPath);
-
-    if (resource == null) {
-        showAlert("Navigation Error", "Cannot find FXML file:\n" + fxmlPath);
-        return;
+    @FXML
+    private void openInventory(ActionEvent event) {
+        navigate(event, FXML_INVENTORY);
     }
 
-    try {
-        FXMLLoader loader = new FXMLLoader(resource);
-        Parent root = loader.load();
-        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-        stage.setScene(new Scene(root));
-        stage.show();
-
-    } catch (IOException e) {
-        // Print the ROOT cause, not just the surface message
-        Throwable cause = e;
-        while (cause.getCause() != null) cause = cause.getCause();
-
-        showAlert("Navigation Error",
-            "Failed to load: " + fxmlPath +
-            "\n\nRoot cause: " + cause.getClass().getSimpleName() +
-            "\n" + cause.getMessage());
-
-        e.printStackTrace(); // full trace in console
+    @FXML
+    private void openPai(ActionEvent event) {
+        navigate(event, FXML_PAI);
     }
-}
+
+    /**
+     * These are aliases so your FXML won't crash
+     * (in case it's using different method names)
+     */
+    @FXML
+    private void goToInventory(ActionEvent event) {
+        openInventory(event); // reuse existing logic
+    }
+    
+    @FXML
+    private void goToPai(ActionEvent event) {
+        openPai(event); // reuse existing logic
+    }
+    
+    @FXML
+    private void goToDashboard(ActionEvent event) {
+        // Already in dashboard → do nothing
+    }
+
+    /**
+     * Filter trigger (for ComboBox / Button if used in FXML)
+     */
+    @FXML
+    private void onFilterChange() {
+        filterProducts(searchField.getText());
+    }
+
+    private void navigate(ActionEvent event, String fxmlPath) {
+        URL resource = getClass().getResource(fxmlPath);
+
+        if (resource == null) {
+            showAlert("Navigation Error", "Cannot find FXML file:\n" + fxmlPath);
+            return;
+        }
+
+        try {
+            FXMLLoader loader = new FXMLLoader(resource);
+            Parent root = loader.load();
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.show();
+
+        } catch (IOException e) {
+            // Print the ROOT cause, not just the surface message
+            Throwable cause = e;
+            while (cause.getCause() != null) cause = cause.getCause();
+
+            showAlert("Navigation Error",
+                "Failed to load: " + fxmlPath +
+                "\n\nRoot cause: " + cause.getClass().getSimpleName() +
+                "\n" + cause.getMessage());
+
+            e.printStackTrace(); // full trace in console
+        }
+    }
+    
     // ──────────────────────────────── UTIL ────────────────────────────────────
     private void showAlert(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);

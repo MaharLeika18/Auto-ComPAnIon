@@ -25,8 +25,8 @@
 <Button fx:id="paiButton" layoutX="1063.0" layoutY="72.0" mnemonicParsing="false" onAction="#openPai" opacity="0.0" prefHeight="92.0" prefWidth="341.0" text="PAI" />
   
     <!-- SEARCH FIELD -->
-    <TextField fx:id="searchField" layoutX="648.0" layoutY="223.0" prefHeight="65.0" prefWidth="421.0" style="-fx-background-radius: 50; -fx-border-width: 0; -fx-background-color: #EEF4ED;" text="        Search Products">
-        <font><Font name="Montserrat Regular" size="18.0" /></font>
+    <TextField fx:id="searchField" layoutX="648.0" layoutY="223.0" prefHeight="65.0" prefWidth="421.0" promptText="Search Products" style="-fx-background-radius: 50; -fx-border-width: 0; -fx-background-color: #EEF4ED;">
+        <font><Font name="Montserrat Regular" size="20.0" /></font>
     </TextField>
 
     <!-- RECEIPT / SUMMARY PANEL -->
@@ -47,14 +47,14 @@
                 <font><Font name="Montserrat SemiBold" size="25.0" /></font>
             </Label>
 
-            <!--
+                  <!--
                 RECEIPT NUMBER  – editable TextField so cashier can override.
-                Positioned at the same x/y as the old dummy Label was.
-            -->
-            <TextField fx:id="receiptNoField" layoutX="220.0" layoutY="25.0" prefHeight="32.0" prefWidth="250.0" promptText="#" style="-fx-background-color: transparent; -fx-border-width: 0 0 .5 0; -fx-border-color: #bdbdbd; -fx-text-fill: #1c4f43; -fx-font-family: 'Montserrat Regular'; -fx-font-size: 18;" />
+                      Positioned at the same x/y as the old dummy Label was.
+                  -->
+            <TextField fx:id="receiptNoField" layoutX="204.0" layoutY="25.0" prefHeight="32.0" prefWidth="250.0" promptText="#" style="-fx-background-color: transparent; -fx-border-width: 0 0 .5 0; -fx-border-color: #bdbdbd; -fx-text-fill: #1c4f43; -fx-font-family: 'Montserrat Regular'; -fx-font-size: 18;" />
 
             <!-- Date label (auto-updated by controller) -->
-            <Label fx:id="datelb" contentDisplay="CENTER" layoutX="217.0" layoutY="70.0" prefHeight="26.0" prefWidth="256.0" textFill="#1c4f43">
+            <Label fx:id="datelb" contentDisplay="CENTER" layoutX="217.0" layoutY="70.0" prefHeight="26.0" prefWidth="256.0" text="null" textFill="#1c4f43">
                 <font><Font name="Montserrat Regular" size="20.0" /></font>
             </Label>
 
@@ -85,9 +85,9 @@
                         <font><Font name="Montserrat SemiBold" size="22.0" /></font>
                     </Label>
 
-                    <Line endX="365.0" layoutX="107.0" layoutY="148.0" startX="-100.0" stroke="#bdbdbd" />
+                    <Line endX="400.0" layoutX="107.0" layoutY="148.0" startX="-100.0" stroke="#bdbdbd" />
 
-                    <Label layoutX="42.0" layoutY="156.0" prefHeight="40.0" prefWidth="192.0" text="Total" textFill="#649e8f">
+                    <Label layoutX="42.0" layoutY="156.0" prefHeight="40.0" prefWidth="192.0" text="Total" textFill="#1c4f43">
                         <font><Font name="Montserrat SemiBold" size="25.0" /></font>
                     </Label>
 
@@ -99,12 +99,12 @@
                         <font><Font name="Montserrat Regular" size="20.0" /></font>
                     </Label>
 
-                   <TextField fx:id="discountField" layoutX="286.0" layoutY="96.0" prefHeight="40.0" prefWidth="185.0" promptText="Enter Discount" style="-fx-background-color: transparent; -fx-border-width: 0 0 0.5 0; -fx-border-color: #bdbdbd; -fx-text-fill: #1c4f43; -fx-font-family: 'Montserrat Regular'; -fx-font-size: 20;">
+                   <TextField fx:id="discountField" layoutX="286.0" layoutY="96.0" prefHeight="40.0" prefWidth="218.0" promptText="Enter Discount" style="-fx-background-color: transparent; -fx-border-width: 0 0 0.5 0; -fx-border-color: #bdbdbd; -fx-text-fill: #1c4f43; -fx-font-family: 'Montserrat Regular'; -fx-font-size: 20;">
                   <font>
                      <Font size="20.0" />
                   </font></TextField>
 
-                    <Label fx:id="totalLabel" layoutX="300.0" layoutY="160.0" text="₱0.00" textFill="#1c4f43">
+                    <Label fx:id="totalLabel" layoutX="176.0" layoutY="162.0" text="₱0.00" textFill="#1c4f43">
                         <font><Font name="Montserrat SemiBold" size="22.0" /></font>
                     </Label>
 
@@ -126,6 +126,10 @@
          <Image url="@../Assets/Inv%20Icons/Sort%20Icon.png" />
       </image>
    </ImageView>
-   <ImageView fitHeight="58.0" fitWidth="61.0" layoutX="1104.0" layoutY="227.0" pickOnBounds="true" preserveRatio="true" />
+   <ImageView fitHeight="40.0" fitWidth="40.0" layoutX="1116.0" layoutY="237.0" pickOnBounds="true" preserveRatio="true">
+      <image>
+         <Image url="@../Assets/Inv%20Icons/Filter.png" />
+      </image>
+   </ImageView>
 
 </AnchorPane>
