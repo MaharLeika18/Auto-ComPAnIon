@@ -1,3 +1,4 @@
+SET FOREIGN_KEY_CHECKS = 0;
 -- ----------------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------------
 --                      Tables for User Authenticator Module
@@ -99,7 +100,8 @@ ALTER TABLE
 ALTER TABLE  
     `vehicles` ADD UNIQUE (`model_name`, `manufacturer_id`);
 
-DROP TABLE IF EXISTS `manufacturers`;
+ALTER TABLE vehicles DROP FOREIGN KEY vehicles_ibfk_1;
+DROP TABLE IF EXISTS manufacturers;
 CREATE TABLE `manufacturers` (
     `manufacturer_id` SMALLINT PRIMARY KEY AUTO_INCREMENT,
     `manufacturer_name` VARCHAR(255) UNIQUE
@@ -3975,3 +3977,5 @@ BEGIN
 END //
 
 DELIMITER ;
+
+SET FOREIGN_KEY_CHECKS = 1;
