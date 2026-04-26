@@ -86,13 +86,6 @@ ALTER TABLE
 ALTER TABLE `compatibility`
     ADD UNIQUE (product_id, vehicle_id, bottom_year, top_year); 
 
-DROP TABLE IF EXISTS `manufacturers`;
-CREATE TABLE manufacturers (
-    `manufacturer_id` SMALLINT PRIMARY KEY AUTO_INCREMENT,
-    `manufacturer_name` VARCHAR(255) UNIQUE
-);
-ALTER TABLE
-    `manufacturers` ADD INDEX `manufacturers_name_index`(`manufacturer_name`);
 
 DROP TABLE IF EXISTS `vehicles`;
 CREATE TABLE `vehicles`(
@@ -107,6 +100,13 @@ ALTER TABLE
 ALTER TABLE  
     `vehicles` ADD UNIQUE (`model_name`, `manufacturer_id`);
 
+DROP TABLE IF EXISTS `manufacturers`;
+CREATE TABLE manufacturers (
+    `manufacturer_id` SMALLINT PRIMARY KEY AUTO_INCREMENT,
+    `manufacturer_name` VARCHAR(255) UNIQUE
+);
+ALTER TABLE
+    `manufacturers` ADD INDEX `manufacturers_name_index`(`manufacturer_name`);
 -- ----------------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------------
 --                              Transactional Tables
