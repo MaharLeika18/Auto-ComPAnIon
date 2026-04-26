@@ -456,7 +456,7 @@ DROP PROCEDURE IF EXISTS view_user_details;
 DELIMITER //
 
 CREATE PROCEDURE view_user_details (
-    OUT user_id
+    OUT user_id BIGINT
 )
 BEGIN
     SELECT
@@ -1143,7 +1143,8 @@ DROP PROCEDURE IF EXISTS cancel_pending_transaction;
 DELIMITER //
 
 CREATE PROCEDURE cancel_pending_transaction (
-    IN tl_transaction_id BIGINT,) 
+    IN tl_transaction_id BIGINT
+) 
 BEGIN
 UPDATE transaction_log
 SET 
@@ -2107,8 +2108,8 @@ BEGIN
     FROM transaction_items ti
     JOIN transaction_log t 
         ON ti.transaction_id = t.transaction_id
-    WHERE t.transaction_date BETWEEN p_start_date AND p_end_date;
-        AND t.status = 'CONFIRMED'
+    WHERE t.transaction_date BETWEEN p_start_date AND p_end_date
+        AND t.status = 'CONFIRMED';
 
     -- COGS
     SELECT IFNULL(SUM(ti.total_cost), 0)
@@ -2116,8 +2117,8 @@ BEGIN
     FROM transaction_items ti
     JOIN transaction_log t 
         ON ti.transaction_id = t.transaction_id
-    WHERE t.transaction_date BETWEEN p_start_date AND p_end_date;
-        AND t.status = 'CONFIRMED'
+    WHERE t.transaction_date BETWEEN p_start_date AND p_end_date
+        AND t.status = 'CONFIRMED';
 
     -- Investments
     SELECT IFNULL(SUM(amount), 0)
@@ -2251,8 +2252,8 @@ BEGIN
     FROM transaction_items ti
     JOIN transaction_log t 
         ON ti.transaction_id = t.transaction_id
-    WHERE DATE(t.transaction_date) = DATE(p_start_date);
-        AND t.status = 'CONFIRMED'
+    WHERE DATE(t.transaction_date) = DATE(p_start_date)
+        AND t.status = 'CONFIRMED';
 
     -- End revenue
     SELECT SUM(ti.total_sale_value)
@@ -2260,8 +2261,8 @@ BEGIN
     FROM transaction_items ti
     JOIN transaction_log t 
         ON ti.transaction_id = t.transaction_id
-    WHERE DATE(t.transaction_date) = DATE(p_end_date);
-        AND t.status = 'CONFIRMED'
+    WHERE DATE(t.transaction_date) = DATE(p_end_date)
+        AND t.status = 'CONFIRMED';
 
     -- Years difference
     SET years = TIMESTAMPDIFF(MONTH, p_start_date, p_end_date) / 12;
@@ -2287,48 +2288,53 @@ DROP PROCEDURE IF EXISTS dataset_cagr_timeseries;
 
 DELIMITER //
 
+DROP PROCEDURE IF EXISTS dataset_cagr_timeseries;
+DELIMITER //
+
 CREATE PROCEDURE dataset_cagr_timeseries (
     IN p_start_date DATETIME,
     IN p_end_date DATETIME
 )
 BEGIN
-    -- Monthly revenue aggregation
-    WITH monthly_data AS (
+
+    SELECT
+        m1.period_month,
+        m1.revenue AS current_revenue,
+        m2.revenue AS past_revenue,
+
+        CASE 
+            WHEN m2.revenue IS NULL OR m2.revenue = 0 THEN NULL
+            ELSE ((m1.revenue / m2.revenue) - 1) * 100
+        END AS yoy_growth_percent
+
+    FROM (
+        -- Monthly revenue (current)
         SELECT
-            DATE_FORMAT(t.transaction_date, '%Y-%m-01') AS period_month,
+            DATE(DATE_FORMAT(t.transaction_date, '%Y-%m-01')) AS period_month,
             SUM(ti.total_sale_value) AS revenue
         FROM transaction_items ti
         JOIN transaction_log t 
             ON ti.transaction_id = t.transaction_id
         WHERE t.transaction_date BETWEEN p_start_date AND p_end_date
-            AND t.status = 'CONFIRMED'
+          AND t.status = 'CONFIRMED'
         GROUP BY period_month
-    ),
-    -- Lagged revenue (12 months before)
-    lagged AS (
+    ) m1
+
+    LEFT JOIN (
+        -- Monthly revenue (for lag comparison)
         SELECT
-            m1.period_month,
-            m1.revenue AS current_revenue,
-            m2.revenue AS past_revenue
-        FROM monthly_data m1
-        LEFT JOIN monthly_data m2
-            ON m2.period_month = DATE_SUB(m1.period_month, INTERVAL 12 MONTH)
-    )
-    -- Calculate CAGR
-    SELECT
-        period_month,
-        current_revenue,
-        past_revenue,
+            DATE(DATE_FORMAT(t.transaction_date, '%Y-%m-01')) AS period_month,
+            SUM(ti.total_sale_value) AS revenue
+        FROM transaction_items ti
+        JOIN transaction_log t 
+            ON ti.transaction_id = t.transaction_id
+        WHERE t.status = 'CONFIRMED'
+        GROUP BY period_month
+    ) m2
+    ON m2.period_month = DATE_SUB(m1.period_month, INTERVAL 12 MONTH)
 
-        CASE 
-            WHEN past_revenue IS NULL OR past_revenue = 0 THEN NULL
-            ELSE (
-                POWER(current_revenue / past_revenue, 1.0 / 1) - 1
-            ) * 100
-        END AS cagr
+    ORDER BY m1.period_month;
 
-    FROM lagged
-    ORDER BY period_month;
 END //
 
 DELIMITER ;
@@ -2345,17 +2351,20 @@ CREATE PROCEDURE dataset_ebit (
 BEGIN
     SELECT
         DATE(t.transaction_date) AS period,
+
+        -- Revenue & COGS
+        SUM(ti.total_sale_value) AS revenue,
         SUM(ti.total_cost) AS cogs,
 
-        SUM(ti.total_sale_value) AS revenue,
-
+        -- Daily Operating Expense (distributed)
         (
             SELECT IFNULL(SUM(amount), 0) / 
-                GREATEST(DATEDIFF(p_end_date, p_start_date), 1)
+                   GREATEST(DATEDIFF(p_end_date, p_start_date), 1)
             FROM operational_costs oc
             WHERE oc.cost_date BETWEEN p_start_date AND p_end_date
-        ) AS operating_expenses
+        ) AS operating_expenses,
 
+        -- EBIT
         (
             SUM(ti.total_sale_value)
             - SUM(ti.total_cost)
@@ -2365,19 +2374,20 @@ BEGIN
                 FROM operational_costs oc
                 WHERE oc.cost_date BETWEEN p_start_date AND p_end_date
             )
-        ) AS ebit
+        ) AS ebit,
 
         -- EBIT Margin
         CASE 
             WHEN SUM(ti.total_sale_value) = 0 THEN 0
             ELSE (
                 (
-                    SUM(ti.total_sale_value) 
+                    SUM(ti.total_sale_value)
                     - SUM(ti.total_cost)
                     - (
-                        SELECT IFNULL(SUM(oc.amount), 0)
+                        SELECT IFNULL(SUM(amount), 0) / 
+                               GREATEST(DATEDIFF(p_end_date, p_start_date), 1)
                         FROM operational_costs oc
-                        WHERE DATE(oc.cost_date) = DATE(t.transaction_date)
+                        WHERE oc.cost_date BETWEEN p_start_date AND p_end_date
                     )
                 ) / SUM(ti.total_sale_value)
             )
@@ -2388,7 +2398,7 @@ BEGIN
         ON ti.transaction_id = t.transaction_id
 
     WHERE t.transaction_date BETWEEN p_start_date AND p_end_date
-        AND t.status = 'CONFIRMED'
+      AND t.status = 'CONFIRMED'
 
     GROUP BY DATE(t.transaction_date)
     ORDER BY period;
@@ -2429,8 +2439,8 @@ BEGIN
     JOIN transaction_log t 
         ON ti.transaction_id = t.transaction_id
 
-    WHERE t.transaction_date BETWEEN p_start_date AND p_end_date;
-        AND t.status = 'CONFIRMED'
+    WHERE t.transaction_date BETWEEN p_start_date AND p_end_date
+        AND t.status = 'CONFIRMED';
 
 END //
 
@@ -2455,8 +2465,8 @@ BEGIN
     FROM transaction_items ti
     JOIN transaction_log t 
         ON ti.transaction_id = t.transaction_id
-    WHERE t.transaction_date BETWEEN p_start_date AND p_end_date;
-        AND t.status = 'CONFIRMED'
+    WHERE t.transaction_date BETWEEN p_start_date AND p_end_date
+        AND t.status = 'CONFIRMED';
 
     -- COGS
     SELECT IFNULL(SUM(ti.total_cost), 0)
@@ -2464,8 +2474,8 @@ BEGIN
     FROM transaction_items ti
     JOIN transaction_log t 
         ON ti.transaction_id = t.transaction_id
-    WHERE t.transaction_date BETWEEN p_start_date AND p_end_date;
-        AND t.status = 'CONFIRMED'
+    WHERE t.transaction_date BETWEEN p_start_date AND p_end_date
+        AND t.status = 'CONFIRMED';
 
     -- Operating Expenses
     SELECT IFNULL(SUM(amount), 0)
@@ -2601,7 +2611,7 @@ BEGIN
     INSERT INTO financial_predictions (
         metric_type,
         predicted_value,
-        forecast_date
+        forecast_date,
         model_name,
         generated_at
     ) VALUES (
@@ -3212,7 +3222,7 @@ BEGIN
     SET
         amount = COALESCE(in_amount, amount),
         investment_date = COALESCE(in_investment_date, investment_date),
-        description = COALESCE(in_investment_date, description),
+        description = COALESCE(in_investment_date, description)
     WHERE cost_id = oc_cost_id;
 
 END //
@@ -3294,15 +3304,15 @@ CREATE PROCEDURE edit_purchase_order (
     IN po_total_cost DECIMAL(12, 2)
 )
 BEGIN
+    -- Check if supplier id is valid
+    DECLARE po_supplier_id SMALLINT;
+    
     IF NOT EXISTS (
         SELECT 1 FROM purchase_orders WHERE po_id = po_po_id
     ) THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'PO entry not found';
     END IF;
-
-    -- Check if supplier id is valid
-    DECLARE po_supplier_id SMALLINT;
 
     SELECT supplier_id INTO po_supplier_id
     FROM supplier
@@ -3317,7 +3327,7 @@ BEGIN
     UPDATE purchase_orders
     SET
         supplier_id = COALESCE(po_supplier_id, supplier_id),
-        order_date = COALESCE(po_order_date, order_date)
+        order_date = COALESCE(po_order_date, order_date),
         total_cost = COALESCE(po_total_cost, total_cost)
     WHERE po_id = po_po_id;
 
@@ -3753,7 +3763,7 @@ BEGIN
         CASE WHEN p_sort = 'price' THEN p.unit_cost END ASC,
         CASE WHEN p_sort = 'stock' THEN p.current_stock_level END ASC,
         CASE WHEN p_sort = 'newest' THEN p.date_added END DESC,
-        CASE WHEN p_sort = 'most_purchased' THEN ts.total_sold END DESC
+        CASE WHEN p_sort = 'most_purchased' THEN ts.total_sold END DESC;
 END //
 
 DELIMITER ;
@@ -3795,7 +3805,7 @@ BEGIN
     LEFT JOIN manufacturers m
         ON v.manufacturer_id = m.manufacturer_id
 
-    WHERE p.product_id = p_product_id
+    WHERE p.product_id = p_product_id;
 
 END //
 
