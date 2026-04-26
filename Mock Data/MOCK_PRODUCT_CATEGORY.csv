@@ -1,0 +1,71 @@
+﻿category_id,category_name,parent_category_id
+1,Auto Parts,
+2,Accessories,1
+3,Car Care,1
+4,Exhaust & Intakes,1
+5,Maintenance,1
+6,Suspensions,1
+7,Tires,1
+8,Wheels,1
+9,Body Kits Counterparts,2
+10,Car & Motorcycle Covers,2
+11,Dashcams & Electronics,2
+12,Exterior Accessories,2
+13,Interior Accessories,2
+14,For 4x4 Outdoors,2
+15,Horns,2
+16,Lights,2
+17,Matting & Trays,2
+18,Roof Racks,2
+19,Seats & Accessories,2
+20,Security,2
+21,Wipers,2
+22,Bumpers,9
+23,Side Skirts,9
+24,Spoilers,9
+25,Reverse Camera,11
+26,Phone Holders,11
+27,Storage Box,12
+28,Door Visor,12
+29,Mudguards,12
+30,Steering Wheel Covers,13
+31,Shift Knobs,13
+32,Sunshades,13
+33,Racks,14
+34,Tow Hooks,14
+35,Headlights,16
+36,Fog Lights,16
+37,LED Bars,16
+38,Seat Covers,19
+39,Seat Cushions,19
+40,Car Alarms,20
+41,Steering Locks,20
+42,Wiper Blades,21
+43,Wiper Arms,21
+44,Air Fresheners & Dehumidifiers,3
+45,Car Shampoo,3
+46,Wax & Polish,3
+47,Tire Shine,3
+48,Cleaning Cloths,3
+49,Mufflers,4
+50,Exhaust Tips,4
+51,Air Filters,4
+52,Intake Hoses,4
+53,Engine Oil,5
+54,Oil Filters,5
+55,Fuel Filters,5
+56,Spark Plugs,5
+57,Coolant,5
+58,Brake Fluid,5
+59,Shock Absorbers,6
+60,Coil Springs,6
+61,Struts,6
+62,Bushings,6
+63,Passenger Tires,7
+64,Truck Tires,7
+65,Tire Valves,7
+66,Tire Repair Kits,7
+67,Alloy Wheels,8
+68,Steel Wheels,8
+69,Wheel Nuts,8
+70,Wheel Spacers,8
