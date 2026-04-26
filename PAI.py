@@ -2,6 +2,10 @@ import pandas as pd
 import numpy as np
 from datetime import timedelta
 from datetime import datetime
+import tkinter as tk
+from tkinter import filedialog
+import os
+from PIL import Image                   # pip install pillow                        
 import mysql.connector                              # pip install mysql-connector-python 
 from statsmodels.tsa.arima.model import ARIMA       # pip install stasmodels  
 from xgboost import XGBRegressor                    # pip install xgboost 
@@ -19,8 +23,102 @@ conn = mysql.connector.connect(
     database="Auto-CompAnIon"
 )
 
+# Generate product barcode string
 def generate_barcode(product_id, supplier_id, batch_id):
     return f"{product_id:03d}-{supplier_id:02d}-{batch_id:05d}"
+
+#-----------------------------Image------------------------------
+# Make image directory
+def get_image_dir():
+    base_dir = os.path.expanduser("~")  # user home directory
+    app_dir = os.path.join(base_dir, "MyInventoryApp", "images", "products")
+
+    os.makedirs(app_dir, exist_ok=True)
+    return app_dir
+
+# Open file picker for image upload 
+def select_image_file():
+    root = tk.Tk()
+    root.withdraw()  # hide main window
+
+    file_path = filedialog.askopenfilename(
+        title="Select Product Image",
+        filetypes=[
+            ("Image Files", "*.png *.jpg *.jpeg *.webp"),
+            ("All Files", "*.*")
+        ]
+    )
+
+    return file_path
+
+# Crop image
+def crop_center_square(img):
+    width, height = img.size
+    min_dim = min(width, height)
+
+    left = (width - min_dim) // 2
+    top = (height - min_dim) // 2
+    right = left + min_dim
+    bottom = top + min_dim
+
+    return img.crop((left, top, right, bottom))
+
+# Resize + compress image and save optimized version
+def process_product_image(file_path, max_size=(800, 800), quality=70):
+    output_dir = get_image_dir()
+
+    try:
+        img = Image.open(file_path)
+
+        if img.mode in ("RGBA", "P"):
+            img = img.convert("RGB")
+
+        img = crop_center_square(img)
+        img.thumbnail(max_size)
+
+        filename = f"product_{datetime.now().strftime('%Y%m%d%H%M%S')}.webp"
+        output_path = os.path.join(output_dir, filename)
+
+        img.save(output_path, format="WEBP", quality=quality, method=6)
+
+        return filename   
+    
+    except Exception as e:
+        print(f"Image processing error: {e}")
+        return None
+        
+def validate_image_size(file_path, max_mb=5):
+    size_mb = os.path.getsize(file_path) / (1024 * 1024)
+    return size_mb <= max_mb
+
+# Save product image path
+def save_product_image(conn, product_id):
+    original_path = select_image_file()
+
+    if not original_path:
+        return
+    
+    if not validate_image_size(original_path):
+        print("Image too large (max 5MB)")
+        return
+
+    filename = process_product_image(original_path)
+
+    if not filename:
+        print("Failed to process image.")
+        return
+
+    cursor = conn.cursor()
+
+    cursor.callproc('add_or_update_product_image', [
+        product_id,
+        filename   
+    ])
+
+    conn.commit()
+    cursor.close()
+
+    print(f"Saved image: {filename}")
 
 #           Predictive AI Functions
 # ROI (Calculated)
@@ -53,6 +151,55 @@ def save_roi_calculation(roi_df):
     """, data)
 
     conn.commit()
+
+def previous_period(start_date, end_date):
+    duration = end_date - start_date
+    prev_end = start_date - timedelta(days=1)
+    prev_start = prev_end - duration
+    return prev_start, prev_end
+
+def same_period_last_year(start_date, end_date):
+    try:
+        return start_date.replace(year=start_date.year - 1), \
+               end_date.replace(year=end_date.year - 1)
+    except ValueError:
+        # handle Feb 29 edge-case by subtracting 365 days
+        return start_date - timedelta(days=365), \
+               end_date - timedelta(days=365)
+    
+def compute_roi_trend(start_date, end_date):
+    # current
+    df_curr = fetch_calculated_roi(start_date, end_date)
+    roi_curr = float(df_curr['roi'].iloc[0]) if not df_curr.empty else 0.0
+
+    # previous period
+    ps, pe = previous_period(start_date, end_date)
+    df_prev = fetch_calculated_roi(ps, pe)
+    roi_prev = float(df_prev['roi'].iloc[0]) if not df_prev.empty else 0.0
+
+    # deltas
+    abs_change = roi_curr - roi_prev
+
+    if roi_prev == 0:
+        pct_change = None  # avoid divide-by-zero; display as "—"
+    else:
+        pct_change = (abs_change / abs(roi_prev)) * 100
+
+    trend = (
+        "UP" if abs_change > 0 else
+        "DOWN" if abs_change < 0 else
+        "FLAT"
+    )
+
+    return {
+        "current_roi": roi_curr,
+        "previous_roi": roi_prev,
+        "abs_change": abs_change,
+        "pct_change": pct_change,
+        "trend": trend,
+        "period": (start_date, end_date),
+        "previous_period": (ps, pe)
+    }
 
 # ROI (Predicted)
 def fetch_roi_dataset(start_date, end_date):
@@ -141,18 +288,35 @@ def fetch_profit_forecast(start_date, end_date):
 
 def predict_break_even(df_forecast, investment_amount):
     df = df_forecast.copy()
+    df['forecast_date'] = pd.to_datetime(df['forecast_date'])
+    df = df.sort_values('forecast_date')
 
     # cumulative profit over time
-    df['cumulative_profit'] = df['total_predicted_profit'].cumsum()
+    df['cumulative_profit'] = df['daily_predicted_profit'].cumsum()
+    df['remaining_to_break_even'] = investment_amount - df['cumulative_profit']
+    df['daily_return'] = df['daily_predicted_profit']
+    start_date = df['forecast_date'].iloc[0]
+    df['days_passed'] = (df['forecast_date'] - start_date).dt.days
 
     # find first date where investment is recovered
     breakeven_row = df[df['cumulative_profit'] >= investment_amount]
 
     if not breakeven_row.empty:
-        breakeven_date = breakeven_row.iloc[0]['forecast_date']
-        return breakeven_date, df
+        breakeven_index = breakeven_row.index[0]
+        breakeven_date = df.loc[breakeven_index, 'forecast_date']
+
+        # total days to break-even
+        total_days = df.loc[breakeven_index, 'days_passed']
+
+        # countdown column
+        df['days_to_break_even'] = total_days - df['days_passed']
+        df['days_to_break_even'] = df['days_to_break_even'].clip(lower=0)
+
     else:
-        return None, df
+        breakeven_date = None
+        df['days_to_break_even'] = None
+
+    return breakeven_date, df
     
 def save_break_even(investment_id, date, amount):
     cursor = conn.cursor()
@@ -180,6 +344,40 @@ def fetch_calculated_cagr(start_date, end_date):
 
     return pd.DataFrame(data, columns=columns)
 
+def compute_cagr_yoy(start_date, end_date):
+    # current
+    df_curr = fetch_calculated_cagr(start_date, end_date)
+    cagr_curr = float(df_curr['cagr'].iloc[0]) if not df_curr.empty else 0.0
+
+    # same period last year
+    ys, ye = same_period_last_year(start_date, end_date)
+    df_prev = fetch_calculated_cagr(ys, ye)
+    cagr_prev = float(df_prev['cagr'].iloc[0]) if not df_prev.empty else 0.0
+
+    # YoY change
+    abs_change = cagr_curr - cagr_prev
+
+    if cagr_prev == 0:
+        pct_change = None
+    else:
+        pct_change = (abs_change / abs(cagr_prev)) * 100
+
+    trend = (
+        "UP" if abs_change > 0 else
+        "DOWN" if abs_change < 0 else
+        "FLAT"
+    )
+
+    return {
+        "current_cagr": cagr_curr,
+        "last_year_cagr": cagr_prev,
+        "abs_change": abs_change,
+        "pct_change": pct_change,
+        "trend": trend,
+        "period": (start_date, end_date),
+        "yoy_period": (ys, ye)
+    }
+
 def save_cagr_calculated(cagr_df):
     cursor = conn.cursor()
 
@@ -199,6 +397,26 @@ def save_cagr_calculated(cagr_df):
     """, data)
 
     conn.commit()
+
+def format_kpi(value, abs_change, pct_change, suffix="%"):
+    arrow = "▲" if abs_change > 0 else "▼" if abs_change < 0 else "■"
+    pct_str = "—" if pct_change is None else f"{pct_change:.1f}%"
+    return f"{value:.2f}{suffix} {arrow} {abs_change:+.2f} pts ({pct_str})"
+
+def get_roi_cagr_trends(start_date, end_date):
+    roi = compute_roi_trend(start_date, end_date)
+    cagr = compute_cagr_yoy(start_date, end_date)
+
+    return {
+        "roi": roi,
+        "cagr": cagr,
+        "roi_display": format_kpi(
+            roi["current_roi"], roi["abs_change"], roi["pct_change"]
+        ),
+        "cagr_display": format_kpi(
+            cagr["current_cagr"], cagr["abs_change"], cagr["pct_change"]
+        )
+    }
 
 # CAGR (Predicted)
 def fetch_cagr_dataset(start_date, end_date):
@@ -274,9 +492,9 @@ def save_cagr_prediction(forecast_df, forecast_date):
     conn.commit()
 
 # Demand Forecasting
-def fetch_sales_data(start_date, end_date):
+def fetch_sales_data(start_date, end_date, mode):
     cursor = conn.cursor()
-    cursor.callproc('dataset_sales_timeseries', [start_date, end_date])
+    cursor.callproc('dataset_sales_timeseries', [start_date, end_date, mode])
 
     for result in cursor.stored_results():
         data = result.fetchall()
@@ -284,6 +502,18 @@ def fetch_sales_data(start_date, end_date):
 
     demand_df = pd.DataFrame(data, columns=columns)
     return demand_df
+
+def filter_selected_products(df, selected_product_ids=None):
+    if selected_product_ids is None:
+        return df  # all products
+
+    return df[df['entity_id'].isin(selected_product_ids)]
+
+def determine_mode(selected_product_ids, all_products_selected):
+    if all_products_selected:
+        return "CATEGORY"
+    else:
+        return "PRODUCT"
 
 def forecast_demand(df, forecast_days=7):
     forecasts = []
@@ -341,6 +571,19 @@ def save_forecasts(df_forecasts):
     """, data)
 
     conn.commit()
+
+def run_demand_forecast(start_date, end_date, selected_product_ids=None, all_products_selected=False, forecast_days=7):
+
+    mode = determine_mode(selected_product_ids, all_products_selected)
+
+    df = fetch_sales_data(start_date, end_date, mode)
+
+    if mode == "PRODUCT":
+        df = filter_selected_products(df, selected_product_ids)
+
+    forecast_df = forecast_demand(df, forecast_days)
+
+    return forecast_df
 
 # Reorder Prediction
 def fetch_reorder_dataset(start_date, end_date):
@@ -541,6 +784,88 @@ def save_reorder_predictions(df_reorder):
     """, data)
 
     conn.commit()
+
+# Low stock Items
+def fetch_products_below_reorder_prediction(conn):
+    cursor = conn.cursor()
+
+    cursor.execute("CALL get_products_below_reorder_prediction()")
+
+    rows = cursor.fetchall()
+    columns = [col[0] for col in cursor.description]
+
+    df = pd.DataFrame(rows, columns=columns)
+
+    cursor.close()
+    return df
+
+# Make reorder list
+def fetch_reorder_by_supplier(conn):
+    cursor = conn.cursor()
+
+    cursor.execute("CALL get_reorder_list_by_supplier()")
+
+    rows = cursor.fetchall()
+    columns = [col[0] for col in cursor.description]
+
+    df = pd.DataFrame(rows, columns=columns)
+
+    cursor.close()
+    return df
+
+def group_reorder_by_supplier(df):
+    grouped = {}
+
+    for supplier_id, group in df.groupby('supplier_id'):
+        supplier_name = group['supplier_name'].iloc[0]
+
+        grouped[supplier_id] = {
+            "supplier_name": supplier_name,
+            "items": group[[
+                'product_id',
+                'product_name',
+                'recommended_order_qty',
+                'current_stock'
+            ]]
+        }
+
+    return grouped
+
+def format_reorder_print(grouped_data):
+    output = {}
+
+    for supplier_id, data in grouped_data.items():
+        df = data['items'].copy()
+
+        df.columns = [
+            "Product ID",
+            "Product Name",
+            "Order Quantity",
+            "Current Stock"
+        ]
+
+        output[data['supplier_name']] = df
+
+    return output
+
+def export_reorder_excel(grouped_data):
+    with pd.ExcelWriter("reorder_list.xlsx") as writer:
+        for supplier_id, data in grouped_data.items():
+            supplier_name = data['supplier_name']
+            df = data['items']
+
+            df.to_excel(writer, sheet_name=supplier_name[:30], index=False)
+
+def generate_reorder_pipeline(conn):
+    df = fetch_reorder_by_supplier(conn)
+
+    grouped = group_reorder_by_supplier(df)
+
+    formatted = format_reorder_print(grouped)
+
+    export_reorder_excel(grouped)  
+
+    return formatted
 
 # Profit Prediction
     # profit = demand × (real selling price − real cost − discounts)
