@@ -86,7 +86,6 @@ ALTER TABLE
 ALTER TABLE `compatibility`
     ADD UNIQUE (product_id, vehicle_id, bottom_year, top_year); 
 
-
 DROP TABLE IF EXISTS `vehicles`;
 CREATE TABLE `vehicles`(
     `vehicle_id` SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -101,7 +100,7 @@ ALTER TABLE
     `vehicles` ADD UNIQUE (`model_name`, `manufacturer_id`);
 
 DROP TABLE IF EXISTS `manufacturers`;
-CREATE TABLE manufacturers (
+CREATE TABLE `manufacturers` (
     `manufacturer_id` SMALLINT PRIMARY KEY AUTO_INCREMENT,
     `manufacturer_name` VARCHAR(255) UNIQUE
 );
@@ -115,7 +114,7 @@ ALTER TABLE
 DROP TABLE IF EXISTS `transaction_log`;
 CREATE TABLE `transaction_log`(
     `transaction_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `parent_transaction_id` BIGINT NULL,
+    `parent_transaction_id` BIGINT UNSIGNED DEFAULT NULL,
     `transaction_date` DATETIME NOT NULL,
     `receipt_num` INT NOT NULL,
     `total_amount` DECIMAL(12, 2) NOT NULL,
