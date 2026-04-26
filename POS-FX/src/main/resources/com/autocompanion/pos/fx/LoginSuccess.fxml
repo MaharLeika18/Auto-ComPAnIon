@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane prefWidth="1920" prefHeight="1080"
+            xmlns="http://javafx.com/javafx/25"
+            xmlns:fx="http://javafx.com/fxml/1"
+            style="-fx-background-color: rgba(0,0,0,0.6);">
+
+    <children>
+        <ImageView fitWidth="1920" fitHeight="1080">
+            <image>
+                <Image url="@../Assets/Welcome.png"/>
+            </image>
+        </ImageView>
+    </children>
+</AnchorPane>
