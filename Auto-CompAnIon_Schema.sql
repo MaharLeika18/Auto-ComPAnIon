@@ -100,7 +100,7 @@ ALTER TABLE
     `vehicles` ADD UNIQUE (`model_name`, `manufacturer_id`);
 
 DROP TABLE IF EXISTS `manufacturers`;
-CREATE TABLE `manufacturers` (
+CREATE TABLE manufacturers (
     `manufacturer_id` SMALLINT PRIMARY KEY AUTO_INCREMENT,
     `manufacturer_name` VARCHAR(255) UNIQUE
 );
