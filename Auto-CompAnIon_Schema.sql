@@ -1,8 +1,8 @@
-------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 --                      Tables for User Authenticator Module
-------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
     `user_id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -14,11 +14,11 @@ CREATE TABLE `users` (
     `last_update` DATETIME NULL
 );
 
-------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 --                      Main Tables for Inventory Information
-------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 DROP TABLE IF EXISTS `product`;
 CREATE TABLE `product`(
     `product_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -59,15 +59,13 @@ CREATE TABLE `product_images` (
 );
 ALTER TABLE 
     `product_images` ADD UNIQUE (image_path);
-ALTER TABLE 
-    `product_images` ADD UNIQUE (product_id);
 
 DROP TABLE IF EXISTS `supplier`;
 CREATE TABLE `supplier`(
     `supplier_id` SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `supplier_name` VARCHAR(255) NOT NULL,
     `supplier_address` VARCHAR(255) NULL,
-    `supplier_contact` VARCHAR(20) NULL,
+    `supplier_contact` BIGINT NULL,
     `date_added` DATETIME NOT NULL,
     `last_update` DATETIME NOT NULL
 );
@@ -88,26 +86,22 @@ ALTER TABLE
 ALTER TABLE `compatibility`
     ADD UNIQUE (product_id, vehicle_id, bottom_year, top_year); 
 
-DROP TABLE IF EXISTS `manufacturers`
+DROP TABLE IF EXISTS `manufacturers`;
 CREATE TABLE manufacturers (
     `manufacturer_id` SMALLINT PRIMARY KEY AUTO_INCREMENT,
     `manufacturer_name` VARCHAR(255) UNIQUE
 );
-ALTER TABLE
-    `manufacturers` ADD INDEX `manufacturers_name_index`(`manufacturer_name`);
 
 DROP TABLE IF EXISTS `vehicles`;
 CREATE TABLE `vehicles`(
     `vehicle_id` SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `model_name` VARCHAR(255) NOT NULL,
-    `manufacturer_id` SMALLINT NOT NULL
+    `manufacturer_name` VARCHAR(255) NOT NULL
 
-    FOREIGN KEY (manufacturer_id) REFERENCES manufacturers(manufacturer_id)
+    FOREIGN KEY (manufacturer_name) REFERENCES manufacturers(manufacturer_name)
 );
 ALTER TABLE
-    `vehicles` ADD INDEX `vehicles_manufacturer_index`(`manufacturer_id`);
-ALTER TABLE  
-    `vehicles` ADD UNIQUE (`model_name`, `manufacturer_id`);
+    `vehicles` ADD INDEX `vehicles_manufacturer_name_index`(`manufacturer_name`);
 
 DROP TABLE IF EXISTS `product_batches`;
 CREATE TABLE `product_batches`(
@@ -121,11 +115,11 @@ CREATE TABLE `product_batches`(
     `barcode` VARCHAR(100) NOT NULL UNIQUE 
 );
 
-------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 --                              Transactional Tables
-------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 DROP TABLE IF EXISTS `transaction_log`;
 CREATE TABLE `transaction_log`(
     `transaction_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -141,8 +135,6 @@ ALTER TABLE
     `transaction_log` ADD INDEX `transaction_log_transaction_date_index`(`transaction_date`);
 ALTER TABLE
     `transaction_log` ADD INDEX `transaction_log_transaction_status_date`(`status`);
-ALTER TABLE 
-    `transaction_log` ADD CONSTRAINT `fk_parent_transaction` FOREIGN KEY (`parent_transaction_id`) REFERENCES `transaction_log`(`transaction_id`);
 
 DROP TABLE IF EXISTS `transaction_items`;
 CREATE TABLE `transaction_items`(
@@ -157,6 +149,8 @@ CREATE TABLE `transaction_items`(
     `total_sale_value` DECIMAL(12, 2) NOT NULL COMMENT 'Total revenue: (quantity_sold * unit_selling_price) - (quantity_sold * discount_applied)',
     `total_cost` DECIMAL(12, 2) NOT NULL COMMENT 'Total cost of goods sold (COGS): quantity_sold * unit_cost_at_sale'
 );
+ALTER TABLE 
+    `transaction_items` ADD FOREIGN KEY (`batch_id`) REFERENCES `product_batches`(`batch_id`);
 ALTER TABLE
     `transaction_items` ADD INDEX `transaction_items_tx`(`transaction_id`, `product_id`);
 
@@ -166,7 +160,7 @@ CREATE TABLE `inventory_log`(
     `product_id` INT NOT NULL,
     `change_type` ENUM('IN', 'OUT', 'ADJUSTMENT') NOT NULL,
     `quantity` SMALLINT NOT NULL,
-    `unit_cost` DECIMAL(12, 2) NOT NULL,
+    `unit_cost` DECIMAL(8, 2) NOT NULL,
     `log_date` DATETIME NOT NULL,
     `reference_id` BIGINT NULL COMMENT 'Links to transaction id/batch id',
     `reference_type` ENUM('SALE','PURCHASE','REFUND','ADJUSTMENT') NULL
@@ -192,11 +186,11 @@ CREATE TABLE `purchase_order_items`(
 );
 ALTER TABLE 
     `purchase_order_items` ADD UNIQUE (po_id, product_id);
-------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 --                          Business and Prediction Tables
-------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 DROP TABLE IF EXISTS `operational_costs`;
 CREATE TABLE `operational_costs`(
     `cost_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -258,7 +252,7 @@ CREATE TABLE `profit_predictions` (
     predicted_profit DECIMAL(14,2) NOT NULL,
     forecast_date DATE NOT NULL,
     model_name VARCHAR(100),
-    generated_at DATETIME NOT NULL,
+    generated_at DATETIME NOT NULL
 
     FOREIGN KEY (product_id) REFERENCES product(product_id)
 );
@@ -273,7 +267,7 @@ CREATE TABLE financial_predictions (
     generated_at DATETIME NOT NULL
 );
 ALTER TABLE 
-    `financial_predictions` ADD UNIQUE (metric_type, forecast_date);
+    `financial_predictions` ADD UNIQUE (forecast_date);
 
 DROP TABLE IF EXISTS `roi_break_even_predictions`;
 CREATE TABLE `roi_break_even_predictions` (
@@ -326,8 +320,8 @@ ALTER TABLE
     `transaction_log`ADD CONSTRAINT `fk_parent_transaction` FOREIGN KEY (`parent_transaction_id`) REFERENCES `transaction_log`(`transaction_id`);
 
 
-------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 -- NOTE: The syntax I will be using for the naming conventions of input variables is:
 -- (initial(s) of referenced table)_(optionaly clarifying info)_(referenced row)
 -- e.g. v_comp_manufacturer_name = v for the 'vehicle' table, comp for compatible (for clarity), 
@@ -335,11 +329,11 @@ ALTER TABLE
 -- If it's incomprehensible, bother me about it.
 
 -- NOTE: When calling procs that edit table info, only send values that changed.
-------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 --                      Procedures for Acct Management Module:
-------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 --      Register new user (Employee role ONLY)
 DROP PROCEDURE IF EXISTS register_user; 
 
@@ -461,11 +455,11 @@ END //
 
 DELIMITER ;
 
-------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 --                          Procedures for Inventory Module: 
-------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 --      Add new product record to Main Data Tables 
 DROP PROCEDURE IF EXISTS add_product; 
 
@@ -488,7 +482,7 @@ CREATE PROCEDURE add_product (
     IN co_comp_top_year SMALLINT
 )
 BEGIN
-    DECLARE c_category_id, s_supplier_id, v_vehicle_id, v_manufacturer_id SMALLINT;
+    DECLARE c_category_id, s_supplier_id, v_vehicle_id SMALLINT;
 
     -- Validate categorical data exists
     SELECT category_id INTO c_category_id
@@ -501,15 +495,9 @@ BEGIN
     WHERE LOWER(supplier_name) = LOWER(s_supplier_name)
     LIMIT 1;
 
-    SELECT manufacturer_id INTO v_manufacturer_id
-    FROM manufacturers
-    WHERE LOWER(manufacturer_name) = LOWER(v_comp_manufacturer_name)
-    LIMIT 1;
-
     SELECT vehicle_id INTO v_vehicle_id
     FROM vehicles
     WHERE LOWER(model_name) = LOWER(v_comp_model_name)
-    AND manufacturer_id = v_manufacturer_id
     LIMIT 1;
 
     IF c_category_id IS NULL THEN 
@@ -525,11 +513,6 @@ BEGIN
     IF v_vehicle_id IS NULL THEN 
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Invalid v_vehicle_id';
-    END IF;
-
-    IF v_manufacturer_id IS NULL THEN 
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Invalid manufacturer_id';
     END IF;
 
     INSERT INTO product (
@@ -613,8 +596,6 @@ CREATE PROCEDURE edit_product (
     IN co_comp_top_year SMALLINT
 )
 BEGIN
-    DECLARE v_manufacturer_id SMALLINT;
-
     -- Check if product exists
     IF NOT EXISTS (
         SELECT 1
@@ -641,31 +622,12 @@ BEGIN
         SET MESSAGE_TEXT = 'Invalid supplier_id';
     END IF;
 
-    -- Get manufacturer_id if provided
-    IF v_comp_manufacturer_name IS NOT NULL THEN
-        SELECT manufacturer_id INTO v_manufacturer_id
-        FROM manufacturers
-        WHERE LOWER(manufacturer_name) = LOWER(v_comp_manufacturer_name)
-        LIMIT 1;
-
-        IF v_manufacturer_id IS NULL THEN
-            SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Invalid manufacturer';
-        END IF;
-    END IF;
-
-    -- Validate vehicle using manufacturer + model
-    IF v_comp_model_name IS NOT NULL THEN
-        SELECT vehicle_id INTO v_comp_vehicle_id
-        FROM vehicles
-        WHERE LOWER(model_name) = LOWER(v_comp_model_name)
-        AND manufacturer_id = v_manufacturer_id
-        LIMIT 1;
-
-        IF v_comp_vehicle_id IS NULL THEN
-            SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Invalid vehicle for given manufacturer';
-        END IF;
+    -- Check if vehicle exists
+        IF v_comp_vehicle_id IS NOT NULL AND NOT EXISTS (
+        SELECT 1 FROM vehicles WHERE vehicle_id = v_comp_vehicle_id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Invalid vehicle_id';
     END IF;
 
     -- Update info
@@ -686,20 +648,8 @@ BEGIN
     UPDATE product_images
     SET
         image_path = COALESCE(i_image_path, image_path),
-        date_uploaded = NOW()
+        date_uploaded = COALESCE(p_description, product_description) -- took off unneeded comma
     WHERE product_id = p_product_id;
-
-    -- Update compatibility 
-    IF v_comp_vehicle_id IS NOT NULL THEN
-
-        UPDATE compatibility
-        SET
-            vehicle_id = v_comp_vehicle_id,
-            bottom_year = COALESCE(co_comp_bottom_year, bottom_year),
-            top_year = COALESCE(co_comp_top_year, top_year)
-        WHERE product_id = p_product_id;
-
-    END IF;
 
 END //
 
@@ -766,36 +716,12 @@ CREATE PROCEDURE add_vehicle (
     IN v_manufacturer_name VARCHAR(255)
 ) 
 BEGIN
-    DECLARE v_manufacturer_id SMALLINT;
-    
-    -- Get manufacturer_id
-    SELECT manufacturer_id INTO v_manufacturer_id
-    FROM manufacturers
-    WHERE LOWER(manufacturer_name) = LOWER(v_manufacturer_name)
-    LIMIT 1;
-
-    IF v_manufacturer_id IS NULL THEN
-        INSERT INTO manufacturers (manufacturer_name)
-        VALUES (v_manufacturer_name);
-
-        SET v_manufacturer_id = LAST_INSERT_ID();
-    END IF;
-
-    IF EXISTS (
-        SELECT 1 FROM vehicles
-        WHERE LOWER(model_name) = LOWER(v_model_name)
-        AND manufacturer_id = v_manufacturer_id
-    ) THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Vehicle already exists for this manufacturer';
-    END IF;
-
     INSERT INTO vehicles (
         model_name,
-        manufacturer_id
+        manufacturer_name
     ) VALUES (
         v_model_name,
-        v_manufacturer_id
+        v_manufacturer_name
     );
 END //
 
@@ -982,22 +908,6 @@ CREATE PROCEDURE update_vehicle (
     IN p_manufacturer_name VARCHAR(255)
 )
 BEGIN
-    DECLARE v_manufacturer_id SMALLINT;
-
-    IF p_manufacturer_name IS NOT NULL THEN
-        SELECT manufacturer_id INTO v_manufacturer_id
-        FROM manufacturers
-        WHERE LOWER(manufacturer_name) = LOWER(p_manufacturer_name)
-        LIMIT 1;
-
-        IF v_manufacturer_id IS NULL THEN
-            INSERT INTO manufacturers (manufacturer_name)
-            VALUES (p_manufacturer_name);
-
-            SET v_manufacturer_id = LAST_INSERT_ID();
-        END IF;
-    END IF;
-
     IF NOT EXISTS (
         SELECT 1 FROM vehicles WHERE vehicle_id = p_vehicle_id
     ) THEN
@@ -1008,8 +918,9 @@ BEGIN
     UPDATE vehicles
     SET
         model_name = COALESCE(p_model_name, model_name),
-        manufacturer_id = COALESCE(v_manufacturer_id, manufacturer_id)
+        manufacturer_name = COALESCE(p_manufacturer_name, manufacturer_name)
     WHERE vehicle_id = p_vehicle_id;
+
 END //
 
 DELIMITER ;
@@ -1099,11 +1010,11 @@ END //
 
 DELIMITER ;
 
-------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 -- Procedures for Point of Sale Module:
-------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 --      Add new pending transaction 
 DROP PROCEDURE IF EXISTS add_pending_transaction; 
 
@@ -1851,11 +1762,11 @@ END //
 
 DELIMITER ;
 
-------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 --              Procedures for Business Analytics & Predictive AI
-------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 --      Create training dataset for Demand Forecasting (time series per product)
 DROP PROCEDURE IF EXISTS dataset_sales_timeseries; 
 
@@ -2738,9 +2649,9 @@ END //
 
 DELIMITER ;
 
-------------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 --      Add generated prediction results into respective table
-------------------------------------------------------------------------------------
+-- ---------------------------------------------------------------------------------
 -- Demand Forecasting
 DROP PROCEDURE IF EXISTS add_demand_forecast; 
 DELIMITER //
@@ -3617,11 +3528,11 @@ END //
 
 DELIMITER //
 
-------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 -- Miscellaneous Procedures for extraneous features that can be used in any module
-------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 -- Search for products
 DROP PROCEDURE IF EXISTS search_products; 
 
@@ -3643,7 +3554,7 @@ BEGIN
         s.supplier_name,
         p.storage_location,
         p.current_stock_level,
-        p.retail_price
+        p.retail_price,
 
     FROM product p
     LEFT JOIN product_category pc 
@@ -3654,17 +3565,9 @@ BEGIN
         ON p.product_id = c.product_id
     LEFT JOIN vehicles v 
         ON c.vehicle_id = v.vehicle_id
-    LEFT JOIN manufacturers m
-        ON v.manufacturer_id = m.manufacturer_id
     LEFT JOIN product_images pi 
         ON p.product_id = pi.product_id
-    LEFT JOIN (
-        SELECT 
-            product_id,
-            SUM(quantity_sold) AS total_sold
-        FROM transaction_items
-        GROUP BY product_id
-    ) ts ON p.product_id = ts.product_id
+        
 
     WHERE
         -- Search name or description
@@ -3683,7 +3586,7 @@ BEGIN
         -- Manufacturer filter
         AND (
             p_manufacturer IS NULL OR
-            LOWER(m.manufacturer_name) LIKE CONCAT('%', LOWER(p_manufacturer), '%')
+            v.manufacturer_name LIKE CONCAT('%', p_manufacturer, '%')
         )
 
         -- Year range filter
@@ -3693,14 +3596,14 @@ BEGIN
             (p_year BETWEEN c.bottom_year AND c.top_year)
         )
 
-    GROUP BY p.product_id, pi.image_path, pc.category_name, s.supplier_name
+    GROUP BY p.product_id
 
     ORDER BY 
         CASE WHEN p_sort = 'name' THEN p.product_name END ASC,
         CASE WHEN p_sort = 'price' THEN p.unit_cost END ASC,
         CASE WHEN p_sort = 'stock' THEN p.current_stock_level END ASC,
         CASE WHEN p_sort = 'newest' THEN p.date_added END DESC,
-        CASE WHEN p_sort = 'most_purchased' THEN ts.total_sold END DESC
+        CASE WHEN p_sort = 'most_purchased' THEN total_sold END DESC;
 END //
 
 DELIMITER ;
@@ -3725,11 +3628,10 @@ BEGIN
         p.unit_cost,
         p.retail_price,
         p.current_stock_level,
-        m.manufacturer_name,
+        v.manufacturer_name,
         v.model_name,
         c.bottom_year,
         c.top_year
-
     FROM product p
     LEFT JOIN product_category pc 
         ON p.category_id = pc.category_id
@@ -3739,21 +3641,17 @@ BEGIN
         ON p.product_id = c.product_id
     LEFT JOIN vehicles v 
         ON c.vehicle_id = v.vehicle_id
-    LEFT JOIN manufacturers m
-        ON v.manufacturer_id = m.manufacturer_id
-
-    WHERE p.product_id = p_product_id
 
 END //
 
 DELIMITER ;
 
 
-------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 --                  Triggers to maintain db-wide consistency
-------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 
 -- Maintain product stock level on changes to product_batches
 DROP TRIGGER IF EXISTS trg_update_product_stock_after_batch_update;
