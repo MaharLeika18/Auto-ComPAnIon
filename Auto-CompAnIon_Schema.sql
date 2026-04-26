@@ -238,7 +238,7 @@ CREATE TABLE `demand_forecasts` (
     forecast_date DATE NOT NULL,    
     predicted_demand DECIMAL(12,2) NOT NULL,
     model_name VARCHAR(100) COMMENT 'e.g. ARIMA, LSTM',    
-    generated_at DATETIME NOT NULL COMMENT 'when prediction was made'
+    generated_at DATETIME NOT NULL COMMENT 'when prediction was made',
 
     FOREIGN KEY (product_id) REFERENCES product(product_id)
 );
