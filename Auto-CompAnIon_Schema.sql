@@ -174,7 +174,7 @@ CREATE TABLE `purchase_orders`(
 DROP TABLE IF EXISTS `purchase_order_items`;
 CREATE TABLE `purchase_order_items`(
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `po_id` BIGINT NOT NULL,
+    `po_id` BIGINT UNSIGNED NOT NULL,
     `product_id` INT NOT NULL,
     `quantity` SMALLINT NOT NULL,
     `unit_cost` DECIMAL(12, 2) NOT NULL
