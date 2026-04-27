@@ -383,9 +383,9 @@ BEGIN
         u_role, 
         NOW()
 	);
-END; //
+END //
 
-DELIMITER;
+DELIMITER ;
 
 -- Remove existing user (For employee accts ONLY)
 DROP PROCEDURE IF EXISTS remove_user; 
@@ -408,7 +408,7 @@ BEGIN
 
     DELETE FROM users 
     WHERE user_id = u_user_id;
-END; //
+END //
 
 DELIMITER ;
 
@@ -444,7 +444,7 @@ BEGIN
         last_update = NOW()
     WHERE user_id = u_user_id;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -465,7 +465,7 @@ BEGIN
     FROM users u
     GROUP BY u.role
     ORDER BY u.name;
-END; //
+END //
 
 DELIMITER ;
 
@@ -587,7 +587,7 @@ BEGIN
         co_comp_top_year,
         v_vehicle_id
     );
-END; //
+END //
 
 DELIMITER ;
 
@@ -700,7 +700,7 @@ BEGIN
         WHERE product_id = p_product_id;
     END IF;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -723,9 +723,9 @@ BEGIN
         c_parent_category_id,
         NOW()
     );
-END; //
+END //
 
-DELIMITER;
+DELIMITER ;
 
 --      Add new supplier
 DROP PROCEDURE IF EXISTS add_supplier; 
@@ -751,9 +751,9 @@ BEGIN
         NOW(),
         NOW()
     );
-END; //
+END //
 
-DELIMITER;
+DELIMITER ;
 
 --      Add new vehicle
 DROP PROCEDURE IF EXISTS add_vehicle; 
@@ -796,9 +796,9 @@ BEGIN
         v_model_name,
         v_manufacturer_id
     );
-END; //
+END //
 
-DELIMITER;
+DELIMITER ;
 
 --      Add/edit image to product
 DROP PROCEDURE IF NOT EXISTS add_or_update_product_image;
@@ -842,7 +842,7 @@ BEGIN
             NOW()
         );
     END IF;
-END; //
+END //
 
 DELIMITER ;
 
@@ -910,7 +910,7 @@ BEGIN
 
     COMMIT;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -938,7 +938,7 @@ BEGIN
         parent_category_id = COALESCE(p_parent_category_id, parent_category_id)
     WHERE category_id = p_category_id;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -968,7 +968,7 @@ BEGIN
         last_update = NOW()
     WHERE supplier_id = p_supplier_id;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -1010,7 +1010,7 @@ BEGIN
         model_name = COALESCE(p_model_name, model_name),
         manufacturer_id = COALESCE(v_manufacturer_id, manufacturer_id)
     WHERE vehicle_id = p_vehicle_id;
-END; //
+END //
 
 DELIMITER ;
 
@@ -1041,7 +1041,7 @@ BEGIN
     DELETE FROM product_category
     WHERE category_id = p_category_id;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -1072,7 +1072,7 @@ BEGIN
     DELETE FROM supplier
     WHERE supplier_id = p_supplier_id;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -1095,7 +1095,7 @@ BEGIN
     DELETE FROM vehicles
     WHERE vehicle_id = p_vehicle_id;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -1131,9 +1131,9 @@ BEGIN
         'PENDING',
         tl_notes
     );
-END; //
+END //
 
-DELIMITER;
+DELIMITER ;
 
 --      Cancel pending transaction 
 DROP PROCEDURE IF EXISTS cancel_pending_transaction; 
@@ -1149,9 +1149,9 @@ SET
     status = 'CANCELLED',
     transaction_date = NOW()
 WHERE transaction_id = tl_transaction_id;
-END; //
+END //
 
-DELIMITER;
+DELIMITER ;
 
 --      Confirm transaction
 DROP PROCEDURE IF EXISTS confirm_transaction;
@@ -1281,7 +1281,7 @@ BEGIN
 
     COMMIT;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -1435,9 +1435,9 @@ BEGIN
     WHERE transaction_id = var_new_transaction_id;
 
     COMMIT;
-END; //
+END //
 
-DELIMITER;
+DELIMITER ;
 
 --      Add selected items to transaction, update inv log (stock out)
 DROP PROCEDURE IF EXISTS add_item_to_transaction;
@@ -1560,7 +1560,7 @@ BEGIN
 
     COMMIT;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -1637,7 +1637,7 @@ BEGIN
     )
     WHERE transaction_id = p_transaction_id;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -1735,7 +1735,7 @@ BEGIN
         END DESC
 
     LIMIT p_limit OFFSET p_offset;
-END; //
+END //
 
 DELIMITER ;
 
@@ -1760,7 +1760,7 @@ BEGIN
     JOIN product p ON ti.product_id = p.product_id
     WHERE ti.transaction_id = p_transaction_id;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -1886,7 +1886,7 @@ BEGIN
     GROUP BY pc.category_id
     ORDER BY total_sales DESC;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -1930,7 +1930,7 @@ BEGIN
 
     GROUP BY entity_id, DATE(t.transaction_date)
     ORDER BY entity_id, sale_date;
-END; //
+END //
 
 DELIMITER ;
 
@@ -1967,7 +1967,7 @@ BEGIN
 
     GROUP BY p.product_id, DATE(t.transaction_date)
     ORDER BY p.product_id, sale_date;
-END; //
+END //
 
 DELIMITER ;
 
@@ -2004,7 +2004,7 @@ BEGIN
 
     ORDER BY rp.current_stock ASC;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -2042,7 +2042,7 @@ BEGIN
 
     ORDER BY s.supplier_name, p.product_name;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -2081,7 +2081,7 @@ BEGIN
 
     GROUP BY p.product_id, DATE(t.transaction_date)
     ORDER BY p.product_id, sale_date;
-END; //
+END //
 
 DELIMITER ;
 
@@ -2149,7 +2149,7 @@ BEGIN
         total_investment,
         net_profit,
         roi;
-    END; //
+    END //
 DELIMITER ;
 
 DROP PROCEDURE IF EXISTS dataset_roi_timeseries; 
@@ -2208,7 +2208,7 @@ BEGIN
     GROUP BY YEAR(t.transaction_date), MONTH(t.transaction_date)
     ORDER BY period_date;
 
-    END; //
+    END //
 DELIMITER ;
 
 DROP PROCEDURE IF EXISTS dataset_cumulative_profit_forecast;
@@ -2227,7 +2227,7 @@ BEGIN
     GROUP BY DATE(forecast_date)
     ORDER BY forecast_date;
 
-END; //
+END //
 DELIMITER ;
 
 --      Create training dataset for CAGR (Yearly revenue)
@@ -2278,7 +2278,7 @@ BEGIN
         end_value,
         years,
         cagr;
-END; //
+END //
 
 DELIMITER ;
 
@@ -2333,7 +2333,7 @@ BEGIN
 
     ORDER BY m1.period_month;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -2401,7 +2401,7 @@ BEGIN
     GROUP BY DATE(t.transaction_date)
     ORDER BY period;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -2440,7 +2440,7 @@ BEGIN
     WHERE t.transaction_date BETWEEN p_start_date AND p_end_date
         AND t.status = 'CONFIRMED';
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -2495,7 +2495,7 @@ BEGIN
             ELSE v_ebit / v_revenue
         END AS ebit_margin;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -2545,7 +2545,7 @@ BEGIN
         v_operational AS operational_cost,
         v_net_profit AS net_profit;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -2592,7 +2592,7 @@ BEGIN
     GROUP BY DATE(t.transaction_date)
     ORDER BY period;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -2619,7 +2619,7 @@ BEGIN
         p_model,
         NOW()
     );
-END; //
+END //
 
 DELIMITER ;
 
@@ -2658,7 +2658,7 @@ BEGIN
     GROUP BY pc.category_id
     ORDER BY net_profit_contribution DESC;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -2700,7 +2700,7 @@ BEGIN
         v_cogs AS cost,
         v_gross_profit AS gross_profit;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -2730,7 +2730,7 @@ BEGIN
     GROUP BY DATE(t.transaction_date)
     ORDER BY period;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -2758,7 +2758,7 @@ BEGIN
         p_model,
         NOW()
     );
-END; //
+END //
 
 DELIMITER ;
 
@@ -2791,7 +2791,7 @@ BEGIN
     GROUP BY pc.category_id
     ORDER BY gross_profit DESC;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -2826,7 +2826,7 @@ BEGIN
     ON DUPLICATE KEY UPDATE
         predicted_demand = VALUES(predicted_demand),
         generated_at = NOW();
-END; //
+END //
 
 DELIMITER ;
 
@@ -2841,7 +2841,7 @@ BEGIN
         SELECT MAX(generated_at)
         FROM demand_forecasts
     );
-END; //
+END //
 
 DELIMITER ;
 
@@ -2879,7 +2879,7 @@ BEGIN
     HAVING lead_time_days IS NOT NULL
     ORDER BY po.order_date;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -2910,7 +2910,7 @@ BEGIN
         rp_current_stock,
         NOW()
     );
-END; //
+END //
 
 DELIMITER ;
 
@@ -2942,7 +2942,7 @@ BEGIN
         pp_model,
         NOW()
     );
-END; //
+END //
 
 DELIMITER ;
 
@@ -2977,7 +2977,7 @@ BEGIN
     ON DUPLICATE KEY UPDATE
         predicted_value = VALUES(predicted_value),
         generated_at = NOW();
-END; //
+END //
 
 DELIMITER ;
 
@@ -3005,7 +3005,7 @@ BEGIN
         p_model,
         NOW()
     );
-END; //
+END //
 
 DELIMITER ;
 
@@ -3031,7 +3031,7 @@ BEGIN
         p_model,
         NOW()
     );
-END; //
+END //
 
 DELIMITER ;
 
@@ -3078,9 +3078,9 @@ BEGIN
         reference_id,
         il_reference_type
     );
-END; //
+END //
 
-DELIMITER;
+DELIMITER ;
 
 --      Add row in operational_costs
 DROP PROCEDURE IF EXISTS add_operational_cost_entry; 
@@ -3106,9 +3106,9 @@ BEGIN
         NOW(),
         oc_notes
     );
-END; //
+END //
 
-DELIMITER;
+DELIMITER ;
 
 --      Edit row in operational_costs
 DROP PROCEDURE IF EXISTS edit_operational_cost
@@ -3140,7 +3140,7 @@ BEGIN
         notes = COALESCE(oc_notes, notes)
     WHERE cost_id = oc_cost_id;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -3165,7 +3165,7 @@ BEGIN
 
     DELETE FROM operational_costs 
     WHERE cost_id = oc_cost_id;
-END; //
+END //
 
 DELIMITER ;
 
@@ -3191,9 +3191,9 @@ BEGIN
         in_investment_date,
         in_description
     );
-END; //
+END //
 
-DELIMITER;
+DELIMITER ;
 
 --      Edit row in investments
 DROP PROCEDURE IF EXISTS edit_operational_cost
@@ -3223,7 +3223,7 @@ BEGIN
         description = COALESCE(in_investment_date, description)
     WHERE cost_id = oc_cost_id;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -3247,7 +3247,7 @@ BEGIN
 
     DELETE FROM investments 
     WHERE investment_id = investment_id;
-END; //
+END //
 
 DELIMITER ;
 
@@ -3287,9 +3287,9 @@ BEGIN
     );
 
     
-END; //
+END //
 
-DELIMITER;
+DELIMITER ;
 
 --      Edit row in purchase_orders
 DROP PROCEDURE IF NOT EXISTS edit_purchase_order;
@@ -3329,7 +3329,7 @@ BEGIN
         total_cost = COALESCE(po_total_cost, total_cost)
     WHERE po_id = po_po_id;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -3356,7 +3356,7 @@ BEGIN
 
     DELETE FROM purchase_orders 
     WHERE po_id = po_po_id;
-END; //
+END //
 
 DELIMITER ;
 
@@ -3444,7 +3444,7 @@ BEGIN
     )
     WHERE po_id = p_po_id;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -3535,9 +3535,9 @@ BEGIN
         last_update = NOW()
     WHERE product_id = pb_product_id;
     
-END; //
+END //
 
-DELIMITER;
+DELIMITER ;
 
 DROP PROCEDURE IF EXISTS edit_product_batches_entry; 
 DELIMITER //
@@ -3610,7 +3610,7 @@ BEGIN
         'BATCH'
     );
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -3674,7 +3674,7 @@ BEGIN
     DELETE FROM product_batches
     WHERE batch_id = pb_batch_id;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -3762,7 +3762,7 @@ BEGIN
         CASE WHEN p_sort = 'stock' THEN p.current_stock_level END ASC,
         CASE WHEN p_sort = 'newest' THEN p.date_added END DESC,
         CASE WHEN p_sort = 'most_purchased' THEN ts.total_sold END DESC;
-END; //
+END //
 
 DELIMITER ;
 
@@ -3805,7 +3805,7 @@ BEGIN
 
     WHERE p.product_id = p_product_id;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -3838,7 +3838,7 @@ BEGIN
         last_update = NOW()
     WHERE product_id = NEW.product_id;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -3861,7 +3861,7 @@ BEGIN
         last_update = NOW()
     WHERE product_id = NEW.product_id;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -3884,7 +3884,7 @@ BEGIN
         last_update = NOW()
     WHERE product_id = OLD.product_id;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -3899,7 +3899,7 @@ BEGIN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Stock cannot go negative';
     END IF;
-END; //
+END //
 
 DELIMITER ;
 
@@ -3934,7 +3934,7 @@ BEGIN
         );
     END IF;
 
-END; //
+END //
 
 DELIMITER ;
 
@@ -3956,7 +3956,7 @@ BEGIN
         WHERE po_id = NEW.po_id
     )
     WHERE po.po_id = NEW.po_id;
-END; //
+END //
 
 CREATE TRIGGER trg_purchase_order_items_after_update
 AFTER UPDATE ON purchase_order_items
@@ -3969,7 +3969,7 @@ BEGIN
         WHERE po_id = NEW.po_id
     )
     WHERE po.po_id = NEW.po_id;
-END; //
+END //
 
 CREATE TRIGGER trg_purchase_order_items_after_delete
 AFTER DELETE ON purchase_order_items
@@ -3982,7 +3982,7 @@ BEGIN
         WHERE po_id = OLD.po_id
     )
     WHERE po.po_id = OLD.po_id;
-END; //
+END //
 
 DELIMITER ;
 
