@@ -2097,6 +2097,7 @@ BEGIN
     DECLARE total_revenue DECIMAL(14,2);
     DECLARE total_cost DECIMAL(14,2);
     DECLARE total_investment DECIMAL(14,2);
+    DECLARE operational_costs_total DECIMAL(14,2);
     DECLARE net_profit DECIMAL(14,2);
     DECLARE roi DECIMAL(10,2);
 
