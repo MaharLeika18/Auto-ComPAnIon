@@ -54,7 +54,7 @@ ALTER TABLE
 DROP TABLE IF EXISTS `product_images`;
 CREATE TABLE `product_images` (
     `image_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `product_id` INT NOT NULL,
+    `product_id` INT UNSIGNED NOT NULL,
     `image_path` VARCHAR(255) NULL,
     `date_uploaded` DATETIME NOT NULL
 );
@@ -135,7 +135,7 @@ DROP TABLE IF EXISTS `transaction_items`;
 CREATE TABLE `transaction_items`(
     `item_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `transaction_id` BIGINT NOT NULL,
-    `product_id` INT NOT NULL,
+    `product_id` INT UNSIGNED NOT NULL,
     `batch_id` BIGINT UNSIGNED NOT NULL,
     `quantity_sold` SMALLINT NOT NULL,
     `unit_selling_price` DECIMAL(12, 2) NOT NULL COMMENT 'Retail price per unit at the moment of sale',
@@ -152,7 +152,7 @@ ALTER TABLE
 DROP TABLE IF EXISTS `inventory_log`;
 CREATE TABLE `inventory_log`(
     `log_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `product_id` INT NOT NULL,
+    `product_id` INT UNSIGNED NOT NULL,
     `change_type` ENUM('IN', 'OUT', 'ADJUSTMENT') NOT NULL,
     `quantity` SMALLINT NOT NULL,
     `unit_cost` DECIMAL(12, 2) NOT NULL,
@@ -175,7 +175,7 @@ DROP TABLE IF EXISTS `purchase_order_items`;
 CREATE TABLE `purchase_order_items`(
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `po_id` BIGINT UNSIGNED NOT NULL,
-    `product_id` INT NOT NULL,
+    `product_id` INT UNSIGNED NOT NULL,
     `quantity` SMALLINT NOT NULL,
     `unit_cost` DECIMAL(12, 2) NOT NULL
 );
@@ -186,7 +186,7 @@ DROP TABLE IF EXISTS `product_batches`;
 CREATE TABLE `product_batches`(
     `batch_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `po_id` BIGINT UNSIGNED,
-    `product_id` INT NOT NULL,
+    `product_id` INT UNSIGNED NOT NULL,
     `supplier_id` SMALLINT UNSIGNED NOT NULL,
     `quantity_received` SMALLINT NOT NULL,
     `quantity_remaining` SMALLINT NOT NULL,
