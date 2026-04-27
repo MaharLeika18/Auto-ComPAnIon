@@ -2283,10 +2283,6 @@ END //
 
 DELIMITER ;
 
-DROP PROCEDURE IF EXISTS dataset_cagr_timeseries; 
-
-DELIMITER //
-
 DROP PROCEDURE IF EXISTS dataset_cagr_timeseries;
 DELIMITER //
 
