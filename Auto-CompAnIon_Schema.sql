@@ -78,7 +78,7 @@ CREATE TABLE `compatibility`(
     `product_id` BIGINT UNSIGNED NOT NULL,
     `bottom_year` SMALLINT NOT NULL,
     `top_year` SMALLINT NOT NULL,
-    `vehicle_id` SMALLINT NOT NULL
+    `vehicle_id` SMALLINT UNSIGNED NOT NULL
 );
 ALTER TABLE
     `compatibility` ADD INDEX `compatibility_product_id_index`(`product_id`);
