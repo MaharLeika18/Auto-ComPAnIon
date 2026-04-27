@@ -2008,7 +2008,7 @@ END //
 
 DELIMITER ;
 
-DROP PROCEDURE IF EXISTS get_reorder_list_by_supplier
+DROP PROCEDURE IF EXISTS get_reorder_list_by_supplier;
 DELIMITER //
 
 CREATE PROCEDURE get_reorder_list_by_supplier ()
@@ -3010,7 +3010,7 @@ END //
 DELIMITER ;
 
     -- EBIT
-DROP PROCEDURE IF EXISTS add_ebit_prediction
+DROP PROCEDURE IF EXISTS add_ebit_prediction;
 DELIMITER //
 
 CREATE PROCEDURE add_ebit_prediction (
@@ -3111,7 +3111,7 @@ END //
 DELIMITER ;
 
 --      Edit row in operational_costs
-DROP PROCEDURE IF EXISTS edit_operational_cost
+DROP PROCEDURE IF EXISTS edit_operational_cost;
 DELIMITER //
 
 CREATE PROCEDURE edit_operational_cost (
@@ -3196,7 +3196,7 @@ END //
 DELIMITER ;
 
 --      Edit row in investments
-DROP PROCEDURE IF EXISTS edit_operational_cost
+DROP PROCEDURE IF EXISTS edit_operational_cost;
 DELIMITER //
 
 CREATE PROCEDURE edit_operational_cost (
