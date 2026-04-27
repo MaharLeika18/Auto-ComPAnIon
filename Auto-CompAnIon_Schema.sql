@@ -27,7 +27,7 @@ CREATE TABLE `product`(
     `product_description` VARCHAR(255) NULL,
     `part_number` VARCHAR(200) NULL,
     `category_id` SMALLINT NOT NULL,
-    `supplier_id` SMALLINT NOT NULL,
+    `supplier_id` SMALLINT UNSIGNED NOT NULL,
     -- `current_stock_level` SMALLINT NOT NULL,
     `storage_location` VARCHAR(255) NULL,
     `date_added` DATETIME NOT NULL,
@@ -166,7 +166,7 @@ ALTER TABLE
 DROP TABLE IF EXISTS `purchase_orders`;
 CREATE TABLE `purchase_orders`(
     `po_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `supplier_id` SMALLINT NOT NULL,
+    `supplier_id` SMALLINT UNSIGNED NOT NULL,
     `order_date` DATETIME NOT NULL,
     `total_cost` DECIMAL(12, 2) NOT NULL
 );
@@ -187,7 +187,7 @@ CREATE TABLE `product_batches`(
     `batch_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `po_id` BIGINT UNSIGNED,
     `product_id` INT NOT NULL,
-    `supplier_id` SMALLINT NOT NULL,
+    `supplier_id` SMALLINT UNSIGNED NOT NULL,
     `quantity_received` SMALLINT NOT NULL,
     `quantity_remaining` SMALLINT NOT NULL,
     `unit_cost` DECIMAL(12, 2) NOT NULL,
@@ -332,8 +332,6 @@ ALTER TABLE
     `compatibility` ADD CONSTRAINT `compatibility_product_id_foreign` FOREIGN KEY(`product_id`) REFERENCES `product`(`product_id`);
 ALTER TABLE
     `product_images` ADD CONSTRAINT `product_images_product_id_foreign` FOREIGN KEY(`product_id`) REFERENCES `product`(`product_id`);
-ALTER TABLE 
-    `transaction_log`ADD CONSTRAINT `fk_parent_transaction` FOREIGN KEY (`parent_transaction_id`) REFERENCES `transaction_log`(`transaction_id`);
 
 
 -- ----------------------------------------------------------------------------------
