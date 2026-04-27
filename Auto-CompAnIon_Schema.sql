@@ -387,7 +387,7 @@ END //
 
 DELIMITER;
 
---      Remove existing user (For employee accts ONLY)
+-- Remove existing user (For employee accts ONLY)
 DROP PROCEDURE IF EXISTS remove_user; 
 
 DELIMITER //
