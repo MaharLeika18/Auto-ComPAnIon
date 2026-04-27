@@ -801,7 +801,7 @@ END //
 DELIMITER ;
 
 --      Add/edit image to product
-DROP PROCEDURE IF NOT EXISTS add_or_update_product_image;
+DROP PROCEDURE IF EXISTS add_or_update_product_image;
 DELIMITER //
 
 CREATE PROCEDURE add_or_update_product_image (
@@ -3292,7 +3292,7 @@ END //
 DELIMITER ;
 
 --      Edit row in purchase_orders
-DROP PROCEDURE IF NOT EXISTS edit_purchase_order;
+DROP PROCEDURE IF EXISTS edit_purchase_order;
 DELIMITER //
 
 CREATE PROCEDURE edit_purchase_order (
