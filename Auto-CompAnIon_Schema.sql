@@ -251,7 +251,7 @@ ALTER TABLE
 DROP TABLE IF EXISTS `reorder_predictions`;
 CREATE TABLE `reorder_predictions` (
     prediction_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    product_id INT NOT NULL,
+    product_id INT UNSIGNED NOT NULL,
     current_stock DECIMAL(12,2),
     predicted_reorder_point DECIMAL(12,2),
     recommended_order_qty DECIMAL(12,2),
@@ -264,7 +264,7 @@ CREATE TABLE `reorder_predictions` (
 DROP TABLE IF EXISTS `profit_predictions`;
 CREATE TABLE `profit_predictions` (
     prediction_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    product_id INT NOT NULL,
+    product_id INT UNSIGNED NOT NULL,
     predicted_profit DECIMAL(14,2) NOT NULL,
     forecast_date DATE NOT NULL,
     model_name VARCHAR(100),
