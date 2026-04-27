@@ -134,7 +134,7 @@ ALTER TABLE
 DROP TABLE IF EXISTS `transaction_items`;
 CREATE TABLE `transaction_items`(
     `item_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `transaction_id` BIGINT NOT NULL,
+    `transaction_id` BIGINT UNSIGNED NOT NULL,
     `product_id` INT UNSIGNED NOT NULL,
     `batch_id` BIGINT UNSIGNED NOT NULL,
     `quantity_sold` SMALLINT NOT NULL,
