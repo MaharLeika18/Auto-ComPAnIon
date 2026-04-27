@@ -234,7 +234,7 @@ CREATE TABLE `investments`(
 DROP TABLE IF EXISTS `demand_forecasts`;
 CREATE TABLE `demand_forecasts` (
     forecast_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    product_id INT NOT NULL,
+    product_id INT UNSIGNED NOT NULL,
     forecast_date DATE NOT NULL,    
     predicted_demand DECIMAL(12,2) NOT NULL,
     model_name VARCHAR(100) COMMENT 'e.g. ARIMA, LSTM',    
