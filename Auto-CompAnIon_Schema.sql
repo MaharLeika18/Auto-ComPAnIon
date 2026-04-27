@@ -351,7 +351,7 @@ ALTER TABLE
 --      Register new user (Employee role ONLY)
 DROP PROCEDURE IF EXISTS register_user; 
 
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE register_user (
     IN u_username VARCHAR(100),
@@ -383,14 +383,14 @@ BEGIN
         u_role, 
         NOW()
 	);
-END //
+END; //
 
 DELIMITER;
 
 -- Remove existing user (For employee accts ONLY)
 DROP PROCEDURE IF EXISTS remove_user; 
 
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE remove_user (
     IN u_user_id BIGINT
@@ -408,14 +408,14 @@ BEGIN
 
     DELETE FROM users 
     WHERE user_id = u_user_id;
-END //
+END; //
 
 DELIMITER ;
 
 --      Change information of existing user (use NULL if no change)
 DROP PROCEDURE IF EXISTS edit_user; 
 
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE edit_user (
     IN u_user_id BIGINT,
@@ -444,14 +444,14 @@ BEGIN
         last_update = NOW()
     WHERE user_id = u_user_id;
 
-END //
+END; //
 
 DELIMITER ;
 
 --      View user credentials (Admin & Owner ONLY can use this)
 DROP PROCEDURE IF EXISTS view_user_details; 
 
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE view_user_details (
     OUT user_id BIGINT
@@ -465,7 +465,7 @@ BEGIN
     FROM users u
     GROUP BY u.role
     ORDER BY u.name;
-END //
+END; //
 
 DELIMITER ;
 
@@ -476,7 +476,7 @@ DELIMITER ;
 -- ----------------------------------------------------------------------------------
 --      Add new product record to Main Data Tables 
 DROP PROCEDURE IF EXISTS add_product; 
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE add_product (
     IN p_name VARCHAR(255),
@@ -587,13 +587,13 @@ BEGIN
         co_comp_top_year,
         v_vehicle_id
     );
-END //
+END; //
 
 DELIMITER ;
 
 --      Edit information of product record in Main Data Tables 
 DROP PROCEDURE IF EXISTS edit_product; 
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE edit_product (
     IN p_product_id INT,
@@ -700,14 +700,14 @@ BEGIN
         WHERE product_id = p_product_id;
     END IF;
 
-END //
+END; //
 
 DELIMITER ;
 
 --      Add new product category
 DROP PROCEDURE IF EXISTS add_product_category; 
 
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE add_product_category (
     IN c_category_name VARCHAR(255),
@@ -723,14 +723,14 @@ BEGIN
         c_parent_category_id,
         NOW()
     );
-END //
+END; //
 
 DELIMITER;
 
 --      Add new supplier
 DROP PROCEDURE IF EXISTS add_supplier; 
 
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE add_supplier (
     IN s_supplier_name VARCHAR(255),
@@ -751,14 +751,14 @@ BEGIN
         NOW(),
         NOW()
     );
-END //
+END; //
 
 DELIMITER;
 
 --      Add new vehicle
 DROP PROCEDURE IF EXISTS add_vehicle; 
 
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE add_vehicle (
     IN v_model_name VARCHAR(255),
@@ -796,13 +796,13 @@ BEGIN
         v_model_name,
         v_manufacturer_id
     );
-END //
+END; //
 
 DELIMITER;
 
 --      Add/edit image to product
 DROP PROCEDURE IF NOT EXISTS add_or_update_product_image;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE add_or_update_product_image (
     IN p_product_id INT,
@@ -842,13 +842,13 @@ BEGIN
             NOW()
         );
     END IF;
-END //
+END; //
 
 DELIMITER ;
 
 --      Remove selected existing product record(s) from Main Data Tables
 DROP PROCEDURE IF EXISTS remove_product;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE remove_product (
     IN p_product_id INT
@@ -910,13 +910,13 @@ BEGIN
 
     COMMIT;
 
-END //
+END; //
 
 DELIMITER ;
 
 --      Edit product category
 DROP PROCEDURE IF EXISTS update_product_category;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE update_product_category (
     IN p_category_id SMALLINT,
@@ -938,13 +938,13 @@ BEGIN
         parent_category_id = COALESCE(p_parent_category_id, parent_category_id)
     WHERE category_id = p_category_id;
 
-END //
+END; //
 
 DELIMITER ;
 
 --      Edit supplier
 DROP PROCEDURE IF EXISTS update_supplier;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE update_supplier (
     IN p_supplier_id SMALLINT,
@@ -968,13 +968,13 @@ BEGIN
         last_update = NOW()
     WHERE supplier_id = p_supplier_id;
 
-END //
+END; //
 
 DELIMITER ;
 
 --      Edit vehicle
 DROP PROCEDURE IF EXISTS update_vehicle;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE update_vehicle (
     IN p_vehicle_id SMALLINT,
@@ -1010,13 +1010,13 @@ BEGIN
         model_name = COALESCE(p_model_name, model_name),
         manufacturer_id = COALESCE(v_manufacturer_id, manufacturer_id)
     WHERE vehicle_id = p_vehicle_id;
-END //
+END; //
 
 DELIMITER ;
 
 --      Remove existing product category
 DROP PROCEDURE IF EXISTS delete_product_category;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE delete_product_category (
     IN p_category_id SMALLINT
@@ -1041,13 +1041,13 @@ BEGIN
     DELETE FROM product_category
     WHERE category_id = p_category_id;
 
-END //
+END; //
 
 DELIMITER ;
 
 --      Remove existing supplier
 DROP PROCEDURE IF EXISTS delete_supplier;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE delete_supplier (
     IN p_supplier_id SMALLINT
@@ -1072,13 +1072,13 @@ BEGIN
     DELETE FROM supplier
     WHERE supplier_id = p_supplier_id;
 
-END //
+END; //
 
 DELIMITER ;
 
 --      Remove existing vehicle
 DROP PROCEDURE IF EXISTS delete_vehicle;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE delete_vehicle (
     IN p_vehicle_id SMALLINT
@@ -1095,7 +1095,7 @@ BEGIN
     DELETE FROM vehicles
     WHERE vehicle_id = p_vehicle_id;
 
-END //
+END; //
 
 DELIMITER ;
 
@@ -1107,7 +1107,7 @@ DELIMITER ;
 --      Add new pending transaction 
 DROP PROCEDURE IF EXISTS add_pending_transaction; 
 
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE add_pending_transaction (
     IN tl_receipt_num INT,
@@ -1131,14 +1131,14 @@ BEGIN
         'PENDING',
         tl_notes
     );
-END //
+END; //
 
 DELIMITER;
 
 --      Cancel pending transaction 
 DROP PROCEDURE IF EXISTS cancel_pending_transaction; 
 
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE cancel_pending_transaction (
     IN tl_transaction_id BIGINT
@@ -1149,13 +1149,13 @@ SET
     status = 'CANCELLED',
     transaction_date = NOW()
 WHERE transaction_id = tl_transaction_id;
-END //
+END; //
 
 DELIMITER;
 
 --      Confirm transaction
 DROP PROCEDURE IF EXISTS confirm_transaction;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE confirm_transaction (
     IN p_transaction_id BIGINT,
@@ -1281,13 +1281,13 @@ BEGIN
 
     COMMIT;
 
-END //
+END; //
 
 DELIMITER ;
 
 --      Set transaction to refunded
 DROP PROCEDURE IF EXISTS refund_transaction;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE refund_transaction (
     IN tl_original_transaction_id BIGINT
@@ -1435,13 +1435,13 @@ BEGIN
     WHERE transaction_id = var_new_transaction_id;
 
     COMMIT;
-END //
+END; //
 
 DELIMITER;
 
 --      Add selected items to transaction, update inv log (stock out)
 DROP PROCEDURE IF EXISTS add_item_to_transaction;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE add_item_to_transaction (
     IN p_transaction_id BIGINT,
@@ -1560,13 +1560,13 @@ BEGIN
 
     COMMIT;
 
-END //
+END; //
 
 DELIMITER ;
 
 --      Remove selected items from transaction, update inv log (stock out)
 DROP PROCEDURE IF EXISTS remove_item_from_transaction;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE remove_item_from_transaction (
     IN p_transaction_id BIGINT,
@@ -1637,13 +1637,13 @@ BEGIN
     )
     WHERE transaction_id = p_transaction_id;
 
-END //
+END; //
 
 DELIMITER ;
 
 --      Fetch transaction details to display on screen
 DROP PROCEDURE IF EXISTS get_transaction_history;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE get_transaction_history (
     IN p_start_date DATETIME,
@@ -1735,13 +1735,13 @@ BEGIN
         END DESC
 
     LIMIT p_limit OFFSET p_offset;
-END //
+END; //
 
 DELIMITER ;
 
 -- Fetch detailed transaction information
 DROP PROCEDURE IF EXISTS get_transaction_details;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE get_transaction_details (
     IN p_transaction_id BIGINT
@@ -1760,13 +1760,13 @@ BEGIN
     JOIN product p ON ti.product_id = p.product_id
     WHERE ti.transaction_id = p_transaction_id;
 
-END //
+END; //
 
 DELIMITER ;
 
 -- Transaction Log Dashboard Proc
 DROP PROCEDURE IF EXISTS get_transaction_dashboard;    
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE get_transaction_dashboard ()
 BEGIN
@@ -1886,7 +1886,7 @@ BEGIN
     GROUP BY pc.category_id
     ORDER BY total_sales DESC;
 
-END //
+END; //
 
 DELIMITER ;
 
@@ -1898,7 +1898,7 @@ DELIMITER ;
 --      Create training dataset for Demand Forecasting (time series per product)
 DROP PROCEDURE IF EXISTS dataset_sales_timeseries; 
 
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE dataset_sales_timeseries (
     IN p_start_date DATETIME,
@@ -1930,14 +1930,14 @@ BEGIN
 
     GROUP BY entity_id, DATE(t.transaction_date)
     ORDER BY entity_id, sale_date;
-END //
+END; //
 
 DELIMITER ;
 
 --      Create training dataset for Reorder Prediction (stock + demand features)
 DROP PROCEDURE IF EXISTS dataset_reorder; 
 
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE dataset_reorder (
     IN p_start_date DATETIME,
@@ -1967,12 +1967,12 @@ BEGIN
 
     GROUP BY p.product_id, DATE(t.transaction_date)
     ORDER BY p.product_id, sale_date;
-END //
+END; //
 
 DELIMITER ;
 
 DROP PROCEDURE IF EXISTS get_products_below_reorder_prediction
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE get_products_below_reorder_prediction ()
 BEGIN
@@ -2004,12 +2004,12 @@ BEGIN
 
     ORDER BY rp.current_stock ASC;
 
-END //
+END; //
 
 DELIMITER ;
 
 DROP PROCEDURE IF EXISTS get_reorder_list_by_supplier
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE get_reorder_list_by_supplier ()
 BEGIN
@@ -2042,14 +2042,14 @@ BEGIN
 
     ORDER BY s.supplier_name, p.product_name;
 
-END //
+END; //
 
 DELIMITER ;
 
 --      Create training dataset for Profit Prediction (per-product profit metrics)
 DROP PROCEDURE IF EXISTS dataset_profit_prediction; 
 
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE dataset_profit_prediction (
     IN p_start_date DATETIME,
@@ -2081,13 +2081,13 @@ BEGIN
 
     GROUP BY p.product_id, DATE(t.transaction_date)
     ORDER BY p.product_id, sale_date;
-END //
+END; //
 
 DELIMITER ;
 
 --      Create training dataset for ROI (aggregated financials over time)
 DROP PROCEDURE IF EXISTS calculate_roi; 
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE calculate_roi (
     IN p_start_date DATETIME,
@@ -2149,11 +2149,11 @@ BEGIN
         total_investment,
         net_profit,
         roi;
-    END //
+    END; //
 DELIMITER ;
 
 DROP PROCEDURE IF EXISTS dataset_roi_timeseries; 
-DELIMITER //
+DELIMITER \\
 CREATE PROCEDURE dataset_roi_timeseries (
     IN p_start_date DATETIME,
     IN p_end_date DATETIME
@@ -2208,11 +2208,11 @@ BEGIN
     GROUP BY YEAR(t.transaction_date), MONTH(t.transaction_date)
     ORDER BY period_date;
 
-    END //
+    END; //
 DELIMITER ;
 
 DROP PROCEDURE IF EXISTS dataset_cumulative_profit_forecast;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE dataset_cumulative_profit_forecast (
     IN p_start_date DATETIME,
@@ -2227,12 +2227,12 @@ BEGIN
     GROUP BY DATE(forecast_date)
     ORDER BY forecast_date;
 
-END //
+END; //
 DELIMITER ;
 
 --      Create training dataset for CAGR (Yearly revenue)
 DROP PROCEDURE IF EXISTS calculate_cagr;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE calculate_cagr (
     IN p_start_date DATETIME,
@@ -2278,16 +2278,16 @@ BEGIN
         end_value,
         years,
         cagr;
-END //
+END; //
 
 DELIMITER ;
 
 DROP PROCEDURE IF EXISTS dataset_cagr_timeseries; 
 
-DELIMITER //
+DELIMITER \\
 
 DROP PROCEDURE IF EXISTS dataset_cagr_timeseries;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE dataset_cagr_timeseries (
     IN p_start_date DATETIME,
@@ -2333,14 +2333,14 @@ BEGIN
 
     ORDER BY m1.period_month;
 
-END //
+END; //
 
 DELIMITER ;
 
 --      KPI Metrics
 --  EBIT
 DROP PROCEDURE IF EXISTS dataset_ebit;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE dataset_ebit (
     IN p_start_date DATETIME,
@@ -2401,12 +2401,12 @@ BEGIN
     GROUP BY DATE(t.transaction_date)
     ORDER BY period;
 
-END //
+END; //
 
 DELIMITER ;
 
 DROP PROCEDURE IF EXISTS get_current_ebit;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE get_current_ebit (
     IN p_start_date DATETIME,
@@ -2440,12 +2440,12 @@ BEGIN
     WHERE t.transaction_date BETWEEN p_start_date AND p_end_date
         AND t.status = 'CONFIRMED';
 
-END //
+END; //
 
 DELIMITER ;
 
 DROP PROCEDURE IF EXISTS get_current_ebit_margin;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE get_current_ebit_margin (
     IN p_start_date DATETIME,
@@ -2495,13 +2495,13 @@ BEGIN
             ELSE v_ebit / v_revenue
         END AS ebit_margin;
 
-END //
+END; //
 
 DELIMITER ;
 
 -- Net Profit (Current)
 DROP PROCEDURE IF EXISTS calculate_current_net_profit;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE calculate_current_net_profit (
     IN p_start_date DATETIME,
@@ -2545,13 +2545,13 @@ BEGIN
         v_operational AS operational_cost,
         v_net_profit AS net_profit;
 
-END //
+END; //
 
 DELIMITER ;
 
 -- Net Profit (Predicted)
 DROP PROCEDURE IF EXISTS dataset_net_profit_timeseries;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE dataset_net_profit_timeseries (
     IN p_start_date DATETIME,
@@ -2592,13 +2592,13 @@ BEGIN
     GROUP BY DATE(t.transaction_date)
     ORDER BY period;
 
-END //
+END; //
 
 DELIMITER ;
 
 -- Save Net Profit Prediction
 DROP PROCEDURE IF EXISTS add_net_profit_prediction;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE add_net_profit_prediction (
     IN p_date DATETIME,
@@ -2619,13 +2619,13 @@ BEGIN
         p_model,
         NOW()
     );
-END //
+END; //
 
 DELIMITER ;
 
 -- Net Profit Impact Factors
 DROP PROCEDURE IF EXISTS net_profit_by_category;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE net_profit_by_category (
     IN p_start_date DATETIME,
@@ -2658,13 +2658,13 @@ BEGIN
     GROUP BY pc.category_id
     ORDER BY net_profit_contribution DESC;
 
-END //
+END; //
 
 DELIMITER ;
 
 -- Gross Profit (Current)
 DROP PROCEDURE IF EXISTS calculate_current_gross_profit;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE calculate_current_gross_profit (
     IN p_start_date DATETIME,
@@ -2700,13 +2700,13 @@ BEGIN
         v_cogs AS cost,
         v_gross_profit AS gross_profit;
 
-END //
+END; //
 
 DELIMITER ;
 
 -- Gross Profit (Predicted)
 DROP PROCEDURE IF EXISTS dataset_gross_profit_timeseries;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE dataset_gross_profit_timeseries (
     IN p_start_date DATETIME,
@@ -2730,12 +2730,12 @@ BEGIN
     GROUP BY DATE(t.transaction_date)
     ORDER BY period;
 
-END //
+END; //
 
 DELIMITER ;
 
 DROP PROCEDURE IF EXISTS add_gross_profit_prediction;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE add_gross_profit_prediction (
     IN p_date DATETIME,
@@ -2758,13 +2758,13 @@ BEGIN
         p_model,
         NOW()
     );
-END //
+END; //
 
 DELIMITER ;
 
 -- Gross Profit Contributors
 DROP PROCEDURE IF EXISTS gross_profit_by_category;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE gross_profit_by_category (
     IN p_start_date DATETIME,
@@ -2791,7 +2791,7 @@ BEGIN
     GROUP BY pc.category_id
     ORDER BY gross_profit DESC;
 
-END //
+END; //
 
 DELIMITER ;
 
@@ -2800,7 +2800,7 @@ DELIMITER ;
 -- ---------------------------------------------------------------------------------
 -- Demand Forecasting
 DROP PROCEDURE IF EXISTS add_demand_forecast; 
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE add_demand_forecast (
     IN df_product_id INT,
@@ -2826,12 +2826,12 @@ BEGIN
     ON DUPLICATE KEY UPDATE
         predicted_demand = VALUES(predicted_demand),
         generated_at = NOW();
-END //
+END; //
 
 DELIMITER ;
 
 DROP PROCEDURE IF EXISTS get_demand_forecasts; 
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE get_demand_forecasts ()
 BEGIN
@@ -2841,13 +2841,13 @@ BEGIN
         SELECT MAX(generated_at)
         FROM demand_forecasts
     );
-END //
+END; //
 
 DELIMITER ;
 
     -- Reorder Predictions
 DROP PROCEDURE IF EXISTS dataset_lead_time;
-DELIMITER //
+DELIMITER \\
 CREATE PROCEDURE dataset_lead_time ()
 BEGIN
     SELECT
@@ -2879,12 +2879,12 @@ BEGIN
     HAVING lead_time_days IS NOT NULL
     ORDER BY po.order_date;
 
-END //
+END; //
 
 DELIMITER ;
 
 DROP PROCEDURE IF EXISTS add_reorder_prediction;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE add_reorder_prediction (
     IN rp_product_id INT,
@@ -2910,13 +2910,13 @@ BEGIN
         rp_current_stock,
         NOW()
     );
-END //
+END; //
 
 DELIMITER ;
 
     -- Profit Optimization
 DROP PROCEDURE IF EXISTS add_profit_prediction;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE add_profit_prediction (
     IN pp_product_id INT,
@@ -2942,13 +2942,13 @@ BEGIN
         pp_model,
         NOW()
     );
-END //
+END; //
 
 DELIMITER ;
 
     -- ROI and CAGR
 DROP PROCEDURE IF EXISTS add_financial_prediction;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE add_financial_prediction (
     IN fp_metric_type ENUM('ROI','CAGR'),
@@ -2977,12 +2977,12 @@ BEGIN
     ON DUPLICATE KEY UPDATE
         predicted_value = VALUES(predicted_value),
         generated_at = NOW();
-END //
+END; //
 
 DELIMITER ;
 
 DROP PROCEDURE IF EXISTS add_break_even_prediction;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE add_break_even_prediction (
     IN p_investment_id BIGINT,
@@ -3005,13 +3005,13 @@ BEGIN
         p_model,
         NOW()
     );
-END //
+END; //
 
 DELIMITER ;
 
     -- EBIT
 DROP PROCEDURE IF EXISTS add_ebit_prediction
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE add_ebit_prediction (
     IN p_date DATETIME,
@@ -3031,7 +3031,7 @@ BEGIN
         p_model,
         NOW()
     );
-END //
+END; //
 
 DELIMITER ;
 
@@ -3039,7 +3039,7 @@ DELIMITER ;
 --      Add adjustment row in inventory_log (Should only be adjustment)
 DROP PROCEDURE IF EXISTS add_inventory_log_entry; 
 
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE add_inventory_log_entry (
     IN il_product_id INT,
@@ -3078,14 +3078,14 @@ BEGIN
         reference_id,
         il_reference_type
     );
-END //
+END; //
 
 DELIMITER;
 
 --      Add row in operational_costs
 DROP PROCEDURE IF EXISTS add_operational_cost_entry; 
 
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE add_operational_cost_entry (
     IN oc_cost_type ENUM('RENT', 'UTILITIES', 'WAGES', 'MAINTENANCE', 'OTHER'),
@@ -3106,13 +3106,13 @@ BEGIN
         NOW(),
         oc_notes
     );
-END //
+END; //
 
 DELIMITER;
 
 --      Edit row in operational_costs
 DROP PROCEDURE IF EXISTS edit_operational_cost
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE edit_operational_cost (
     IN oc_cost_id BIGINT,
@@ -3140,14 +3140,14 @@ BEGIN
         notes = COALESCE(oc_notes, notes)
     WHERE cost_id = oc_cost_id;
 
-END //
+END; //
 
 DELIMITER ;
 
 --      Remove row in operational_costs
 DROP PROCEDURE IF EXISTS remove_operational_cost; 
 
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE remove_operational_cost (
     IN oc_cost_id BIGINT
@@ -3165,7 +3165,7 @@ BEGIN
 
     DELETE FROM operational_costs 
     WHERE cost_id = oc_cost_id;
-END //
+END; //
 
 DELIMITER ;
 
@@ -3173,7 +3173,7 @@ DELIMITER ;
 --      Add row in investments
 DROP PROCEDURE IF EXISTS add_investments_entry; 
 
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE add_investments_entry (
     IN in_amount DECIMAL(12, 2),
@@ -3191,13 +3191,13 @@ BEGIN
         in_investment_date,
         in_description
     );
-END //
+END; //
 
 DELIMITER;
 
 --      Edit row in investments
 DROP PROCEDURE IF EXISTS edit_operational_cost
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE edit_operational_cost (
     IN in_investment_id BIGINT,
@@ -3223,13 +3223,13 @@ BEGIN
         description = COALESCE(in_investment_date, description)
     WHERE cost_id = oc_cost_id;
 
-END //
+END; //
 
 DELIMITER ;
 
 --      Remove row in investments
 DROP PROCEDURE IF EXISTS remove_investment; 
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE remove_investment (
     IN in_investment_id BIGINT
@@ -3247,14 +3247,14 @@ BEGIN
 
     DELETE FROM investments 
     WHERE investment_id = investment_id;
-END //
+END; //
 
 DELIMITER ;
 
 --      Add row in purchase_orders
 DROP PROCEDURE IF EXISTS add_purchase_order_entry; 
 
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE add_purchase_order_entry (
     IN po_supplier_name VARCHAR(255),
@@ -3287,13 +3287,13 @@ BEGIN
     );
 
     
-END //
+END; //
 
 DELIMITER;
 
 --      Edit row in purchase_orders
 DROP PROCEDURE IF NOT EXISTS edit_purchase_order;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE edit_purchase_order (
     IN po_po_id BIGINT,
@@ -3329,13 +3329,13 @@ BEGIN
         total_cost = COALESCE(po_total_cost, total_cost)
     WHERE po_id = po_po_id;
 
-END //
+END; //
 
 DELIMITER ;
 
 --      Remove row in purchase_orders & purchase_order_items
 DROP PROCEDURE IF EXISTS remove_purchase_order; 
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE remove_purchase_order (
     IN po_po_id BIGINT
@@ -3356,14 +3356,14 @@ BEGIN
 
     DELETE FROM purchase_orders 
     WHERE po_id = po_po_id;
-END //
+END; //
 
 DELIMITER ;
 
 
 --      Add or edit row in purchase_order_items
 DROP PROCEDURE IF EXISTS upsert_purchase_order_item;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE upsert_purchase_order_item (
     IN p_po_id BIGINT,
@@ -3444,7 +3444,7 @@ BEGIN
     )
     WHERE po_id = p_po_id;
 
-END //
+END; //
 
 DELIMITER ;
 
@@ -3453,7 +3453,7 @@ DELIMITER ;
 --          * Barcode should be generated using python/java script
 DROP PROCEDURE IF EXISTS add_product_batches_entry; 
 
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE add_product_batches_entry (
     IN pb_product_name VARCHAR(255),
@@ -3535,12 +3535,12 @@ BEGIN
         last_update = NOW()
     WHERE product_id = pb_product_id;
     
-END //
+END; //
 
 DELIMITER;
 
 DROP PROCEDURE IF EXISTS edit_product_batches_entry; 
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE edit_product_batches_entry (
     IN pb_batch_id BIGINT,
@@ -3610,12 +3610,12 @@ BEGIN
         'BATCH'
     );
 
-END //
+END; //
 
 DELIMITER ;
 
 DROP PROCEDURE IF EXISTS remove_product_batch_entry;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE remove_product_batch_entry(
     IN pb_batch_id BIGINT
@@ -3674,7 +3674,7 @@ BEGIN
     DELETE FROM product_batches
     WHERE batch_id = pb_batch_id;
 
-END //
+END; //
 
 DELIMITER ;
 
@@ -3686,7 +3686,7 @@ DELIMITER ;
 -- Search for products
 DROP PROCEDURE IF EXISTS search_products; 
 
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE search_products (
     IN p_search VARCHAR(255),
@@ -3762,13 +3762,13 @@ BEGIN
         CASE WHEN p_sort = 'stock' THEN p.current_stock_level END ASC,
         CASE WHEN p_sort = 'newest' THEN p.date_added END DESC,
         CASE WHEN p_sort = 'most_purchased' THEN ts.total_sold END DESC;
-END //
+END; //
 
 DELIMITER ;
 
 --      Fetch expanded product information based on selection
 DROP PROCEDURE IF EXISTS get_product_details;
-DELIMITER //
+DELIMITER \\
 
 CREATE PROCEDURE get_product_details (
     IN p_product_id INT
@@ -3805,7 +3805,7 @@ BEGIN
 
     WHERE p.product_id = p_product_id;
 
-END //
+END; //
 
 DELIMITER ;
 
@@ -3818,7 +3818,7 @@ DELIMITER ;
 
 -- Maintain product stock level on changes to product_batches
 DROP TRIGGER IF EXISTS trg_update_product_stock_after_batch_update;
-DELIMITER //
+DELIMITER \\
 
 CREATE TRIGGER trg_update_product_stock_after_batch_update
 AFTER UPDATE ON product_batches
@@ -3838,12 +3838,12 @@ BEGIN
         last_update = NOW()
     WHERE product_id = NEW.product_id;
 
-END //
+END; //
 
 DELIMITER ;
 
 DROP TRIGGER IF EXISTS trg_update_product_stock_after_batch_insert;
-DELIMITER //
+DELIMITER \\
 
 CREATE TRIGGER trg_update_product_stock_after_batch_insert
 AFTER INSERT ON product_batches
@@ -3861,12 +3861,12 @@ BEGIN
         last_update = NOW()
     WHERE product_id = NEW.product_id;
 
-END //
+END; //
 
 DELIMITER ;
 
 DROP TRIGGER IF EXISTS trg_update_product_stock_after_batch_delete;
-DELIMITER //
+DELIMITER \\
 
 CREATE TRIGGER trg_update_product_stock_after_batch_delete
 AFTER DELETE ON product_batches
@@ -3884,12 +3884,12 @@ BEGIN
         last_update = NOW()
     WHERE product_id = OLD.product_id;
 
-END //
+END; //
 
 DELIMITER ;
 
 DROP TRIGGER IF EXISTS trg_prevent_negative_stock;
-DELIMITER //
+DELIMITER \\
 
 CREATE TRIGGER trg_prevent_negative_stock
 BEFORE UPDATE ON product_batches
@@ -3899,12 +3899,12 @@ BEGIN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Stock cannot go negative';
     END IF;
-END //
+END; //
 
 DELIMITER ;
 
 DROP TRIGGER IF EXISTS trg_auto_inventory_log;
-DELIMITER //
+DELIMITER \\
 
 CREATE TRIGGER trg_auto_inventory_log
 AFTER UPDATE ON product_batches
@@ -3934,7 +3934,7 @@ BEGIN
         );
     END IF;
 
-END //
+END; //
 
 DELIMITER ;
 
@@ -3943,7 +3943,7 @@ DELIMITER ;
 DROP TRIGGER IF EXISTS trg_purchase_order_items_after_mod;
 DROP TRIGGER IF EXISTS trg_purchase_order_items_after_update;
 DROP TRIGGER IF EXISTS trg_purchase_order_items_after_delete;
-DELIMITER //
+DELIMITER \\
 
 CREATE TRIGGER trg_purchase_order_items_after_mod
 AFTER INSERT ON purchase_order_items
@@ -3956,7 +3956,7 @@ BEGIN
         WHERE po_id = NEW.po_id
     )
     WHERE po.po_id = NEW.po_id;
-END //
+END; //
 
 CREATE TRIGGER trg_purchase_order_items_after_update
 AFTER UPDATE ON purchase_order_items
@@ -3969,7 +3969,7 @@ BEGIN
         WHERE po_id = NEW.po_id
     )
     WHERE po.po_id = NEW.po_id;
-END //
+END; //
 
 CREATE TRIGGER trg_purchase_order_items_after_delete
 AFTER DELETE ON purchase_order_items
@@ -3982,7 +3982,7 @@ BEGIN
         WHERE po_id = OLD.po_id
     )
     WHERE po.po_id = OLD.po_id;
-END //
+END; //
 
 DELIMITER ;
 
