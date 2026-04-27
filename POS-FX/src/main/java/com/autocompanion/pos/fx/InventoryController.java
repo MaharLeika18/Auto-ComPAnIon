@@ -10,6 +10,7 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
 public class InventoryController {
@@ -17,12 +18,15 @@ public class InventoryController {
     private static final String FXML_BASE      = "/com/autocompanion/pos/fx/";
     private static final String FXML_DASHBOARD = FXML_BASE + "Dashboard.fxml";
     private static final String FXML_PAI       = FXML_BASE + "Pai.fxml";
+    
+    @FXML
+    private TextField searchField;
 
     @FXML
     private void goToDashboard(ActionEvent event) { navigate(event, FXML_DASHBOARD); }
 
     @FXML
-    private void goToPai(ActionEvent event) { navigate(event, FXML_PAI); }
+    private void openPai(ActionEvent event) { navigate(event, FXML_PAI); }
 
     @FXML
     private void goToInventory(ActionEvent event) { /* already here */ }
