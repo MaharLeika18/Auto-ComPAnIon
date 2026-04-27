@@ -75,7 +75,7 @@ ALTER TABLE
 
 DROP TABLE IF EXISTS `compatibility`;
 CREATE TABLE `compatibility`(
-    `product_id` BIGINT UNSIGNED NOT NULL,
+    `product_id` INT UNSIGNED NOT NULL,
     `bottom_year` SMALLINT NOT NULL,
     `top_year` SMALLINT NOT NULL,
     `vehicle_id` SMALLINT UNSIGNED NOT NULL
