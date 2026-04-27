@@ -1971,7 +1971,7 @@ END //
 
 DELIMITER ;
 
-DROP PROCEDURE IF EXISTS get_products_below_reorder_prediction
+DROP PROCEDURE IF EXISTS get_products_below_reorder_prediction;
 DELIMITER //
 
 CREATE PROCEDURE get_products_below_reorder_prediction ()
