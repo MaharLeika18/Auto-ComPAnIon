@@ -26,7 +26,7 @@ CREATE TABLE `product`(
     `product_name` VARCHAR(255) NOT NULL,
     `product_description` VARCHAR(255) NULL,
     `part_number` VARCHAR(200) NULL,
-    `category_id` SMALLINT NOT NULL,
+    `category_id` SMALLINT UNSIGNED NOT NULL,
     `supplier_id` SMALLINT UNSIGNED NOT NULL,
     -- `current_stock_level` SMALLINT NOT NULL,
     `storage_location` VARCHAR(255) NULL,
