@@ -43,7 +43,7 @@ DROP TABLE IF EXISTS `product_category`;
 CREATE TABLE `product_category`(
     `category_id` SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `category_name` VARCHAR(255) NOT NULL,
-    `parent_category_id` SMALLINT NULL,
+    `parent_category_id` SMALLINT UNSIGNED NULL,
     `date_added` DATETIME NOT NULL
 );
 ALTER TABLE 
