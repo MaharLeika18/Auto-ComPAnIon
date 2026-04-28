@@ -5,7 +5,7 @@ from datetime import datetime
 import tkinter as tk
 from tkinter import filedialog
 import os
-from PIL import Image                   # pip install pillow                        
+from PIL import Image                               # pip install pillow                        
 import mysql.connector                              # pip install mysql-connector-python 
 from statsmodels.tsa.arima.model import ARIMA       # pip install stasmodels  
 from xgboost import XGBRegressor                    # pip install xgboost 
@@ -19,8 +19,8 @@ import seaborn as sb                                # pip install seaborn
 conn = mysql.connector.connect(
     host="localhost",
     user="root",
-    password="Caine",
-    database="Auto-CompAnIon"
+    password="1218",
+    database="autocomp"
 )
 
 # Generate product barcode string
@@ -120,7 +120,7 @@ def save_product_image(conn, product_id):
 
     print(f"Saved image: {filename}")
 
-#           Predictive AI Functions
+#----------------------Predictive AI Functions----------------------
 # ROI (Calculated)
 def fetch_calculated_roi(start_date, end_date):
     cursor = conn.cursor()
@@ -139,15 +139,15 @@ def save_roi_calculation(roi_df):
     data = [
         (
             "ROI",
-            float(row['roi']),
-            row['forecast_date'],
+            float(row['roi']) if row['roi'] is not None else None,
+            row['period_end'],
             "CALCULATED_v1"
         )
         for _, row in roi_df.iterrows()
     ]
 
     cursor.executemany("""
-        CALL add_financial_prediction(%s, %s, %s, %s, %s)
+        CALL add_financial_prediction(%s, %s, %s, %s, NOW())
     """, data)
 
     conn.commit()
@@ -224,7 +224,7 @@ def preprocess_roi(df):
     df = df.asfreq('D')
 
     # Fill missing ROI
-    df['roi'] = df['roi'].fillna(method='fill').fillna(0)
+    df['roi'] = df['roi'].fillna(method='ffill').fillna(0)
 
     return df
 
@@ -252,21 +252,21 @@ def train_roi_model(df, forecast_days=7):
 
     return pd.DataFrame(result)
 
-def save_roi_predictions(forecast_df, forecast_date):
+def save_roi_predictions(forecast_df):
     cursor = conn.cursor()
 
     data = [
         (
             "ROI",
             float(row['predicted_roi']),
-            forecast_date,
-            "ARIMA_v1"
+            row['forecast_date'],
+            "ARIMA_v1"        
         )
         for _, row in forecast_df.iterrows()
     ]
 
     cursor.executemany("""
-        CALL add_financial_prediction(%s, %s, %s, %s, %s)
+        CALL add_financial_prediction(%s, %s, %s, %s, NOW())
     """, data)
 
     conn.commit()
@@ -393,7 +393,7 @@ def save_cagr_calculated(cagr_df):
     ]
 
     cursor.executemany("""
-        CALL add_financial_prediction(%s, %s, %s, %s, %s)
+        CALL add_financial_prediction(%s, %s, %s, %s, NOW())
     """, data)
 
     conn.commit()
@@ -486,7 +486,7 @@ def save_cagr_prediction(forecast_df, forecast_date):
     ]
 
     cursor.executemany("""
-        CALL add_financial_prediction(%s, %s, %s, %s, %s)
+        CALL add_financial_prediction(%s, %s, %s, %s, NOW())
     """, data)
 
     conn.commit()
@@ -530,7 +530,7 @@ def forecast_demand(df, forecast_days=7):
             series = entity_df['total_quantity']
 
             if len(series) < 20:
-                continue
+                raise ValueError("Not enough data for demand forecasting")
 
             try:
                 model = ARIMA(series, order=(5,1,0))
@@ -545,7 +545,7 @@ def forecast_demand(df, forecast_days=7):
                     forecasts.append({
                         "entity_id": entity_id,
                         "entity_name": entity_name,
-                        "forecast_date": date,
+                        "forecast_date": date.to_pydatetime(),
                         "predicted_demand": max(0, float(value))
                     })
 
@@ -558,7 +558,7 @@ def save_forecasts(df_forecasts):
 
     data = [
         (
-            int(row['product_id']),
+            int(row['entity_id']),
             row['forecast_date'],
             float(row['predicted_demand']),
             "ARIMA_v1"
