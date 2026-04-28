@@ -5,7 +5,7 @@ from datetime import datetime
 import tkinter as tk
 from tkinter import filedialog
 import os
-from PIL import Image                   # pip install pillow                        
+from PIL import Image                               # pip install pillow                        
 import mysql.connector                              # pip install mysql-connector-python 
 from statsmodels.tsa.arima.model import ARIMA       # pip install stasmodels  
 from xgboost import XGBRegressor                    # pip install xgboost 
@@ -120,7 +120,7 @@ def save_product_image(conn, product_id):
 
     print(f"Saved image: {filename}")
 
-#           Predictive AI Functions
+#----------------------Predictive AI Functions----------------------
 # ROI (Calculated)
 def fetch_calculated_roi(start_date, end_date):
     cursor = conn.cursor()
@@ -530,7 +530,7 @@ def forecast_demand(df, forecast_days=7):
             series = entity_df['total_quantity']
 
             if len(series) < 20:
-                continue
+                raise ValueError("Not enough data for demand forecasting")
 
             try:
                 model = ARIMA(series, order=(5,1,0))

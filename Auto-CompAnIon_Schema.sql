@@ -3046,6 +3046,8 @@ CREATE PROCEDURE add_inventory_log_entry (
     IN il_reference_type ENUM('TRANSACTION', 'PURCHASE')
 )
 BEGIN
+    DECLARE temp_product_id INT;
+
     -- Check if product exists
     SELECT product_id INTO temp_product_id
     FROM product_category
