@@ -79,20 +79,15 @@ public class ProductDialog {
         grid.setPadding(new Insets(16, 24, 10, 24));
 
         // Required fields first (marked with *)
-        addRow(grid,  0, "* Counter ID",          counterIdField);
-        addRow(grid,  1, "* Counter Name",         counterNameField);
-        addRow(grid,  2, "* Category",             categoryField);
-        addRow(grid,  3, "* Serial Number",        serialField);
+        addRow(grid,  1, "* Category",         counterNameField);
+        addRow(grid,  2, "* Sub-Category",             categoryField);
+        addRow(grid,  3, "* Product ID",        serialField);
         addRow(grid,  4, "* Price (₱)",            priceField);
         addRow(grid,  5, "* Original Price (₱)",   origPriceField);
-        addRow(grid,  6, "* Printer Name",         printerNameField);
-        addRow(grid,  7, "* Printer Address",      printerAddrField);
+        addRow(grid,  6, "* Supplier",         printerNameField);
         // Optional fields
-        addRow(grid,  8, "  Product Name",         nameField);
-        addRow(grid,  9, "  Tax %",                taxField);
-        addRow(grid, 10, "  Promo %",              promoField);
-        addRow(grid, 11, "  Stock Count",          stockField);
-        addRow(grid, 12, "  Description",          descField);
+        addRow(grid,  7, "  Product Name",         nameField);
+        addRow(grid, 8, "  Stock Count",          stockField);
 
         // Required note
         Label note = new Label("* Required fields");
