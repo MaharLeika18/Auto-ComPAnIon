@@ -147,7 +147,7 @@ def save_roi_calculation(roi_df):
     ]
 
     cursor.executemany("""
-        CALL add_financial_prediction(%s, %s, %s, %s, NOW())
+        CALL add_financial_prediction(%s, %s, %s, %s)
     """, data)
 
     conn.commit()
@@ -266,7 +266,7 @@ def save_roi_predictions(forecast_df):
     ]
 
     cursor.executemany("""
-        CALL add_financial_prediction(%s, %s, %s, %s, NOW())
+        CALL add_financial_prediction(%s, %s, %s, %s)
     """, data)
 
     conn.commit()
@@ -393,7 +393,7 @@ def save_cagr_calculated(cagr_df):
     ]
 
     cursor.executemany("""
-        CALL add_financial_prediction(%s, %s, %s, %s, NOW())
+        CALL add_financial_prediction(%s, %s, %s, %s)
     """, data)
 
     conn.commit()
@@ -486,7 +486,7 @@ def save_cagr_prediction(forecast_df, forecast_date):
     ]
 
     cursor.executemany("""
-        CALL add_financial_prediction(%s, %s, %s, %s, NOW())
+        CALL add_financial_prediction(%s, %s, %s, %s)
     """, data)
 
     conn.commit()
@@ -1481,8 +1481,11 @@ if __name__ == "__main__":
         # EBIT falling -> reduce costs or adjust pricing
 
     # EBIT MARGIN
-    current = fetch_current_ebit_margin(start_current, end_current)
-    previous = fetch_current_ebit_margin(start_prev, end_prev)
+    # current = fetch_current_ebit_margin(start_current, end_current)
+    # previous = fetch_current_ebit_margin(start_prev, end_prev)
+
+    current = fetch_current_ebit_margin(start_date, end_date)
+    previous = fetch_current_ebit_margin("2026-04-30", "2026-10-30")
 
     trend = calculate_trend(
         current['ebit_margin'],
