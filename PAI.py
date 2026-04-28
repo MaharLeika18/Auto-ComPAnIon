@@ -147,7 +147,7 @@ def save_roi_calculation(roi_df):
     ]
 
     cursor.executemany("""
-        CALL add_financial_prediction(%s, %s, %s, %s, %s)
+        CALL add_financial_prediction(%s, %s, %s, %s)
     """, data)
 
     conn.commit()
@@ -224,7 +224,7 @@ def preprocess_roi(df):
     df = df.asfreq('D')
 
     # Fill missing ROI
-    df['roi'] = df['roi'].fillna(method='fill').fillna(0)
+    df['roi'] = df['roi'].fillna(method='ffill').fillna(0)
 
     return df
 
@@ -252,21 +252,21 @@ def train_roi_model(df, forecast_days=7):
 
     return pd.DataFrame(result)
 
-def save_roi_predictions(forecast_df, forecast_date):
+def save_roi_predictions(forecast_df):
     cursor = conn.cursor()
 
     data = [
         (
             "ROI",
             float(row['predicted_roi']),
-            forecast_date,
-            "ARIMA_v1"
+            row['forecast_date'],
+            "ARIMA_v1"        
         )
         for _, row in forecast_df.iterrows()
     ]
 
     cursor.executemany("""
-        CALL add_financial_prediction(%s, %s, %s, %s, %s)
+        CALL add_financial_prediction(%s, %s, %s, %s)
     """, data)
 
     conn.commit()
@@ -393,7 +393,7 @@ def save_cagr_calculated(cagr_df):
     ]
 
     cursor.executemany("""
-        CALL add_financial_prediction(%s, %s, %s, %s, %s)
+        CALL add_financial_prediction(%s, %s, %s, %s)
     """, data)
 
     conn.commit()
@@ -486,7 +486,7 @@ def save_cagr_prediction(forecast_df, forecast_date):
     ]
 
     cursor.executemany("""
-        CALL add_financial_prediction(%s, %s, %s, %s, %s)
+        CALL add_financial_prediction(%s, %s, %s, %s)
     """, data)
 
     conn.commit()
