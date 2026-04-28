@@ -19,8 +19,8 @@ import seaborn as sb                                # pip install seaborn
 conn = mysql.connector.connect(
     host="localhost",
     user="root",
-    password="Caine",
-    database="Auto-CompAnIon"
+    password="1218",
+    database="autocomp"
 )
 
 # Generate product barcode string

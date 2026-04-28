@@ -3046,6 +3046,7 @@ CREATE PROCEDURE add_inventory_log_entry (
     IN il_reference_type ENUM('TRANSACTION', 'PURCHASE')
 )
 BEGIN
+DECLARE temp_product_id INT;
     -- Check if product exists
     SELECT product_id INTO temp_product_id
     FROM product_category
@@ -3547,9 +3548,9 @@ CREATE PROCEDURE edit_product_batches_entry (
     IN pb_new_barcode VARCHAR(100)
 )
 BEGIN
-    DECLARE var_product_id INT;
-    DECLARE var_old_quantity SMALLINT;
-    DECLARE var_old_unit_cost DECIMAL(12,2);
+    DECLARE v_product_id INT;
+    DECLARE v_old_quantity SMALLINT;
+    DECLARE v_old_unit_cost DECIMAL(12,2);
 
     -- Check if entry exists and is valid
     SELECT 
