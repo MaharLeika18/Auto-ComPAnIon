@@ -139,8 +139,8 @@ def save_roi_calculation(roi_df):
     data = [
         (
             "ROI",
-            float(row['roi']),
-            row['forecast_date'],
+            float(row['roi']) if row['roi'] is not None else None,
+            row['period_end'],
             "CALCULATED_v1"
         )
         for _, row in roi_df.iterrows()
