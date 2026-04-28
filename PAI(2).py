@@ -1481,8 +1481,11 @@ if __name__ == "__main__":
         # EBIT falling -> reduce costs or adjust pricing
 
     # EBIT MARGIN
-    current = fetch_current_ebit_margin(start_current, end_current)
-    previous = fetch_current_ebit_margin(start_prev, end_prev)
+    # current = fetch_current_ebit_margin(start_current, end_current)
+    # previous = fetch_current_ebit_margin(start_prev, end_prev)
+
+    current = fetch_current_ebit_margin(start_date, end_date)
+    previous = fetch_current_ebit_margin("2026-04-30", "2026-10-30")
 
     trend = calculate_trend(
         current['ebit_margin'],

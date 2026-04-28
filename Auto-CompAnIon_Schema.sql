@@ -2950,16 +2950,14 @@ DELIMITER //
 CREATE PROCEDURE add_financial_prediction (
     IN fp_metric_type ENUM('ROI','CAGR'),
     IN fp_predicted_value DECIMAL(12,4),
-    IN fp_period_start DATE,
-    IN fp_period_end DATE,
+    IN fp_forecast_date DATE,
     IN fp_model_name VARCHAR(100)
 )
 BEGIN
     INSERT INTO financial_predictions (
         metric_type,
         predicted_value,
-        period_start,
-        period_end,
+        forecast_date,
         model_name,
         generated_at
     )
