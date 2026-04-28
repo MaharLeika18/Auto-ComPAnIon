@@ -147,7 +147,7 @@ def save_roi_calculation(roi_df):
     ]
 
     cursor.executemany("""
-        CALL add_financial_prediction(%s, %s, %s, %s)
+        CALL add_financial_prediction(%s, %s, %s, %s, NOW())
     """, data)
 
     conn.commit()
@@ -266,7 +266,7 @@ def save_roi_predictions(forecast_df):
     ]
 
     cursor.executemany("""
-        CALL add_financial_prediction(%s, %s, %s, %s)
+        CALL add_financial_prediction(%s, %s, %s, %s, NOW())
     """, data)
 
     conn.commit()
@@ -393,7 +393,7 @@ def save_cagr_calculated(cagr_df):
     ]
 
     cursor.executemany("""
-        CALL add_financial_prediction(%s, %s, %s, %s)
+        CALL add_financial_prediction(%s, %s, %s, %s, NOW())
     """, data)
 
     conn.commit()
@@ -486,7 +486,7 @@ def save_cagr_prediction(forecast_df, forecast_date):
     ]
 
     cursor.executemany("""
-        CALL add_financial_prediction(%s, %s, %s, %s)
+        CALL add_financial_prediction(%s, %s, %s, %s, NOW())
     """, data)
 
     conn.commit()
