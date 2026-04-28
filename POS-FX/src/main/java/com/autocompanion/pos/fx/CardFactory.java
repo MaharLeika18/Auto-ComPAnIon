@@ -20,9 +20,9 @@ public class CardFactory {
 
     private static final DecimalFormat df = new DecimalFormat("#,###.00");
 
-    // ─────────────────────────────────────────────────────────────────
-    // PRODUCT CARD  (grid on the left)
-    // ─────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────────
+    // PRODUCT CARD  (grid on the left of the POS dashboard)
+    // ─────────────────────────────────────────────────────────────────────────
     public static VBox createProductCard(Product p, Runnable onAddToCart) {
         VBox card = new VBox(8);
         card.setStyle(
@@ -48,11 +48,11 @@ public class CardFactory {
             "-fx-font-size: 16px; " +
             "-fx-text-fill: #649e8f;");
 
-        boolean lowStock = p.getStockAvailableNumber() < 5;
+        boolean lowStock = p.getStockAvailableNumber() > 0 && p.getStockAvailableNumber() < 5;
         Label stockLabel = new Label("Stock: " + p.getStockAvailableNumber());
         stockLabel.setStyle(
             "-fx-font-size: 11px; " +
-            "-fx-text-fill: " + (lowStock ? "#e05252" : "#888888") + ";");
+            "-fx-text-fill: " + (lowStock ? "#e08c52" : "#888888") + ";");
 
         Button addBtn = new Button("Add to Cart");
         addBtn.setStyle(
@@ -66,17 +66,22 @@ public class CardFactory {
 
         if (p.getStockAvailableNumber() == 0) {
             addBtn.setDisable(true);
-            addBtn.setStyle(addBtn.getStyle() +
-                "-fx-background-color: #cccccc; -fx-text-fill: #888888;");
+            addBtn.setStyle(
+                "-fx-background-color: #cccccc; " +
+                "-fx-background-radius: 20; " +
+                "-fx-text-fill: #888888; " +
+                "-fx-font-family: 'Montserrat SemiBold'; " +
+                "-fx-font-size: 12px; " +
+                "-fx-padding: 6 14;");
         }
 
         card.getChildren().addAll(nameLabel, priceLabel, stockLabel, addBtn);
         return card;
     }
 
-    // ─────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────────
     // CART ROW  (receipt panel on the right)
-    // ─────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────────
     public static VBox createCartRow(
             CartItem item,
             Runnable  onMinus,
@@ -156,13 +161,18 @@ public class CardFactory {
         return row;
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    // INVENTORY ROW  (table rows in inventory view)
+    // ─────────────────────────────────────────────────────────────────────────
+    // INVENTORY ROW  (table in inventory view)
     //
-    //  ┌──────────────────────────────────────────────────────────────────┐
-    //  │  Product Name   │  Serial Code  │  ₱ price  │  qty  │  status  │
-    //  └──────────────────────────────────────────────────────────────────┘
-    // ─────────────────────────────────────────────────────────────────────
+    // Column mapping from search_products → Product field used here:
+    //   Col 1  product_name        → p.getName()
+    //   Col 2  product_id          → p.getSerialCode()  / p.getId()
+    //   Col 3  category_name       → p.getCounterName()           ← setCounterName() in controller
+    //   Col 4  supplier_name       → p.getFoodDesc()              ← setFoodDesc() in controller
+    //   Col 5  storage_location    → p.getMainPrinterPortName()   ← setMainPrinterPortName() in controller
+    //   Col 6  current_stock_level → p.getStockAvailableNumber()
+    //   Col 7  retail_price        → p.getPrice()
+    // ─────────────────────────────────────────────────────────────────────────
     public static HBox createInventoryRow(Product p) {
         HBox row = new HBox();
         row.setPrefWidth(1656);
@@ -174,34 +184,36 @@ public class CardFactory {
             "-fx-padding: 0 16; " +
             "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 4, 0, 0, 2);");
 
-        // Product name — 290px to match your FXML label at x=125
+        // Col 1 — Product Name (290 px)
         Label nameLabel = makeRowLabel(p.getName(), 290, true);
 
-        // Serial code — 230px
-        Label idLabel = makeRowLabel(
-            p.getSerialCode() != null ? p.getSerialCode() : (p.getId() != null ? p.getId() : "—"),
-            230, false);
+        // Col 2 — Product ID / Serial Code (230 px)
+        String id = p.getSerialCode() != null ? p.getSerialCode()
+                  : p.getId() != null         ? p.getId()
+                  : "—";
+        Label idLabel = makeRowLabel(id, 230, false);
 
-        // Category — 180px (counterName is the closest field you have)
+        // Col 3 — Category  (180 px)  ← category_name packed into counterName
         Label categoryLabel = makeRowLabel(
-            p.getCounterName() != null ? p.getCounterName() : "—",
-            180, false);
+            p.getCounterName() != null ? p.getCounterName() : "—", 180, false);
 
-        // Supplier — 177px (no supplier field, placeholder)
-        Label supplierLabel = makeRowLabel("—", 177, false);
+        // Col 4 — Supplier  (177 px)  ← supplier_name packed into foodDesc
+        Label supplierLabel = makeRowLabel(
+            p.getFoodDesc() != null ? p.getFoodDesc() : "—", 177, false);
 
-        // Storage LOC — 223px (no field, placeholder)
-        Label storageLabel = makeRowLabel("—", 223, false);
+        // Col 5 — Storage Location  (223 px)  ← storage_location packed into mainPrinterPortName
+        Label storageLabel = makeRowLabel(
+            p.getMainPrinterPortName() != null ? p.getMainPrinterPortName() : "—", 223, false);
 
-        // Quantity in stock — 264px
-        int stock = p.getStockAvailableNumber();
-        boolean lowStock = stock > 0 && stock < 5;
-        boolean outOfStock = stock == 0;
+        // Col 6 — Stock  (264 px)
+        int stock      = p.getStockAvailableNumber();
+        boolean low    = stock > 0 && stock < 5;
+        boolean out    = stock == 0;
         Label qtyLabel = makeRowLabel(String.valueOf(stock), 264, false);
         qtyLabel.setStyle(qtyLabel.getStyle() +
-            "-fx-text-fill: " + (outOfStock ? "#e05252" : lowStock ? "#e08c52" : "#1c4f43") + ";");
+            "-fx-text-fill: " + (out ? "#e05252" : low ? "#e08c52" : "#1c4f43") + ";");
 
-        // Retail price — remaining space
+        // Col 7 — Price  (150 px)
         Label priceLabel = makeRowLabel("₱" + df.format(p.getPrice()), 150, true);
         priceLabel.setStyle(priceLabel.getStyle() + "-fx-text-fill: #649e8f;");
 
@@ -212,9 +224,9 @@ public class CardFactory {
         return row;
     }
 
-    // ─────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────────
     // HELPERS
-    // ─────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────────
     private static Label makeRowLabel(String text, double width, boolean semibold) {
         Label lbl = new Label(text != null ? text : "—");
         lbl.setPrefWidth(width);
@@ -241,7 +253,7 @@ public class CardFactory {
         try {
             int val = Integer.parseInt(field.getText().trim());
             if (val >= 1) onQtyTyped.accept(val);
-            else field.setText("1");
+            else          field.setText("1");
         } catch (NumberFormatException ex) {
             field.setText("1");
         }

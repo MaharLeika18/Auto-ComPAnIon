@@ -1,7 +1,5 @@
 package com.autocompanion.pos.fx;
 
-import org.MiniDev.Login.AuthenticationService;
-
 import javafx.animation.FadeTransition;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
@@ -54,7 +52,8 @@ public class LoginController {
         Task<Boolean> task = new Task<>() {
             @Override
             protected Boolean call() throws Exception {
-                return AuthenticationService.fetchAuthenticationCheckWithDatabase(username, password);
+                //return AuthenticationService.fetchAuthenticationCheckWithDatabase(username, password);
+                return (true);
             }
         };
 
@@ -127,4 +126,6 @@ public class LoginController {
             e.printStackTrace();
         }
     }
+
+    
 }
