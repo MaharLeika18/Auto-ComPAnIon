@@ -1,21 +1,66 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
 
-<AnchorPane fx:controller="com.autocompanion.pos.fx.InventoryController" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="1080.0" prefWidth="1920.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="1080.0" prefWidth="1920.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.autocompanion.pos.fx.InventoryController">
    <children>
+
+      <!-- Background -->
       <ImageView fitHeight="1080.0" fitWidth="1920.0" pickOnBounds="true" preserveRatio="true">
-         <image>
-            <Image url="@../Assets/INV2.png" />
-         </image>
+         <image><Image url="@../Assets/INV2.png" /></image>
       </ImageView>
+
+      <!-- Nav buttons (invisible hit areas) -->
       <Button fx:id="dashboardButton" layoutX="286.0" layoutY="74.0" mnemonicParsing="false" onAction="#goToDashboard" opacity="0.0" prefHeight="98.0" prefWidth="347.0" text="DASHBOARD" />
-      <Button  fx:id="paiButton" layoutX="1063.0" layoutY="72.0" mnemonicParsing="false" onAction="#openPai" opacity="0.0" prefHeight="92.0" prefWidth="341.0" text="PAI" />
-          <TextField fx:id="searchField" layoutX="648.0" layoutY="223.0" prefHeight="65.0" prefWidth="421.0" promptText="Search Products" style="-fx-background-radius: 50; -fx-border-width: 0; -fx-background-color: #EEF4ED;">
-    </TextField>
+      <Button fx:id="paiButton" layoutX="1063.0" layoutY="72.0" mnemonicParsing="false" onAction="#openPai" opacity="0.0" prefHeight="92.0" prefWidth="341.0" text="PAI" />
+
+      <!-- Search -->
+      <TextField fx:id="searchField" layoutX="910.0" layoutY="223.0" prefHeight="65.0" prefWidth="421.0" promptText="Search Products" style="-fx-background-radius: 50; -fx-border-width: 0; -fx-background-color: #EEF4ED;">
+         <font><Font name="Montserrat Regular" size="20.0" /></font>
+      </TextField>
+
+      <!-- Column header (white labels over background image) -->
+      <Pane layoutX="124.0" layoutY="312.0" prefHeight="56.0" prefWidth="1656.0">
+         <children>
+            <Label layoutX="30.0" layoutY="15.0" text="Product" textFill="WHITE">
+               <font><Font name="Montserrat Regular" size="20.0" /></font>
+            </Label>
+            <Label layoutX="269.0" layoutY="15.0" text="Product ID" textFill="WHITE">
+               <font><Font name="Montserrat Regular" size="20.0" /></font>
+            </Label>
+            <Label layoutX="484.0" layoutY="14.0" text="Category" textFill="WHITE">
+               <font><Font name="Montserrat Regular" size="20.0" /></font>
+            </Label>
+            <Label layoutX="676.0" layoutY="15.0" text="Supplier" textFill="WHITE">
+               <font><Font name="Montserrat Regular" size="20.0" /></font>
+            </Label>
+            <Label layoutX="863.0" layoutY="15.0" text="Storage LOC" textFill="WHITE">
+               <font><Font name="Montserrat Regular" size="20.0" /></font>
+            </Label>
+            <Label layoutX="1061.0" layoutY="14.0" text="Quantity In Stock" textFill="WHITE">
+               <font><Font name="Montserrat Regular" size="20.0" /></font>
+            </Label>
+            <Label layoutX="1343.0" layoutY="15.0" text="Retail Price" textFill="WHITE">
+               <font><Font name="Montserrat Regular" size="20.0" /></font>
+            </Label>
+         </children>
+      </Pane>
+
+      <!-- Scrollable product cards list -->
+      <ScrollPane fx:id="scrollPane" fitToWidth="true" layoutX="99.0" layoutY="391.0" prefHeight="664.0" prefWidth="1713.0" style="-fx-background: transparent; -fx-background-color: transparent; -fx-border-width: 0; -fx-background-radius: 40;">
+         <content>
+            <VBox fx:id="productList" spacing="10" style="-fx-background-color: transparent; -fx-padding: 0 0 20 0;" />
+         </content>
+      </ScrollPane>
+
    </children>
 </AnchorPane>

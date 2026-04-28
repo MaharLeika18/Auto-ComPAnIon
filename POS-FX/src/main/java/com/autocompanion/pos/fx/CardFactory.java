@@ -76,11 +76,6 @@ public class CardFactory {
 
     // ─────────────────────────────────────────────────────────────────
     // CART ROW  (receipt panel on the right)
-    //
-    //  ┌─────────────────────────────────────────────────────────┐
-    //  │  Product Name                           ₱ subtotal  [✕] │
-    //  │  [−]  [  qty field  ]  [+]                               │
-    //  └─────────────────────────────────────────────────────────┘
     // ─────────────────────────────────────────────────────────────────
     public static VBox createCartRow(
             CartItem item,
@@ -97,7 +92,6 @@ public class CardFactory {
             "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.07), 6, 0, 0, 2);");
         row.setPrefWidth(440);
 
-        // ── top line: name + subtotal + remove ───────────────────────
         Label nameLabel = new Label(item.getProductName());
         nameLabel.setStyle(
             "-fx-font-family: 'Montserrat SemiBold'; " +
@@ -127,7 +121,6 @@ public class CardFactory {
         HBox topLine = new HBox(4, nameLabel, spacer, subtotalLabel, removeBtn);
         topLine.setAlignment(Pos.CENTER_LEFT);
 
-        // ── bottom line: − | qty | + ──────────────────────────────────
         Button minusBtn = makeQtyBtn("−");
         minusBtn.setOnAction(e -> onMinus.run());
 
@@ -142,7 +135,6 @@ public class CardFactory {
             "-fx-border-radius: 8; " +
             "-fx-text-fill: #1c4f43;");
 
-        // commit on Enter or focus-lost
         qtyField.setOnAction(e -> commitQty(qtyField, onQtyTyped));
         qtyField.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
             if (!isFocused) commitQty(qtyField, onQtyTyped);
@@ -151,7 +143,6 @@ public class CardFactory {
         Button plusBtn = makeQtyBtn("+");
         plusBtn.setOnAction(e -> onPlus.run());
 
-        // unit price hint
         Label unitPrice = new Label("@ ₱" + df.format(item.getPrice()) + " each");
         unitPrice.setStyle("-fx-font-size: 11px; -fx-text-fill: #aaaaaa;");
 
@@ -166,8 +157,74 @@ public class CardFactory {
     }
 
     // ─────────────────────────────────────────────────────────────────
+    // INVENTORY ROW  (table rows in inventory view)
+    //
+    //  ┌──────────────────────────────────────────────────────────────────┐
+    //  │  Product Name   │  Serial Code  │  ₱ price  │  qty  │  status  │
+    //  └──────────────────────────────────────────────────────────────────┘
+    // ─────────────────────────────────────────────────────────────────────
+    public static HBox createInventoryRow(Product p) {
+        HBox row = new HBox();
+        row.setPrefWidth(1656);
+        row.setPrefHeight(56);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setStyle(
+            "-fx-background-color: #EEF4ED; " +
+            "-fx-background-radius: 40; " +
+            "-fx-padding: 0 16; " +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 4, 0, 0, 2);");
+
+        // Product name — 290px to match your FXML label at x=125
+        Label nameLabel = makeRowLabel(p.getName(), 290, true);
+
+        // Serial code — 230px
+        Label idLabel = makeRowLabel(
+            p.getSerialCode() != null ? p.getSerialCode() : (p.getId() != null ? p.getId() : "—"),
+            230, false);
+
+        // Category — 180px (counterName is the closest field you have)
+        Label categoryLabel = makeRowLabel(
+            p.getCounterName() != null ? p.getCounterName() : "—",
+            180, false);
+
+        // Supplier — 177px (no supplier field, placeholder)
+        Label supplierLabel = makeRowLabel("—", 177, false);
+
+        // Storage LOC — 223px (no field, placeholder)
+        Label storageLabel = makeRowLabel("—", 223, false);
+
+        // Quantity in stock — 264px
+        int stock = p.getStockAvailableNumber();
+        boolean lowStock = stock > 0 && stock < 5;
+        boolean outOfStock = stock == 0;
+        Label qtyLabel = makeRowLabel(String.valueOf(stock), 264, false);
+        qtyLabel.setStyle(qtyLabel.getStyle() +
+            "-fx-text-fill: " + (outOfStock ? "#e05252" : lowStock ? "#e08c52" : "#1c4f43") + ";");
+
+        // Retail price — remaining space
+        Label priceLabel = makeRowLabel("₱" + df.format(p.getPrice()), 150, true);
+        priceLabel.setStyle(priceLabel.getStyle() + "-fx-text-fill: #649e8f;");
+
+        row.getChildren().addAll(
+            nameLabel, idLabel, categoryLabel,
+            supplierLabel, storageLabel, qtyLabel, priceLabel
+        );
+        return row;
+    }
+
+    // ─────────────────────────────────────────────────────────────────
     // HELPERS
     // ─────────────────────────────────────────────────────────────────
+    private static Label makeRowLabel(String text, double width, boolean semibold) {
+        Label lbl = new Label(text != null ? text : "—");
+        lbl.setPrefWidth(width);
+        lbl.setStyle(
+            "-fx-font-family: 'Montserrat " + (semibold ? "SemiBold" : "Regular") + "'; " +
+            "-fx-font-size: 14px; " +
+            "-fx-text-fill: #1c4f43;");
+        return lbl;
+    }
+
     private static Button makeQtyBtn(String text) {
         Button btn = new Button(text);
         btn.setPrefSize(30, 30);
