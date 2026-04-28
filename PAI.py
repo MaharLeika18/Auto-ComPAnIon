@@ -545,7 +545,7 @@ def forecast_demand(df, forecast_days=7):
                     forecasts.append({
                         "entity_id": entity_id,
                         "entity_name": entity_name,
-                        "forecast_date": date,
+                        "forecast_date": date.to_pydatetime(),
                         "predicted_demand": max(0, float(value))
                     })
 
@@ -558,7 +558,7 @@ def save_forecasts(df_forecasts):
 
     data = [
         (
-            int(row['product_id']),
+            int(row['entity_id']),
             row['forecast_date'],
             float(row['predicted_demand']),
             "ARIMA_v1"
