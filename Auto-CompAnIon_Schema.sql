@@ -3549,9 +3549,9 @@ CREATE PROCEDURE edit_product_batches_entry (
     IN pb_new_barcode VARCHAR(100)
 )
 BEGIN
-    DECLARE var_product_id INT;
-    DECLARE var_old_quantity SMALLINT;
-    DECLARE var_old_unit_cost DECIMAL(12,2);
+    DECLARE v_product_id INT;
+    DECLARE v_old_quantity SMALLINT;
+    DECLARE v_old_unit_cost DECIMAL(12,2);
 
     -- Check if entry exists and is valid
     SELECT 
