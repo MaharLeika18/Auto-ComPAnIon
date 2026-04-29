@@ -72,7 +72,7 @@ LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/Mock Data/MOCK_D
 INTO TABLE transaction_log
 FIELDS TERMINATED BY ',' 
 OPTIONALLY ENCLOSED BY '"'
-LINES TERMINATED BY '\n'
+LINES TERMINATED BY '\r\n'
 IGNORE 1 LINES
 (@c1,@transaction_date,@c3,@c4,@c5,@c6,@c7,@c8,@c9)
 SET
@@ -84,9 +84,9 @@ transaction_date =
     END,
 receipt_num = @c3,
 total_amount = @c4,
-payment_method = NULLIF(UPPER(TRIM(@c5)), ''),
-status = NULLIF(UPPER(TRIM(@c6)), ''),
-notes = NULLIF(TRIM(@c7), '');
+payment_method = NULLIF(UPPER(TRIM(REPLACE(@c5, '\r', ''))), ''),
+status = NULLIF(UPPER(TRIM(REPLACE(@c6, '\r', ''))), ''),
+notes = NULLIF(UPPER(TRIM(REPLACE(@c7, '\r', ''))), '');
 
 -- TRANSACTION ITEMS
 LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/Mock Data/MOCK_DATA_TRANSACTION_ITEMS.csv'
