@@ -233,7 +233,7 @@ def preprocess_roi(df):
     df = df.asfreq('D')
 
     # Fill missing ROI
-    df['roi'] = df['roi'].fillna(method='ffill').fillna(0)
+    # df['roi'] = df['roi'].fillna(method='ffill').fillna(0)
 
     return df
 
@@ -1399,7 +1399,7 @@ if __name__ == "__main__":
     save_roi_calculation(df)
 
     df = fetch_roi_dataset(start_date, end_date)    
-    df = preprocess_roi(df)
+    # df = preprocess_roi(df)
     forecast_df = train_roi_model(df, forecast_days=7)  # Predicted
     save_roi_predictions(forecast_df, start_date, end_date)
 
