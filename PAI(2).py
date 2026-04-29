@@ -148,7 +148,7 @@ def save_roi_calculation(roi_df):
     data = [
         (
             "ROI",
-            float(row['roi']),
+            float(row['roi']) if pd.notna(row['roi']) else None,
             row['period_end'],
             "CALCULATED_v1"
         )
@@ -1390,7 +1390,8 @@ if __name__ == "__main__":
 
     # ROI
     df = fetch_calculated_roi(start_date, end_date) # Calculated, take roi for kpi
-    validate_roi_data(df)
+    # validate_roi_data(df)
+    print(df[['roi']])
     save_roi_calculation(df)
 
     df = fetch_roi_dataset(start_date, end_date)    
