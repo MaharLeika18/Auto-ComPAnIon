@@ -145,7 +145,7 @@
             <Label layoutX="749.0" layoutY="239.0" text="Net Profit" textFill="#00000080">
                <font><Font name="Orbitron Bold" size="15.0" /></font>
             </Label>
-<ImageView id="paiStock" fx:id="paiStock" fitHeight="150.0" fitWidth="69.0" layoutX="938.0" layoutY="160.0" pickOnBounds="true" preserveRatio="true" onMouseClicked="#goToPaiStock">
+<ImageView id="paiStock" fx:id="paiStock" fitHeight="150.0" fitWidth="69.0" layoutX="938.0" layoutY="160.0" onMouseClicked="#goToPaiStock" pickOnBounds="true" preserveRatio="true">
    <image>
       <Image url="@../Assets/arrow_left.png" />
    </image>
@@ -156,7 +156,7 @@
       <!-- ④ Invisible nav buttons — same positions as your original -->
       <Button layoutX="286.0" layoutY="74.0" mnemonicParsing="false" onAction="#goToDashboard" opacity="0.0" prefHeight="98.0" prefWidth="347.0" text="DASHBOARD" />
       <Button layoutX="671.0" layoutY="74.0" mnemonicParsing="false" onAction="#goToInventory" opacity="0.0" prefHeight="98.0" prefWidth="347.0" text="INVENTORY" />
-      <Pane layoutX="416.0" layoutY="633.0" prefHeight="364.0" prefWidth="994.0">
+      <Pane id="goToPareto" accessibleRole="BUTTON" layoutX="416.0" layoutY="633.0" prefHeight="364.0" prefWidth="994.0">
          <children>
             <Label layoutX="40.0" layoutY="22.0" text="Profit Optimization (Pareto Chart)">
                <font>
@@ -166,7 +166,7 @@
             <Pane layoutX="40.0" layoutY="56.0" prefHeight="289.0" prefWidth="917.0" />
          </children>
       </Pane>
-      <Pane layoutX="1446.0" layoutY="226.0" prefHeight="380.0" prefWidth="363.0">
+      <Pane id="goToDF" accessibleRole="BUTTON" layoutX="1446.0" layoutY="226.0" prefHeight="380.0" prefWidth="363.0">
          <children>
             <Label layoutX="26.0" layoutY="6.0" text="Demand Forecasting">
                <font>
@@ -176,7 +176,7 @@
             <Pane layoutX="26.0" layoutY="42.0" prefHeight="321.0" prefWidth="319.0" />
          </children>
       </Pane>
-      <Pane layoutX="1450.0" layoutY="633.0" prefHeight="170.0" prefWidth="356.0">
+      <Pane id="goToROICAGR" layoutX="1450.0" layoutY="633.0" prefHeight="170.0" prefWidth="356.0">
          <children>
             <Label layoutX="29.0" layoutY="31.0" text="ROI (Return on Investment)">
                <font>
@@ -195,7 +195,7 @@
             </Label>
          </children>
       </Pane>
-      <Pane layoutX="1450.0" layoutY="832.0" prefHeight="164.0" prefWidth="356.0">
+      <Pane id="goToROICAGR" accessibleRole="BUTTON" layoutX="1450.0" layoutY="832.0" prefHeight="164.0" prefWidth="356.0">
          <children>
             <Label layoutX="21.0" layoutY="25.0" text="CAGR (Annual Growth Rate)">
                <font>
