@@ -145,6 +145,11 @@
             <Label layoutX="749.0" layoutY="239.0" text="Net Profit" textFill="#00000080">
                <font><Font name="Orbitron Bold" size="15.0" /></font>
             </Label>
+<ImageView id="paiStock" fx:id="paiStock" fitHeight="150.0" fitWidth="69.0" layoutX="938.0" layoutY="160.0" pickOnBounds="true" preserveRatio="true" onMouseClicked="#goToPaiStock">
+   <image>
+      <Image url="@../Assets/arrow_left.png" />
+   </image>
+</ImageView>
          </children>
       </Pane>
 
@@ -158,6 +163,7 @@
                   <Font name="Orbitron Bold" size="20.0" />
                </font>
             </Label>
+            <Pane layoutX="40.0" layoutY="56.0" prefHeight="289.0" prefWidth="917.0" />
          </children>
       </Pane>
       <Pane layoutX="1446.0" layoutY="226.0" prefHeight="380.0" prefWidth="363.0">
@@ -167,6 +173,7 @@
                   <Font name="Orbitron Bold" size="20.0" />
                </font>
             </Label>
+            <Pane layoutX="26.0" layoutY="42.0" prefHeight="321.0" prefWidth="319.0" />
          </children>
       </Pane>
       <Pane layoutX="1450.0" layoutY="633.0" prefHeight="170.0" prefWidth="356.0">
