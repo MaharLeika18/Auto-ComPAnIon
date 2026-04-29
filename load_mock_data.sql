@@ -114,7 +114,9 @@ FIELDS TERMINATED BY ','
 OPTIONALLY ENCLOSED BY '"'
 LINES TERMINATED BY '\n'
 IGNORE 1 LINES
-(log_id,product_id,change_type,quantity,unit_cost,log_date,reference_id,reference_type);
+(log_id,product_id,change_type,quantity,unit_cost,log_date,reference_id,@reference_type)
+SET
+reference_type = NULLIF(UPPER(TRIM(REPLACE(@reference_type, '\r', ''))), '');
 
 -- PURCHASE ORDERS
 LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/Mock Data/MOCK_DATA_PURCHASE_ORDERS.csv'
