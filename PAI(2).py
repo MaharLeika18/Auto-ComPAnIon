@@ -133,6 +133,15 @@ def fetch_calculated_roi(start_date, end_date):
 
     return pd.DataFrame(data, columns=columns)
 
+def validate_roi_data(roi_df):
+    if roi_df.empty:
+        raise ValueError("No ROI data returned")
+
+    investment = roi_df['total_investment'].iloc[0]
+
+    if investment is None or investment == 0:
+        raise ValueError("ROI cannot be calculated due to missing investment data")
+    
 def save_roi_calculation(roi_df):
     cursor = conn.cursor()
 
@@ -1378,6 +1387,7 @@ if __name__ == "__main__":
 
     # ROI
     df = fetch_calculated_roi(start_date, end_date) # Calculated, take roi for kpi
+    validate_roi_data(df)
     save_roi_calculation(df)
 
     df = fetch_roi_dataset(start_date, end_date)    
