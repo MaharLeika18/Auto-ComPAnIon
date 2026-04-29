@@ -84,9 +84,9 @@ transaction_date =
     END,
 receipt_num = @c3,
 total_amount = @c4,
-payment_method = @c5,
-status = @c6,
-notes = @c7;
+payment_method = NULLIF(UPPER(TRIM(@c5)), ''),
+status = NULLIF(UPPER(TRIM(@c6)), ''),
+notes = NULLIF(TRIM(@c7), '');
 
 -- TRANSACTION ITEMS
 LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/Mock Data/MOCK_DATA_TRANSACTION_ITEMS.csv'
