@@ -1385,6 +1385,12 @@ if __name__ == "__main__":
     start_date = "2025-01-01"
     end_date = "2026-04-20"
 
+    start_date = datetime.combine(start_date.date(), datetime.min.time())
+    end_date = datetime.combine(end_date.date(), datetime.max.time())       
+
+    print("START:", start_date, type(start_date))
+    print("END:", end_date, type(end_date))
+
     # ROI
     df = fetch_calculated_roi(start_date, end_date) # Calculated, take roi for kpi
     validate_roi_data(df)
