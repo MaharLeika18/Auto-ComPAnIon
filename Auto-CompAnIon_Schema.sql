@@ -2964,7 +2964,6 @@ BEGIN
     VALUES (
         fp_metric_type,
         fp_predicted_value,
-        fp_period_start,
         fp_period_end,
         fp_model_name,
         NOW()

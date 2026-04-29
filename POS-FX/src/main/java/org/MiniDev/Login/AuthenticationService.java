@@ -10,7 +10,7 @@ public class AuthenticationService {
     private static final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
     public static boolean fetchAuthenticationCheckWithDatabase(String username, String rawPassword) {
-    String sql = "SELECT TellerPassword FROM Teller WHERE TellerName = ?";
+    String sql = "SELECT password_hash FROM users WHERE username = ?";
     try (Connection connection = DBConnection.getConnection();
          PreparedStatement stmt = connection.prepareStatement(sql)) {
 
@@ -20,7 +20,7 @@ public class AuthenticationService {
         stmt.setString(1, username);
         try (ResultSet rs = stmt.executeQuery()) {
             if (rs.next()) {
-                String hashedPassword = rs.getString("TellerPassword");
+                String hashedPassword = rs.getString("password_hash");
                 System.out.println("DEBUG: Hash from DB: " + hashedPassword);
                 boolean result = encoder.matches(rawPassword, hashedPassword);
                 System.out.println("DEBUG: Password match result: " + result);
@@ -36,16 +36,16 @@ public class AuthenticationService {
     return false;
 }
 
-    // Method to get the current tellerID
-    public static int getCurrenttellerID(String username) {
-        String sql = "SELECT tellerID FROM Teller WHERE TellerName = ?";
+    // Method to get the current user ID
+    public static int getCurrentUserID(String username) {
+        String sql = "SELECT user_id FROM users WHERE username = ?";
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement stmt = connection.prepareStatement(sql)) {
 
             stmt.setString(1, username);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getInt("tellerID");
+                    return rs.getInt("user_id");
                 }
             }
         } catch (SQLException e) {
