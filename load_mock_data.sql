@@ -58,6 +58,7 @@ IGNORE 1 LINES
 
 -- MANUFACTURERS
 LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/Mock Data/MOCK_DATA_MANUFACTURER.csv'
+IGNORE
 INTO TABLE manufacturers
 FIELDS TERMINATED BY ',' 
 OPTIONALLY ENCLOSED BY '"'
@@ -76,7 +77,11 @@ IGNORE 1 LINES
 (@c1,@transaction_date,@c3,@c4,@c5,@c6,@c7,@c8,@c9)
 SET
 parent_transaction_id = @c1,
-transaction_date = NULLIF(@transaction_date,''),
+transaction_date = 
+    CASE 
+        WHEN @transaction_date = '' THEN NOW()
+        ELSE @transaction_date
+    END,
 receipt_num = @c3,
 total_amount = @c4,
 payment_method = @c5,
