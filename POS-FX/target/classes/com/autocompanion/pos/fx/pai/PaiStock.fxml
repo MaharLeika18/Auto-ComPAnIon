@@ -19,7 +19,7 @@
 
       <!-- ① Background — must be FIRST so everything else renders on top -->
       <ImageView fitHeight="1080.0" fitWidth="1920.0" pickOnBounds="true" preserveRatio="true">
-         <image><Image url="@../Assets/PAI3.png" /></image>
+         <image><Image url="@../../Assets/PAI3.png" /></image>
       </ImageView>
 <!-- ② Left filter pane -->
 <Pane id="dateFIlter" layoutX="91.0" layoutY="230.0" prefHeight="756.0" prefWidth="258.0">
@@ -92,25 +92,22 @@
       <Pane layoutX="408.0" layoutY="230.0" prefHeight="387.0" prefWidth="980.0">
          <children>
             <ImageView fitHeight="429.0" fitWidth="406.0" layoutX="14.0" layoutY="7.0" pickOnBounds="true" preserveRatio="true">
-               <image><Image url="@../Assets/speedometers/30.png" /></image>
+               <image><Image url="@../../Assets/speedometers/30.png" /></image>
             </ImageView>
             <ImageView fitHeight="467.0" fitWidth="487.0" layoutX="270.0" layoutY="-51.0" pickOnBounds="true" preserveRatio="true">
-               <image><Image url="@../Assets/speedometers/29.png" /></image>
-            </ImageView>
-            <ImageView fitHeight="406.0" fitWidth="431.0" layoutX="586.0" layoutY="7.0" pickOnBounds="true" preserveRatio="true">
-               <image><Image url="@../Assets/speedometers/31.png" /></image>
+               <image><Image url="@../../Assets/speedometers/29.png" /></image>
             </ImageView>
             <ImageView fitHeight="175.0" fitWidth="205.0" layoutX="416.0" layoutY="238.0" pickOnBounds="true" preserveRatio="true">
-               <image><Image url="@../Assets/Logo/(W)%20Auto-CompAnIon%20Logo.png" /></image>
+               <image><Image url="@../../Assets/Logo/(W)%20Auto-CompAnIon%20Logo.png" /></image>
             </ImageView>
             <ImageView fitHeight="22.0" fitWidth="23.0" layoutX="492.0" layoutY="112.0">
-               <image><Image url="@../Assets/speedometers/small.png" /></image>
+               <image><Image url="@../../Assets/speedometers/small.png" /></image>
             </ImageView>
             <ImageView fitHeight="22.0" fitWidth="23.0" layoutX="206.0" layoutY="134.0">
-               <image><Image url="@../Assets/speedometers/small.png" /></image>
+               <image><Image url="@../../Assets/speedometers/small.png" /></image>
             </ImageView>
             <ImageView fitHeight="22.0" fitWidth="23.0" layoutX="778.0" layoutY="134.0">
-               <image><Image url="@../Assets/speedometers/small.png" /></image>
+               <image><Image url="@../../Assets/speedometers/small.png" /></image>
             </ImageView>
 
             <!-- Static headings -->
@@ -145,9 +142,14 @@
             <Label layoutX="749.0" layoutY="239.0" text="Net Profit" textFill="#00000080">
                <font><Font name="Orbitron Bold" size="15.0" /></font>
             </Label>
-            <ImageView id="paiStock" accessibleRole="BUTTON" fitHeight="150.0" fitWidth="69.0" layoutX="938.0" layoutY="160.0" pickOnBounds="true" preserveRatio="true">
+            <ImageView id="goToPai" accessibleRole="BUTTON" fitHeight="150.0" fitWidth="69.0" layoutY="144.0" pickOnBounds="true" preserveRatio="true">
                <image>
-                  <Image url="@../Assets/arrow_left.png" />
+                  <Image url="@../../Assets/arrow_left(1).png" />
+               </image>
+            </ImageView>
+            <ImageView fitHeight="406.0" fitWidth="431.0" layoutX="590.0" layoutY="7.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../../Assets/speedometers/31.png" />
                </image>
             </ImageView>
          </children>
@@ -158,7 +160,7 @@
       <Button layoutX="671.0" layoutY="74.0" mnemonicParsing="false" onAction="#goToInventory" opacity="0.0" prefHeight="98.0" prefWidth="347.0" text="INVENTORY" />
       <Pane layoutX="416.0" layoutY="633.0" prefHeight="364.0" prefWidth="994.0">
          <children>
-            <Label layoutX="40.0" layoutY="22.0" text="Profit Optimization (Pareto Chart)">
+            <Label layoutX="40.0" layoutY="22.0" text="Reorder Prediction (Matrix)">
                <font>
                   <Font name="Orbitron Bold" size="20.0" />
                </font>
@@ -168,7 +170,7 @@
       </Pane>
       <Pane layoutX="1446.0" layoutY="226.0" prefHeight="380.0" prefWidth="363.0">
          <children>
-            <Label layoutX="26.0" layoutY="6.0" text="Demand Forecasting">
+            <Label layoutX="26.0" layoutY="6.0" text="Low Stock Alert">
                <font>
                   <Font name="Orbitron Bold" size="20.0" />
                </font>
@@ -176,38 +178,14 @@
             <Pane layoutX="26.0" layoutY="42.0" prefHeight="321.0" prefWidth="319.0" />
          </children>
       </Pane>
-      <Pane layoutX="1450.0" layoutY="633.0" prefHeight="170.0" prefWidth="356.0">
+      <Pane layoutX="1435.0" layoutY="626.0" prefHeight="380.0" prefWidth="385.0" style="-fx-background-color: #fff; -fx-border-width: 1; -fx-border-color: #000; -fx-background-radius: 30; -fx-border-radius: 30;">
          <children>
-            <Label layoutX="29.0" layoutY="31.0" text="ROI (Return on Investment)">
+            <Label layoutX="21.0" layoutY="25.0" text="Analysis">
                <font>
                   <Font name="Orbitron Bold" size="20.0" />
                </font>
             </Label>
-            <Label layoutX="100.0" layoutY="56.0" text="0.00 %">
-               <font>
-                  <Font name="Orbitron Bold" size="45.0" />
-               </font>
-            </Label>
-            <Label layoutX="83.0" layoutY="122.0" text="+-0.00% vs last period">
-               <font>
-                  <Font name="Orbitron Bold" size="15.0" />
-               </font>
-            </Label>
-         </children>
-      </Pane>
-      <Pane layoutX="1450.0" layoutY="832.0" prefHeight="164.0" prefWidth="356.0">
-         <children>
-            <Label layoutX="21.0" layoutY="25.0" text="CAGR (Annual Growth Rate)">
-               <font>
-                  <Font name="Orbitron Bold" size="20.0" />
-               </font>
-            </Label>
-            <Label layoutX="88.0" layoutY="56.0" text="0.00 %">
-               <font>
-                  <Font name="Orbitron Bold" size="45.0" />
-               </font>
-            </Label>
-            <Label layoutX="83.0" layoutY="108.0" text="+-0.00% vs last period">
+            <Label layoutX="44.0" layoutY="65.0" prefHeight="289.0" prefWidth="299.0" text="Analysis here." textFill="#00000080">
                <font>
                   <Font name="Orbitron Bold" size="15.0" />
                </font>
