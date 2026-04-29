@@ -70,6 +70,20 @@ public class PaiController {
         initializing = false;
         loadMetrics();
     }
+@FXML
+private void goToPaiStock(MouseEvent event) {
+    try {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/autocompanion/pos/fx/pai/PaiStock.fxml"));
+        Parent root = loader.load();
+
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        Scene scene = new Scene(root);
+        stage.setScene(scene);
+        stage.show();
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
 
     // ─────────────────────────────────────────────────────────────────────────
     // FILTER CHANGE — all checkboxes route here via onAction="#onFilterChange"

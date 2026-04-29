@@ -145,11 +145,11 @@
             <Label layoutX="749.0" layoutY="239.0" text="Net Profit" textFill="#00000080">
                <font><Font name="Orbitron Bold" size="15.0" /></font>
             </Label>
-<ImageView id="paiStock" fx:id="paiStock" fitHeight="150.0" fitWidth="69.0" layoutX="938.0" layoutY="160.0" pickOnBounds="true" preserveRatio="true" onMouseClicked="#goToPaiStock">
-   <image>
-      <Image url="@../Assets/arrow_left.png" />
-   </image>
-</ImageView>
+            <ImageView id="paiStock" accessibleRole="BUTTON" fitHeight="150.0" fitWidth="69.0" layoutX="938.0" layoutY="160.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../Assets/arrow_left.png" />
+               </image>
+            </ImageView>
          </children>
       </Pane>
 
