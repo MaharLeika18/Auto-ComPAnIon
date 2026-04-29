@@ -1382,11 +1382,8 @@ def calculate_trend(current, previous):
 # Main Execution (for testing)
 if __name__ == "__main__":
     # NOTE: These are all example usages for both testing and reference 
-    start_date = "2025-01-01"
-    end_date = "2026-04-20"
-
-    start_date = datetime.combine(start_date.date(), datetime.min.time())
-    end_date = datetime.combine(end_date.date(), datetime.max.time())       
+    start_date = datetime.strptime("2025-01-01", "%Y-%m-%d")
+    end_date = datetime.strptime("2026-04-20", "%Y-%m-%d")       
 
     print("START:", start_date, type(start_date))
     print("END:", end_date, type(end_date))
