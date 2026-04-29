@@ -2964,7 +2964,7 @@ BEGIN
     VALUES (
         fp_metric_type,
         fp_predicted_value,
-        fp_period_end,
+        fp_forecast_date,
         fp_model_name,
         NOW()
     ) -- removed semicolon
