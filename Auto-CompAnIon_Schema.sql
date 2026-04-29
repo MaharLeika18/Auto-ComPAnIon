@@ -2123,7 +2123,8 @@ BEGIN
     SELECT IFNULL(SUM(amount), 0)
     INTO total_investment
     FROM investments
-    WHERE investment_date BETWEEN p_start_date AND p_end_date;
+    WHERE investment_date >= p_start_date
+    AND investment_date < DATE_ADD(p_end_date, INTERVAL 1 DAY);
 
     -- Operational Costs
     SELECT IFNULL(SUM(amount), 0)
