@@ -139,7 +139,7 @@ def save_roi_calculation(roi_df):
     data = [
         (
             "ROI",
-            float(row['roi']) if row['roi'] is not None else None,
+            float(row['roi']),
             row['period_end'],
             "CALCULATED_v1"
         )
