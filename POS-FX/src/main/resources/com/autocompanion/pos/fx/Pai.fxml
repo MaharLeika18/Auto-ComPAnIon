@@ -30,7 +30,7 @@
          <!-- MONTH -->
          <VBox spacing="6">
             <HBox alignment="CENTER_LEFT" spacing="6">
-               <Label style="-fx-font-family:'Orbitron Bold';-fx-font-size:30;-fx-text-fill:#1C4F43;" text="Month:"></Label>
+               <Label style="-fx-font-family:'Orbitron Bold';-fx-font-size:30;-fx-text-fill:#1C4F43;" text="Month:" />
                <Region HBox.hgrow="ALWAYS" />
                <CheckBox fx:id="cbAllMonths" onAction="#onFilterChange" style="-fx-font-family:'Orbitron';-fx-text-fill:#1C4F43;" text="All" />
             </HBox>
@@ -151,6 +151,62 @@
       <!-- ④ Invisible nav buttons — same positions as your original -->
       <Button layoutX="286.0" layoutY="74.0" mnemonicParsing="false" onAction="#goToDashboard" opacity="0.0" prefHeight="98.0" prefWidth="347.0" text="DASHBOARD" />
       <Button layoutX="671.0" layoutY="74.0" mnemonicParsing="false" onAction="#goToInventory" opacity="0.0" prefHeight="98.0" prefWidth="347.0" text="INVENTORY" />
+      <Pane layoutX="416.0" layoutY="633.0" prefHeight="364.0" prefWidth="994.0">
+         <children>
+            <Label layoutX="40.0" layoutY="22.0" text="Profit Optimization (Pareto Chart)">
+               <font>
+                  <Font name="Orbitron Bold" size="20.0" />
+               </font>
+            </Label>
+         </children>
+      </Pane>
+      <Pane layoutX="1446.0" layoutY="226.0" prefHeight="380.0" prefWidth="363.0">
+         <children>
+            <Label layoutX="26.0" layoutY="6.0" text="Demand Forecasting">
+               <font>
+                  <Font name="Orbitron Bold" size="20.0" />
+               </font>
+            </Label>
+         </children>
+      </Pane>
+      <Pane layoutX="1450.0" layoutY="633.0" prefHeight="170.0" prefWidth="356.0">
+         <children>
+            <Label layoutX="29.0" layoutY="31.0" text="ROI (Return on Investment)">
+               <font>
+                  <Font name="Orbitron Bold" size="20.0" />
+               </font>
+            </Label>
+            <Label layoutX="100.0" layoutY="56.0" text="0.00 %">
+               <font>
+                  <Font name="Orbitron Bold" size="45.0" />
+               </font>
+            </Label>
+            <Label layoutX="83.0" layoutY="122.0" text="+-0.00% vs last period">
+               <font>
+                  <Font name="Orbitron Bold" size="15.0" />
+               </font>
+            </Label>
+         </children>
+      </Pane>
+      <Pane layoutX="1450.0" layoutY="832.0" prefHeight="164.0" prefWidth="356.0">
+         <children>
+            <Label layoutX="21.0" layoutY="25.0" text="CAGR (Annual Growth Rate)">
+               <font>
+                  <Font name="Orbitron Bold" size="20.0" />
+               </font>
+            </Label>
+            <Label layoutX="88.0" layoutY="56.0" text="0.00 %">
+               <font>
+                  <Font name="Orbitron Bold" size="45.0" />
+               </font>
+            </Label>
+            <Label layoutX="83.0" layoutY="108.0" text="+-0.00% vs last period">
+               <font>
+                  <Font name="Orbitron Bold" size="15.0" />
+               </font>
+            </Label>
+         </children>
+      </Pane>
 
    </children>
 </AnchorPane>
