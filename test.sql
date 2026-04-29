@@ -1,0 +1,14 @@
+CREATE TEMPORARY TABLE raw_import (
+    c5 VARCHAR(100)
+);
+
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/Mock Data/MOCK_DATA_TRANSACTION_LOG.csv'
+INTO TABLE raw_import
+FIELDS TERMINATED BY ','
+OPTIONALLY ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+(@c1,@c2,@c3,@c4,@c5,@c6,@c7,@c8,@c9)
+SET c5 = @c5;
+
+SELECT DISTINCT c5, LENGTH(c5) FROM raw_import;
