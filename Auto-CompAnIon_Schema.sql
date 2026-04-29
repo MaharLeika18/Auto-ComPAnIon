@@ -118,7 +118,7 @@ CREATE TABLE `transaction_log`(
     `transaction_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `parent_transaction_id` BIGINT UNSIGNED DEFAULT NULL,
     `transaction_date` DATETIME NOT NULL,
-    `receipt_num` INT NOT NULL,
+    `receipt_num` VARCHAR(50) NOT NULL,
     `total_amount` DECIMAL(12, 2) NOT NULL,
     `payment_method` ENUM('CASH', 'E-WALLET', 'BANK') NULL,
     `status` ENUM('PENDING', 'CONFIRMED', 'CANCELLED', 'REFUNDED') NOT NULL DEFAULT 'PENDING',
