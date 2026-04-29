@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="1080.0" prefWidth="1920.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.autocompanion.pos.fx.PaiController">
+
+   <children>
+
+      <!-- ① Background — must be FIRST so everything else renders on top -->
+      <ImageView fitHeight="1080.0" fitWidth="1920.0" pickOnBounds="true" preserveRatio="true">
+         <image><Image url="@../Assets/PAI3.png" /></image>
+      </ImageView>
+<!-- ② Left filter pane -->
+<Pane id="dateFIlter" layoutX="91.0" layoutY="230.0" prefHeight="756.0" prefWidth="258.0">
+   <children>
+      <VBox layoutX="-1.0" prefHeight="756.0" prefWidth="258.0" spacing="12">
+         <padding><Insets bottom="20" left="14" right="14" top="20" /></padding>
+
+         <!-- MONTH -->
+         <VBox spacing="6">
+            <HBox alignment="CENTER_LEFT" spacing="6">
+               <Label style="-fx-font-family:'Orbitron Bold';-fx-font-size:30;-fx-text-fill:#1C4F43;" text="Month:" />
+               <Region HBox.hgrow="ALWAYS" />
+               <CheckBox fx:id="cbAllMonths" onAction="#onFilterChange" style="-fx-font-family:'Orbitron';-fx-text-fill:#1C4F43;" text="All" />
+            </HBox>
+
+            <!-- ONE STRAIGHT COLUMN -->
+            <VBox spacing="4">
+               <CheckBox fx:id="cbJan" onAction="#onFilterChange" style="-fx-font-family:'Montserrat'; -fx-text-fill:#1C4F43; -fx-font-size: 20px;" text="January" />
+               <CheckBox fx:id="cbFeb" onAction="#onFilterChange" style="-fx-font-family:'Montserrat'; -fx-text-fill:#1C4F43; -fx-font-size: 20px;" text="February" />
+               <CheckBox fx:id="cbMar" onAction="#onFilterChange" style="-fx-font-family:'Montserrat'; -fx-text-fill:#1C4F43; -fx-font-size: 20px;" text="March" />
+               <CheckBox fx:id="cbApr" onAction="#onFilterChange" style="-fx-font-family:'Montserrat'; -fx-text-fill:#1C4F43; -fx-font-size: 20px;" text="April" />
+               <CheckBox fx:id="cbMay" onAction="#onFilterChange" style="-fx-font-family:'Montserrat'; -fx-text-fill:#1C4F43; -fx-font-size: 20px;" text="May" />
+               <CheckBox fx:id="cbJun" onAction="#onFilterChange" style="-fx-font-family:'Montserrat'; -fx-text-fill:#1C4F43; -fx-font-size: 20px;" text="June" />
+               <CheckBox fx:id="cbJul" onAction="#onFilterChange" style="-fx-font-family:'Montserrat'; -fx-text-fill:#1C4F43; -fx-font-size: 20px;" text="July" />
+               <CheckBox fx:id="cbAug" onAction="#onFilterChange" style="-fx-font-family:'Montserrat'; -fx-text-fill:#1C4F43; -fx-font-size: 20px;" text="August" />
+               <CheckBox fx:id="cbSep" onAction="#onFilterChange" style="-fx-font-family:'Montserrat';-fx-text-fill:#1C4F43; -fx-font-size: 20px;" text="September" />
+               <CheckBox fx:id="cbOct" onAction="#onFilterChange" style="-fx-font-family:'Montserrat';-fx-text-fill:#1C4F43; -fx-font-size: 20px;" text="October" />
+               <CheckBox fx:id="cbNov" onAction="#onFilterChange" style="-fx-font-family:'Montserrat';-fx-text-fill:#1C4F43; -fx-font-size: 20px;" text="November" />
+               <CheckBox fx:id="cbDec" onAction="#onFilterChange" style="-fx-font-family:'Montserrat';-fx-text-fill:#1C4F43; -fx-font-size: 20px;" text="December" />
+            </VBox>
+         </VBox>
+
+         <!-- QUARTER -->
+         <VBox spacing="6">
+            <HBox alignment="CENTER_LEFT" spacing="6">
+               <Label style="-fx-font-family:'Orbitron Bold';-fx-font-size:30;-fx-text-fill:#1C4F43;" text="Quarter" />
+               <Region prefHeight="18.0" prefWidth="30.0" HBox.hgrow="ALWAYS" />
+               <CheckBox fx:id="cbAllQuarters" onAction="#onFilterChange" style="-fx-font-family:'Orbitron';-fx-text-fill:#1C4F43;" text="All" />
+            </HBox>
+
+            <VBox spacing="4">
+               <CheckBox fx:id="cbQ1" onAction="#onFilterChange" style="-fx-font-family:'Montserrat';-fx-text-fill:#1C4F43; -fx-font-size: 20px;" text="Q1 (Jan–Mar)" />
+               <CheckBox fx:id="cbQ2" onAction="#onFilterChange" style="-fx-font-family:'Montserrat';-fx-text-fill:#1C4F43; -fx-font-size: 20px;" text="Q2 (Apr–Jun)" />
+               <CheckBox fx:id="cbQ3" onAction="#onFilterChange" style="-fx-font-family:'Montserrat';-fx-text-fill:#1C4F43; -fx-font-size: 20px;" text="Q3 (Jul–Sep)" />
+               <CheckBox fx:id="cbQ4" onAction="#onFilterChange" style="-fx-font-family:'Montserrat';-fx-text-fill:#1C4F43; -fx-font-size: 20px;" text="Q4 (Oct–Dec)" />
+            </VBox>
+         </VBox>
+
+         <!-- YEAR -->
+         <VBox spacing="6">
+            <HBox alignment="CENTER_LEFT" spacing="6">
+               <Label style="-fx-font-family:'Orbitron Bold';-fx-font-size:14;-fx-text-fill:#1C4F43;" text="Year" />
+               <Region HBox.hgrow="ALWAYS" />
+               <CheckBox fx:id="cbAllYears" onAction="#onFilterChange" style="-fx-font-family:'Orbitron';-fx-text-fill:#1C4F43;" text="All" />
+            </HBox>
+
+            <VBox spacing="4">
+               <CheckBox fx:id="cb2026" onAction="#onFilterChange" style="-fx-font-family:'Montserrat';-fx-text-fill:#1C4F43; -fx-font-size: 20px;" text="2026" />
+               <CheckBox fx:id="cb2027" onAction="#onFilterChange" style="-fx-font-family:'Montserrat';-fx-text-fill:#1C4F43; -fx-font-size: 20px;" text="2027" />
+               <CheckBox fx:id="cb2028" onAction="#onFilterChange" style="-fx-font-family:'Montserrat';-fx-text-fill:#1C4F43; -fx-font-size: 20px;" text="2028" />
+            </VBox>
+         </VBox>
+
+      </VBox>
+   </children>
+</Pane>
+
+
+      <!-- ③ Speedometers + metric labels — identical to your original -->
+      <Pane layoutX="408.0" layoutY="230.0" prefHeight="387.0" prefWidth="980.0">
+         <children>
+            <ImageView fitHeight="429.0" fitWidth="406.0" layoutX="14.0" layoutY="7.0" pickOnBounds="true" preserveRatio="true">
+               <image><Image url="@../Assets/speedometers/30.png" /></image>
+            </ImageView>
+            <ImageView fitHeight="467.0" fitWidth="487.0" layoutX="270.0" layoutY="-51.0" pickOnBounds="true" preserveRatio="true">
+               <image><Image url="@../Assets/speedometers/29.png" /></image>
+            </ImageView>
+            <ImageView fitHeight="406.0" fitWidth="431.0" layoutX="586.0" layoutY="7.0" pickOnBounds="true" preserveRatio="true">
+               <image><Image url="@../Assets/speedometers/31.png" /></image>
+            </ImageView>
+            <ImageView fitHeight="175.0" fitWidth="205.0" layoutX="416.0" layoutY="238.0" pickOnBounds="true" preserveRatio="true">
+               <image><Image url="@../Assets/Logo/(W)%20Auto-CompAnIon%20Logo.png" /></image>
+            </ImageView>
+            <ImageView fitHeight="22.0" fitWidth="23.0" layoutX="492.0" layoutY="112.0">
+               <image><Image url="@../Assets/speedometers/small.png" /></image>
+            </ImageView>
+            <ImageView fitHeight="22.0" fitWidth="23.0" layoutX="206.0" layoutY="134.0">
+               <image><Image url="@../Assets/speedometers/small.png" /></image>
+            </ImageView>
+            <ImageView fitHeight="22.0" fitWidth="23.0" layoutX="778.0" layoutY="134.0">
+               <image><Image url="@../Assets/speedometers/small.png" /></image>
+            </ImageView>
+
+            <!-- Static headings -->
+            <Label layoutX="441.0" layoutY="145.0" text="EBITDA Margin">
+               <font><Font name="Orbitron Bold" size="15.0" /></font>
+            </Label>
+            <Label layoutX="166.0" layoutY="164.0" text="Gross Profit">
+               <font><Font name="Orbitron Bold" size="15.0" /></font>
+            </Label>
+            <Label layoutX="749.0" layoutY="164.0" text="Net Profit">
+               <font><Font name="Orbitron Bold" size="15.0" /></font>
+            </Label>
+
+            <!-- ★ Dynamic value labels wired to controller ★ -->
+            <Label fx:id="ebitdaValueLabel" layoutX="432.0" layoutY="164.0" text="0.00%">
+               <font><Font name="Orbitron Bold" size="45.0" /></font>
+            </Label>
+            <Label fx:id="grossProfitValueLabel" layoutX="147.0" layoutY="187.0" text="₱0.00">
+               <font><Font name="Orbitron Bold" size="35.0" /></font>
+            </Label>
+            <Label fx:id="netProfitValueLabel" layoutX="734.0" layoutY="187.0" text="₱0.00">
+               <font><Font name="Orbitron Bold" size="35.0" /></font>
+            </Label>
+
+            <!-- Sub-labels -->
+            <Label contentDisplay="CENTER" layoutX="475.0" layoutY="230.0" text="Margin" textFill="#00000080">
+               <font><Font name="Orbitron Bold" size="15.0" /></font>
+            </Label>
+            <Label layoutX="166.0" layoutY="239.0" text="Gross Profit" textFill="#00000080">
+               <font><Font name="Orbitron Bold" size="15.0" /></font>
+            </Label>
+            <Label layoutX="749.0" layoutY="239.0" text="Net Profit" textFill="#00000080">
+               <font><Font name="Orbitron Bold" size="15.0" /></font>
+            </Label>
+<ImageView id="paiStock" fx:id="paiStock" fitHeight="150.0" fitWidth="69.0" layoutX="938.0" layoutY="160.0" onMouseClicked="#goToPaiStock" pickOnBounds="true" preserveRatio="true">
+   <image>
+      <Image url="@../Assets/arrow_left.png" />
+   </image>
+</ImageView>
+         </children>
+      </Pane>
+
+      <!-- ④ Invisible nav buttons — same positions as your original -->
+      <Button layoutX="286.0" layoutY="74.0" mnemonicParsing="false" onAction="#goToDashboard" opacity="0.0" prefHeight="98.0" prefWidth="347.0" text="DASHBOARD" />
+      <Button layoutX="671.0" layoutY="74.0" mnemonicParsing="false" onAction="#goToInventory" opacity="0.0" prefHeight="98.0" prefWidth="347.0" text="INVENTORY" />
+      <Pane id="goToPareto" accessibleRole="BUTTON" layoutX="416.0" layoutY="633.0" prefHeight="364.0" prefWidth="994.0">
+         <children>
+            <Label layoutX="40.0" layoutY="22.0" text="Profit Optimization (Pareto Chart)">
+               <font>
+                  <Font name="Orbitron Bold" size="20.0" />
+               </font>
+            </Label>
+            <Pane layoutX="40.0" layoutY="56.0" prefHeight="289.0" prefWidth="917.0" />
+         </children>
+      </Pane>
+      <Pane id="goToDF" accessibleRole="BUTTON" layoutX="1446.0" layoutY="226.0" prefHeight="380.0" prefWidth="363.0">
+         <children>
+            <Label layoutX="26.0" layoutY="6.0" text="Demand Forecasting">
+               <font>
+                  <Font name="Orbitron Bold" size="20.0" />
+               </font>
+            </Label>
+            <Pane layoutX="26.0" layoutY="42.0" prefHeight="321.0" prefWidth="319.0" />
+         </children>
+      </Pane>
+      <Pane id="goToROICAGR" layoutX="1450.0" layoutY="633.0" prefHeight="170.0" prefWidth="356.0">
+         <children>
+            <Label layoutX="29.0" layoutY="31.0" text="ROI (Return on Investment)">
+               <font>
+                  <Font name="Orbitron Bold" size="20.0" />
+               </font>
+            </Label>
+            <Label layoutX="100.0" layoutY="56.0" text="0.00 %">
+               <font>
+                  <Font name="Orbitron Bold" size="45.0" />
+               </font>
+            </Label>
+            <Label layoutX="83.0" layoutY="122.0" text="+-0.00% vs last period">
+               <font>
+                  <Font name="Orbitron Bold" size="15.0" />
+               </font>
+            </Label>
+         </children>
+      </Pane>
+      <Pane id="goToROICAGR" accessibleRole="BUTTON" layoutX="1450.0" layoutY="832.0" prefHeight="164.0" prefWidth="356.0">
+         <children>
+            <Label layoutX="21.0" layoutY="25.0" text="CAGR (Annual Growth Rate)">
+               <font>
+                  <Font name="Orbitron Bold" size="20.0" />
+               </font>
+            </Label>
+            <Label layoutX="88.0" layoutY="56.0" text="0.00 %">
+               <font>
+                  <Font name="Orbitron Bold" size="45.0" />
+               </font>
+            </Label>
+            <Label layoutX="83.0" layoutY="108.0" text="+-0.00% vs last period">
+               <font>
+                  <Font name="Orbitron Bold" size="15.0" />
+               </font>
+            </Label>
+         </children>
+      </Pane>
+
+   </children>
+</AnchorPane>
