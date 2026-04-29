@@ -252,7 +252,7 @@ def train_roi_model(df, forecast_days=7):
     forecast = model_fit.forecast(steps=forecast_days)
 
     last_date = df.index[-1]
-    pd.to_datetime(last_date)
+    last_date = pd.to_datetime(last_date)
     future_dates = [last_date + timedelta(days=i+1) for i in range(forecast_days)]
 
     result = []
@@ -1401,7 +1401,7 @@ if __name__ == "__main__":
     df = fetch_roi_dataset(start_date, end_date)    
     # df = preprocess_roi(df)
     forecast_df = train_roi_model(df, forecast_days=7)  # Predicted
-    save_roi_predictions(forecast_df, start_date, end_date)
+    save_roi_predictions(forecast_df)
 
     # CAGR
     df = fetch_calculated_cagr(start_date, end_date) # Calculated, take cagr for kpi
@@ -1410,7 +1410,7 @@ if __name__ == "__main__":
     df = fetch_cagr_dataset(start_date, end_date)   
     df = preprocess_cagr(df)
     forecast_df = train_cagr_model(df)  # Predicted
-    save_cagr_prediction(forecast_df, start_date, end_date)
+    save_cagr_prediction(forecast_df, end_date)
 
     # Demand Forecasting
     df = fetch_sales_data(mode="PRODUCT", product_id=123)   # Forecast one product 
