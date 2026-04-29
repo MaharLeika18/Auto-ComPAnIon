@@ -140,7 +140,7 @@ CREATE TABLE `transaction_items`(
     `quantity_sold` SMALLINT NOT NULL,
     `unit_selling_price` DECIMAL(12, 2) NOT NULL COMMENT 'Retail price per unit at the moment of sale',
     `unit_cost_at_sale` DECIMAL(12, 2) NOT NULL COMMENT 'Cost per unit from supplier at the moment of sale',
-    `discount_applied` DECIMAL(3, 2) NOT NULL,
+    `discount_applied` DECIMAL(12, 2) NOT NULL,
     `total_sale_value` DECIMAL(12, 2) NOT NULL COMMENT 'Total revenue: (quantity_sold * unit_selling_price) - (quantity_sold * discount_applied)',
     `total_cost` DECIMAL(12, 2) NOT NULL COMMENT 'Total cost of goods sold (COGS): quantity_sold * unit_cost_at_sale'
 );
