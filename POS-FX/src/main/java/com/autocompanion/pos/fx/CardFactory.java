@@ -21,7 +21,7 @@ public class CardFactory {
     private static final DecimalFormat df = new DecimalFormat("#,###.00");
 
     // ─────────────────────────────────────────────────────────────────────────
-    // PRODUCT CARD  (grid on the left of the POS dashboard)
+    // PRODUCT CARD  (grid on the left — UI unchanged)
     // ─────────────────────────────────────────────────────────────────────────
     public static VBox createProductCard(Product p, Runnable onAddToCart) {
         VBox card = new VBox(8);
@@ -80,7 +80,7 @@ public class CardFactory {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // CART ROW  (receipt panel on the right)
+    // CART ROW  (receipt panel — + and manual input capped at maxStock)
     // ─────────────────────────────────────────────────────────────────────────
     public static VBox createCartRow(
             CartItem item,
@@ -88,6 +88,8 @@ public class CardFactory {
             Runnable  onPlus,
             Consumer<Integer> onQtyTyped,
             Runnable  onRemove) {
+
+        int maxStock = item.getMaxStock();
 
         VBox row = new VBox(6);
         row.setStyle(
@@ -127,7 +129,19 @@ public class CardFactory {
         topLine.setAlignment(Pos.CENTER_LEFT);
 
         Button minusBtn = makeQtyBtn("−");
+        Button plusBtn  = makeQtyBtn("+");
+
+        // Disable + if already at stock limit
+        plusBtn.setDisable(item.getQuantity() >= maxStock);
+
         minusBtn.setOnAction(e -> onMinus.run());
+
+        // Guard + so it never exceeds stock
+        plusBtn.setOnAction(e -> {
+            if (item.getQuantity() < maxStock) {
+                onPlus.run();
+            }
+        });
 
         TextField qtyField = new TextField(String.valueOf(item.getQuantity()));
         qtyField.setPrefWidth(52);
@@ -140,15 +154,12 @@ public class CardFactory {
             "-fx-border-radius: 8; " +
             "-fx-text-fill: #1c4f43;");
 
-        qtyField.setOnAction(e -> commitQty(qtyField, onQtyTyped));
+        qtyField.setOnAction(e -> commitQty(qtyField, onQtyTyped, maxStock));
         qtyField.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
-            if (!isFocused) commitQty(qtyField, onQtyTyped);
+            if (!isFocused) commitQty(qtyField, onQtyTyped, maxStock);
         });
 
-        Button plusBtn = makeQtyBtn("+");
-        plusBtn.setOnAction(e -> onPlus.run());
-
-        Label unitPrice = new Label("@ ₱" + df.format(item.getPrice()) + " each");
+        Label unitPrice = new Label("@ ₱" + df.format(item.getPrice()) + " each  [max: " + maxStock + "]");
         unitPrice.setStyle("-fx-font-size: 11px; -fx-text-fill: #aaaaaa;");
 
         Region spacer2 = new Region();
@@ -162,16 +173,7 @@ public class CardFactory {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // INVENTORY ROW  (table in inventory view)
-    //
-    // Column mapping from search_products → Product field used here:
-    //   Col 1  product_name        → p.getName()
-    //   Col 2  product_id          → p.getSerialCode()  / p.getId()
-    //   Col 3  category_name       → p.getCounterName()           ← setCounterName() in controller
-    //   Col 4  supplier_name       → p.getFoodDesc()              ← setFoodDesc() in controller
-    //   Col 5  storage_location    → p.getMainPrinterPortName()   ← setMainPrinterPortName() in controller
-    //   Col 6  current_stock_level → p.getStockAvailableNumber()
-    //   Col 7  retail_price        → p.getPrice()
+    // INVENTORY ROW
     // ─────────────────────────────────────────────────────────────────────────
     public static HBox createInventoryRow(Product p) {
         HBox row = new HBox();
@@ -184,36 +186,29 @@ public class CardFactory {
             "-fx-padding: 0 16; " +
             "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 4, 0, 0, 2);");
 
-        // Col 1 — Product Name (290 px)
         Label nameLabel = makeRowLabel(p.getName(), 290, true);
 
-        // Col 2 — Product ID / Serial Code (230 px)
         String id = p.getSerialCode() != null ? p.getSerialCode()
                   : p.getId() != null         ? p.getId()
                   : "—";
         Label idLabel = makeRowLabel(id, 230, false);
 
-        // Col 3 — Category  (180 px)  ← category_name packed into counterName
         Label categoryLabel = makeRowLabel(
             p.getCounterName() != null ? p.getCounterName() : "—", 180, false);
 
-        // Col 4 — Supplier  (177 px)  ← supplier_name packed into foodDesc
         Label supplierLabel = makeRowLabel(
             p.getFoodDesc() != null ? p.getFoodDesc() : "—", 177, false);
 
-        // Col 5 — Storage Location  (223 px)  ← storage_location packed into mainPrinterPortName
         Label storageLabel = makeRowLabel(
             p.getMainPrinterPortName() != null ? p.getMainPrinterPortName() : "—", 223, false);
 
-        // Col 6 — Stock  (264 px)
-        int stock      = p.getStockAvailableNumber();
-        boolean low    = stock > 0 && stock < 5;
-        boolean out    = stock == 0;
+        int stock   = p.getStockAvailableNumber();
+        boolean low = stock > 0 && stock < 5;
+        boolean out = stock == 0;
         Label qtyLabel = makeRowLabel(String.valueOf(stock), 264, false);
         qtyLabel.setStyle(qtyLabel.getStyle() +
             "-fx-text-fill: " + (out ? "#e05252" : low ? "#e08c52" : "#1c4f43") + ";");
 
-        // Col 7 — Price  (150 px)
         Label priceLabel = makeRowLabel("₱" + df.format(p.getPrice()), 150, true);
         priceLabel.setStyle(priceLabel.getStyle() + "-fx-text-fill: #649e8f;");
 
@@ -249,13 +244,16 @@ public class CardFactory {
         return btn;
     }
 
-    private static void commitQty(TextField field, Consumer<Integer> onQtyTyped) {
+    // maxStock param added — clamps typed value before passing it up
+    private static void commitQty(TextField field, Consumer<Integer> onQtyTyped, int maxStock) {
         try {
             int val = Integer.parseInt(field.getText().trim());
-            if (val >= 1) onQtyTyped.accept(val);
-            else          field.setText("1");
+            val = Math.max(1, Math.min(val, maxStock)); // clamp [1, maxStock]
+            field.setText(String.valueOf(val));          // reflect clamped value in field
+            onQtyTyped.accept(val);
         } catch (NumberFormatException ex) {
             field.setText("1");
+            onQtyTyped.accept(1);
         }
     }
 }

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.text.Font?>
+
+<StackPane prefHeight="1080.0" prefWidth="1920.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.autocompanion.pos.fx.OwnerLoginController">
+   <children>
+      <!-- ================= MAIN UI ================= -->
+      <Pane prefHeight="1080.0" prefWidth="1920.0">
+         <children>
+
+            <!-- Background (reuse same background) -->
+            <ImageView fitHeight="1080.0" fitWidth="1920.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../img/UserAuth_Background.png" />
+               </image>
+            </ImageView>
+      
+                        <!-- ================= OVERLAY LAYER ================= -->
+            <StackPane fx:id="overlayPane" pickOnBounds="false" prefHeight="1080.0" prefWidth="1920.0" />
+
+            <!-- Icon (reuse same icon) -->
+            <StackPane layoutX="689.0" layoutY="267.0" prefHeight="450.0" prefWidth="552.0">
+               <children>
+                  <ImageView fitHeight="400.0" fitWidth="433.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../img/usericon.png" />
+                     </image>
+                  </ImageView>
+               </children>
+            </StackPane>
+
+            <!-- Title label -->
+            <Label layoutX="804.0" layoutY="720.0" text="Admin Authentication Required" textFill="WHITE">
+               <font>
+                  <Font name="Montserrat Regular" size="20.0" />
+               </font>
+            </Label>
+
+            <!-- Username -->
+            <TextField fx:id="txtUsername" alignment="CENTER" layoutX="784.0" layoutY="782.0" prefHeight="53.0" prefWidth="363.0" promptText="Enter Username" style="-fx-background-radius: 70; -fx-background-color: #b3b3b3; -fx-text-fill: black; -fx-prompt-text-fill: #4a4a4a; -fx-border-width: 0;">
+               <font>
+                  <Font name="Montserrat SemiBold" size="17.0" />
+               </font>
+            </TextField>
+
+            <!-- Password -->
+            <PasswordField fx:id="txtPassword" alignment="CENTER" layoutX="783.0" layoutY="846.0" prefHeight="53.0" prefWidth="363.0" promptText="Enter Password" style="-fx-background-color: #B3B3B3; -fx-background-radius: 70; -fx-text-fill: black; -fx-prompt-text-fill: #4a4a4a; -fx-border-width: 0;">
+               <font>
+                  <Font name="Montserrat SemiBold" size="17.0" />
+               </font>
+            </PasswordField>
+
+            <!-- Error label (hidden by default) -->
+            <Label fx:id="errorLabel" alignment="CENTER" layoutX="784.0" layoutY="906.0" prefWidth="363.0" text="Invalid owner credentials." textFill="#ff6b6b" visible="false">
+               <font>
+                  <Font name="Montserrat Regular" size="13.0" />
+               </font>
+            </Label>
+
+            <!-- Login Button -->
+            <Button fx:id="btnLogin" layoutX="783.0" layoutY="930.0" prefHeight="41.0" prefWidth="363.0" style="-fx-background-color: #1FFFCB; -fx-background-radius: 70; -fx-text-fill: black; -fx-border-width: 0;" text="Log In">
+               <font>
+                  <Font name="Orbitron Regular" size="14.0" />
+               </font>
+            </Button>
+
+            <!-- Back button -->
+            <Button layoutX="783.0" layoutY="982.0" onAction="#goBackToDashboard" prefHeight="35.0" prefWidth="363.0" style="-fx-background-color: transparent; -fx-border-color: #888888; -fx-border-radius: 70; -fx-background-radius: 70; -fx-text-fill: #cccccc; -fx-border-width: 1;" text="← Back to Dashboard">
+               <font>
+                  <Font name="Montserrat Regular" size="13.0" />
+               </font>
+            </Button>
+
+         </children>
+      </Pane>
+   </children>
+</StackPane>

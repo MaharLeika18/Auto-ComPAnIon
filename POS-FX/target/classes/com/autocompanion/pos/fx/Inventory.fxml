@@ -39,7 +39,7 @@
             <Label layoutX="264.0" layoutY="15.0" text="Product ID" textFill="WHITE">
                <font><Font name="Montserrat Regular" size="20.0" /></font>
             </Label>
-            <Label layoutX="502.0" layoutY="15.0" text="Category" textFill="WHITE">
+            <Label layoutX="490.0" layoutY="15.0" text="Category" textFill="WHITE">
                <font><Font name="Montserrat Regular" size="20.0" /></font>
             </Label>
             <Label layoutX="864.0" layoutY="15.0" text="Supplier" textFill="WHITE">
@@ -51,7 +51,7 @@
             <Label layoutX="1350.0" layoutY="15.0" text="Retail Price" textFill="WHITE">
                <font><Font name="Montserrat Regular" size="20.0" /></font>
             </Label>
-            <Label layoutX="645.0" layoutY="15.0" text="Sub-Category" textFill="WHITE">
+            <Label layoutX="662.0" layoutY="15.0" text="Sub-Category" textFill="WHITE">
                <font>
                   <Font name="Montserrat Regular" size="20.0" />
                </font>
@@ -95,6 +95,11 @@
             <ImageView fitHeight="53.0" fitWidth="53.0" layoutX="344.0" layoutY="14.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true">
                <image><Image url="@../Assets/Inv%20Icons/16.png" /></image>
             </ImageView>
+            <Button id="transactionLogs" layoutX="6.0" layoutY="7.0" mnemonicParsing="false" prefHeight="65.0" prefWidth="168.0" style="-fx-background-radius: 70; -fx-background-color: #1C4F43;" text="Logs" textFill="WHITE">
+               <font>
+                  <Font name="Montserrat Regular" size="20.0" />
+               </font>
+            </Button>
 
          </children>
       </Pane>

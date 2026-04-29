@@ -61,12 +61,33 @@ public class InventoryController {
         addButton.setOnAction(e    -> doAdd());
         editButton.setOnAction(e   -> doEdit());
         deleteButton.setOnAction(e -> doDelete());
-        searchField.textProperty().addListener(
-            (obs, o, n) -> filterProducts(n));
+        searchField.textProperty().addListener((obs, o, n) -> filterProducts(n));
+
+        // ── Wire the Logs button ──────────────────────────────────
+        // The FXML uses id="transactionLogs" (not fx:id), so we look it up by id.
+        // This runs after the scene is attached, so we post it to the next pulse.
+        javafx.application.Platform.runLater(() -> {
+            if (scrollPane.getScene() != null) {
+                Button logsBtn = (Button) scrollPane.getScene()
+                    .lookup("#transactionLogs");
+                if (logsBtn != null) {
+                    logsBtn.setOnAction(e -> openLogs());
+                }
+            }
+        });
+
         loadProductsFromDatabase();
     }
 
-    // ── Load ──────────────────────────────────────────────────────────────
+    // ── Open logs popup ───────────────────────────────────────────
+    private void openLogs() {
+        Stage owner = (Stage) scrollPane.getScene().getWindow();
+        LogsPopup.show(owner);
+        // Reload products after owner may have approved orders (stock changed)
+        loadProductsFromDatabase();
+    }
+
+    // ── Load ──────────────────────────────────────────────────────
     private void loadProductsFromDatabase() {
         String sql =
             "SELECT Food_Main_Counter_ID, Counter_Name, Food_Category, " +
@@ -87,7 +108,7 @@ public class InventoryController {
                 Product p = new Product();
                 p.setId(rs.getString("Food_Main_Counter_ID"));
                 p.setCounterName(rs.getString("Counter_Name"));
-                p.setFoodDesc(rs.getString("Food_Category"));        // Category → foodDesc
+                p.setFoodDesc(rs.getString("Food_Category"));
                 p.setSerialCode(rs.getString("Food_Serial_Number"));
                 p.setName(rs.getString("Food_Name"));
                 p.setPrice(rs.getDouble("Food_Price"));
@@ -105,7 +126,7 @@ public class InventoryController {
         }
     }
 
-    // ── Display ───────────────────────────────────────────────────────────
+    // ── Display ───────────────────────────────────────────────────
     private void displayProducts(ObservableList<Product> list) {
         productList.getChildren().clear();
         clearSelection();
@@ -119,13 +140,13 @@ public class InventoryController {
 
     private void selectRow(Product p, HBox row) {
         if (selectedRow != null) selectedRow.setStyle(STYLE_NORMAL);
-        if (selectedRow == row) { clearSelection(); }
+        if (selectedRow == row)  clearSelection();
         else { selectedProduct = p; selectedRow = row; row.setStyle(STYLE_SELECTED); }
     }
 
     private void clearSelection() { selectedProduct = null; selectedRow = null; }
 
-    // ── Add ───────────────────────────────────────────────────────────────
+    // ── Add ───────────────────────────────────────────────────────
     private void doAdd() {
         ProductDialog.show(null).ifPresent(p -> {
             String sql =
@@ -140,21 +161,21 @@ public class InventoryController {
             try (Connection conn = DBConnection.getConnection();
                  PreparedStatement ps = conn.prepareStatement(sql)) {
 
-                ps.setString   (1,  p.getId());                          // Food_Main_Counter_ID
-                ps.setString   (2,  p.getCounterName());                 // Counter_Name
-                ps.setString   (3,  p.getFoodDesc());                    // Food_Category
-                ps.setString   (4,  p.getSerialCode());                  // Food_Serial_Number
-                ps.setString   (5,  p.getName());                        // Food_Name
-                ps.setInt      (6,  (int) p.getPrice());                 // Food_Price
-                ps.setInt      (7,  (int) p.getPrice());                 // Food_Original_Price (same as price on add)
-                ps.setDouble   (8,  0.00);                               // Tax_Percentage default
-                ps.setDouble   (9,  p.getPromotionPercentage());         // Promotion_Percentage
-                ps.setString   (10, p.getDescription());                 // Food_Desc
-                ps.setString   (11, p.getStockAvailableNumber() > 0 ? "Y" : "N"); // Stock_Count_YN
-                ps.setInt      (12, p.getStockAvailableNumber());        // Stock_Available_Cnt
-                ps.setString   (13, p.getMainPrinterPortName());         // MainPrinterPortName
-                ps.setString   (14, p.getMainPrinterPortAddress());      // MainPrinterPortAddress
-                ps.setTimestamp(15, Timestamp.valueOf(LocalDateTime.now())); // CreatedDate
+                ps.setString   (1,  p.getId());
+                ps.setString   (2,  p.getCounterName());
+                ps.setString   (3,  p.getFoodDesc());
+                ps.setString   (4,  p.getSerialCode());
+                ps.setString   (5,  p.getName());
+                ps.setInt      (6,  (int) p.getPrice());
+                ps.setInt      (7,  (int) p.getPrice());
+                ps.setDouble   (8,  0.00);
+                ps.setDouble   (9,  p.getPromotionPercentage());
+                ps.setString   (10, p.getDescription());
+                ps.setString   (11, p.getStockAvailableNumber() > 0 ? "Y" : "N");
+                ps.setInt      (12, p.getStockAvailableNumber());
+                ps.setString   (13, p.getMainPrinterPortName());
+                ps.setString   (14, p.getMainPrinterPortAddress());
+                ps.setTimestamp(15, Timestamp.valueOf(LocalDateTime.now()));
 
                 ps.executeUpdate();
                 showInfo("Product Added", "\"" + p.getName() + "\" was added successfully.");
@@ -167,7 +188,7 @@ public class InventoryController {
         });
     }
 
-    // ── Edit ──────────────────────────────────────────────────────────────
+    // ── Edit ──────────────────────────────────────────────────────
     private void doEdit() {
         if (selectedProduct == null) {
             showAlert("No Selection", "Please click on a product row first, then press Edit.");
@@ -203,11 +224,12 @@ public class InventoryController {
                 ps.setInt   (9,  updated.getStockAvailableNumber());
                 ps.setString(10, updated.getMainPrinterPortName());
                 ps.setString(11, updated.getMainPrinterPortAddress());
-                ps.setString(12, updated.getSerialCode());              // WHERE
+                ps.setString(12, updated.getSerialCode());
 
                 int rows = ps.executeUpdate();
                 if (rows == 0)
-                    showAlert("Not Found", "No product with serial \"" + updated.getSerialCode() + "\" found.");
+                    showAlert("Not Found",
+                        "No product with serial \"" + updated.getSerialCode() + "\" found.");
                 else {
                     showInfo("Updated", "\"" + updated.getName() + "\" was updated.");
                     loadProductsFromDatabase();
@@ -220,7 +242,7 @@ public class InventoryController {
         });
     }
 
-    // ── Delete ────────────────────────────────────────────────────────────
+    // ── Delete ────────────────────────────────────────────────────
     private void doDelete() {
         if (selectedProduct == null) {
             showAlert("No Selection", "Please click on a product row first, then press Delete.");
@@ -229,7 +251,8 @@ public class InventoryController {
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle("Delete Product");
         confirm.setHeaderText(null);
-        confirm.setContentText("Delete \"" + selectedProduct.getName() + "\"? This cannot be undone.");
+        confirm.setContentText(
+            "Delete \"" + selectedProduct.getName() + "\"? This cannot be undone.");
         Optional<ButtonType> result = confirm.showAndWait();
         if (result.isEmpty() || result.get() != ButtonType.OK) return;
 
@@ -251,26 +274,29 @@ public class InventoryController {
         }
     }
 
-    // ── Filter ────────────────────────────────────────────────────────────
+    // ── Filter ────────────────────────────────────────────────────
     private void filterProducts(String key) {
         if (key == null || key.isEmpty()) { displayProducts(products); return; }
         String lower = key.toLowerCase();
         ObservableList<Product> filtered = FXCollections.observableArrayList();
         for (Product p : products) {
-            boolean nm = p.getName() != null && p.getName().toLowerCase().contains(lower);
+            boolean nm = p.getName()       != null && p.getName().toLowerCase().contains(lower);
             boolean sm = p.getSerialCode() != null && p.getSerialCode().toLowerCase().contains(lower);
             if (nm || sm) filtered.add(p);
         }
         displayProducts(filtered);
     }
 
-    // ── Nav ───────────────────────────────────────────────────────────────
+    // ── Nav ───────────────────────────────────────────────────────
     @FXML private void goToDashboard(ActionEvent event) { navigate(event, FXML_DASHBOARD); }
     @FXML private void openPai(ActionEvent event)       { navigate(event, FXML_PAI); }
 
     private void navigate(ActionEvent event, String fxmlPath) {
         URL resource = getClass().getResource(fxmlPath);
-        if (resource == null) { showAlert("Navigation Error", "Cannot find FXML:\n" + fxmlPath); return; }
+        if (resource == null) {
+            showAlert("Navigation Error", "Cannot find FXML:\n" + fxmlPath);
+            return;
+        }
         try {
             Parent root = new FXMLLoader(resource).load();
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
@@ -285,7 +311,7 @@ public class InventoryController {
         }
     }
 
-    // ── Util ──────────────────────────────────────────────────────────────
+    // ── Util ──────────────────────────────────────────────────────
     private void showAlert(String title, String msg) {
         Alert a = new Alert(Alert.AlertType.WARNING);
         a.setTitle(title); a.setHeaderText(null); a.setContentText(msg); a.showAndWait();
