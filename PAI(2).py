@@ -252,6 +252,7 @@ def train_roi_model(df, forecast_days=7):
     forecast = model_fit.forecast(steps=forecast_days)
 
     last_date = df.index[-1]
+    pd.to_datetime(last_date)
     future_dates = [last_date + timedelta(days=i+1) for i in range(forecast_days)]
 
     result = []
