@@ -76,7 +76,7 @@ LINES TERMINATED BY '\n'
 IGNORE 1 LINES
 (@discard,@c1,@transaction_date,@c3,@c4,@c5,@c6,@c7,@c8,@c9)
 SET
-parent_transaction_id = @c1,
+parent_transaction_id = NULLIF(TRIM(@c1), ''),
 transaction_date = 
     CASE 
         WHEN @transaction_date = '' THEN NOW()
