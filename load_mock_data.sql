@@ -112,7 +112,7 @@ LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/Mock Data/MOCK_D
 INTO TABLE inventory_log
 FIELDS TERMINATED BY ',' 
 OPTIONALLY ENCLOSED BY '"'
-LINES TERMINATED BY '\n'
+LINES TERMINATED BY '\r\n'
 IGNORE 1 LINES
 (log_id,product_id,change_type,quantity,unit_cost,log_date,reference_id,@reference_type)
 SET
