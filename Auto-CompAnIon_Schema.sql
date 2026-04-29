@@ -3527,10 +3527,10 @@ BEGIN
     );
 
     -- Update product stock level
-    UPDATE product
-    SET current_stock_level = current_stock_level + pb_quantity_received,
-        last_update = NOW()
-    WHERE product_id = pb_product_id;
+    -- UPDATE product
+    -- SET current_stock_level = current_stock_level + pb_quantity_received,
+    --     last_update = NOW()
+    -- WHERE product_id = pb_product_id;
     
 END //
 
@@ -3569,10 +3569,10 @@ BEGIN
     END IF;
 
     -- Remove old data
-    UPDATE product
-    SET current_stock_level = current_stock_level - v_old_quantity,
-        last_update = NOW()
-    WHERE product_id = v_product_id;
+    -- UPDATE product
+    -- SET current_stock_level = current_stock_level - v_old_quantity,
+    --     last_update = NOW()
+    -- WHERE product_id = v_product_id;
 
     -- Update tables
     UPDATE product_batches
@@ -3583,10 +3583,10 @@ BEGIN
         barcode = pb_new_barcode
     WHERE batch_id = pb_batch_id;
 
-    UPDATE product
-    SET current_stock_level = current_stock_level + pb_new_quantity,
-        last_update = NOW()
-    WHERE product_id = v_product_id;
+    -- UPDATE product
+    -- SET current_stock_level = current_stock_level + pb_new_quantity,
+    --     last_update = NOW()
+    -- WHERE product_id = v_product_id;
 
     INSERT INTO inventory_log (
         product_id,
@@ -3649,9 +3649,9 @@ BEGIN
     END IF;
 
     -- Prevent negative stock
-    SELECT current_stock_level INTO v_remaining_stock
-    FROM product
-    WHERE product_id = v_product_id;
+    -- SELECT current_stock_level INTO v_remaining_stock
+    -- FROM product
+    -- WHERE product_id = v_product_id;
 
     IF v_remaining_stock < v_quantity THEN
         SIGNAL SQLSTATE '45000'
@@ -3659,10 +3659,10 @@ BEGIN
     END IF;
 
     -- Remove entry across tables
-    UPDATE product
-    SET current_stock_level = current_stock_level - v_quantity,
-        last_update = NOW()
-    WHERE product_id = v_product_id;
+    -- UPDATE product
+    -- SET current_stock_level = current_stock_level - v_quantity,
+    --     last_update = NOW()
+    -- WHERE product_id = v_product_id;
 
     DELETE FROM inventory_log
     WHERE reference_id = pb_batch_id
@@ -3700,7 +3700,7 @@ BEGIN
         pc.category_name,
         s.supplier_name,
         p.storage_location,
-        p.current_stock_level,
+        -- p.current_stock_level,
         p.retail_price
 
     FROM product p
@@ -3756,7 +3756,7 @@ BEGIN
     ORDER BY 
         CASE WHEN p_sort = 'name' THEN p.product_name END ASC,
         CASE WHEN p_sort = 'price' THEN p.unit_cost END ASC,
-        CASE WHEN p_sort = 'stock' THEN p.current_stock_level END ASC,
+        -- CASE WHEN p_sort = 'stock' THEN p.current_stock_level END ASC,
         CASE WHEN p_sort = 'newest' THEN p.date_added END DESC,
         CASE WHEN p_sort = 'most_purchased' THEN ts.total_sold END DESC;
 END //
@@ -3782,7 +3782,7 @@ BEGIN
         p.storage_location,
         p.unit_cost,
         p.retail_price,
-        p.current_stock_level,
+        -- p.current_stock_level,
         m.manufacturer_name,
         v.model_name,
         c.bottom_year,
@@ -3814,76 +3814,76 @@ DELIMITER ;
 -- ----------------------------------------------------------------------------------
 
 -- Maintain product stock level on changes to product_batches
-DROP TRIGGER IF EXISTS trg_update_product_stock_after_batch_update;
-DELIMITER //
+-- DROP TRIGGER IF EXISTS trg_update_product_stock_after_batch_update;
+-- DELIMITER //
 
-CREATE TRIGGER trg_update_product_stock_after_batch_update
-AFTER UPDATE ON product_batches
-FOR EACH ROW
-BEGIN
-    DECLARE v_total_stock INT;
+-- CREATE TRIGGER trg_update_product_stock_after_batch_update
+-- AFTER UPDATE ON product_batches
+-- FOR EACH ROW
+-- BEGIN
+--     DECLARE v_total_stock INT;
 
-    -- Recalculate total stock from all batches
-    SELECT IFNULL(SUM(quantity_remaining), 0)
-    INTO v_total_stock
-    FROM product_batches
-    WHERE product_id = NEW.product_id;
+--     -- Recalculate total stock from all batches
+--     SELECT IFNULL(SUM(quantity_remaining), 0)
+--     INTO v_total_stock
+--     FROM product_batches
+--     WHERE product_id = NEW.product_id;
 
-    -- Update product table
-    UPDATE product
-    SET current_stock_level = v_total_stock,
-        last_update = NOW()
-    WHERE product_id = NEW.product_id;
+--     -- Update product table
+--     UPDATE product
+--     SET current_stock_level = v_total_stock,
+--         last_update = NOW()
+--     WHERE product_id = NEW.product_id;
 
-END //
+-- END //
 
-DELIMITER ;
+-- DELIMITER ;
 
-DROP TRIGGER IF EXISTS trg_update_product_stock_after_batch_insert;
-DELIMITER //
+-- DROP TRIGGER IF EXISTS trg_update_product_stock_after_batch_insert;
+-- DELIMITER //
 
-CREATE TRIGGER trg_update_product_stock_after_batch_insert
-AFTER INSERT ON product_batches
-FOR EACH ROW
-BEGIN
-    DECLARE v_total_stock INT;
+-- CREATE TRIGGER trg_update_product_stock_after_batch_insert
+-- AFTER INSERT ON product_batches
+-- FOR EACH ROW
+-- BEGIN
+--     DECLARE v_total_stock INT;
 
-    SELECT IFNULL(SUM(quantity_remaining), 0)
-    INTO v_total_stock
-    FROM product_batches
-    WHERE product_id = NEW.product_id;
+--     SELECT IFNULL(SUM(quantity_remaining), 0)
+--     INTO v_total_stock
+--     FROM product_batches
+--     WHERE product_id = NEW.product_id;
 
-    UPDATE product
-    SET current_stock_level = v_total_stock,
-        last_update = NOW()
-    WHERE product_id = NEW.product_id;
+--     UPDATE product
+--     SET current_stock_level = v_total_stock,
+--         last_update = NOW()
+--     WHERE product_id = NEW.product_id;
 
-END //
+-- END //
 
-DELIMITER ;
+-- DELIMITER ;
 
-DROP TRIGGER IF EXISTS trg_update_product_stock_after_batch_delete;
-DELIMITER //
+-- DROP TRIGGER IF EXISTS trg_update_product_stock_after_batch_delete;
+-- DELIMITER //
 
-CREATE TRIGGER trg_update_product_stock_after_batch_delete
-AFTER DELETE ON product_batches
-FOR EACH ROW
-BEGIN
-    DECLARE v_total_stock INT;
+-- CREATE TRIGGER trg_update_product_stock_after_batch_delete
+-- AFTER DELETE ON product_batches
+-- FOR EACH ROW
+-- BEGIN
+--     DECLARE v_total_stock INT;
 
-    SELECT IFNULL(SUM(quantity_remaining), 0)
-    INTO v_total_stock
-    FROM product_batches
-    WHERE product_id = OLD.product_id;
+--     SELECT IFNULL(SUM(quantity_remaining), 0)
+--     INTO v_total_stock
+--     FROM product_batches
+--     WHERE product_id = OLD.product_id;
 
-    UPDATE product
-    SET current_stock_level = v_total_stock,
-        last_update = NOW()
-    WHERE product_id = OLD.product_id;
+--     UPDATE product
+--     SET current_stock_level = v_total_stock,
+--         last_update = NOW()
+--     WHERE product_id = OLD.product_id;
 
-END //
+-- END //
 
-DELIMITER ;
+-- DELIMITER ;
 
 DROP TRIGGER IF EXISTS trg_prevent_negative_stock;
 DELIMITER //
