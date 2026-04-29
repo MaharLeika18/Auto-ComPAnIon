@@ -243,6 +243,9 @@ def train_roi_model(df, forecast_days=7):
     if len(series) < 20:
         raise ValueError("Not enough data for ROI forecasting")
 
+    series = pd.to_numeric(series, errors='coerce')
+    series = series.dropna()
+    
     model = ARIMA(series, order=(3,1,1))
     model_fit = model.fit()
 
