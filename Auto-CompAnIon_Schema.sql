@@ -2163,27 +2163,21 @@ CREATE PROCEDURE dataset_roi_timeseries (
 BEGIN
     SELECT
         DATE(t.transaction_date) AS period_date,
-
         SUM(ti.total_sale_value) AS revenue,
         SUM(ti.total_cost) AS cost,
-
         (
             SELECT IFNULL(SUM(oc.amount), 0)
             FROM operational_costs oc
             WHERE DATE(oc.cost_date) = DATE(t.transaction_date)
         ) AS operational_costs,
-
         (
             SELECT IFNULL(SUM(i.amount), 0)
             FROM investments i
             WHERE DATE(i.investment_date) = DATE(t.transaction_date)
         ) AS investments,
-
         (
-            SUM(ti.total_sale_value) - 
-            SUM(ti.total_cost)
+            SUM(ti.total_sale_value) - SUM(ti.total_cost)
         ) AS net_profit,
-
         CASE 
             WHEN (
                 SELECT IFNULL(SUM(i.amount), 0)
@@ -2199,18 +2193,14 @@ BEGIN
                 )
             ) * 100
         END AS roi
-
     FROM transaction_items ti
     JOIN transaction_log t 
         ON ti.transaction_id = t.transaction_id
-
     WHERE t.transaction_date BETWEEN p_start_date AND p_end_date
-        AND t.status = 'CONFIRMED'
-
-    GROUP BY YEAR(t.transaction_date), MONTH(t.transaction_date)
+    AND t.status = 'CONFIRMED'
+    GROUP BY DATE(t.transaction_date)
     ORDER BY period_date;
-
-    END //
+END //
 DELIMITER ;
 
 DROP PROCEDURE IF EXISTS dataset_cumulative_profit_forecast;
