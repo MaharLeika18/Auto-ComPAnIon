@@ -20,9 +20,9 @@ public class CardFactory {
 
     private static final DecimalFormat df = new DecimalFormat("#,###.00");
 
-    // ─────────────────────────────────────────────────────────────────
-    // PRODUCT CARD  (grid on the left)
-    // ─────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────────
+    // PRODUCT CARD  (grid on the left — UI unchanged)
+    // ─────────────────────────────────────────────────────────────────────────
     public static VBox createProductCard(Product p, Runnable onAddToCart) {
         VBox card = new VBox(8);
         card.setStyle(
@@ -48,11 +48,11 @@ public class CardFactory {
             "-fx-font-size: 16px; " +
             "-fx-text-fill: #649e8f;");
 
-        boolean lowStock = p.getStockAvailableNumber() < 5;
+        boolean lowStock = p.getStockAvailableNumber() > 0 && p.getStockAvailableNumber() < 5;
         Label stockLabel = new Label("Stock: " + p.getStockAvailableNumber());
         stockLabel.setStyle(
             "-fx-font-size: 11px; " +
-            "-fx-text-fill: " + (lowStock ? "#e05252" : "#888888") + ";");
+            "-fx-text-fill: " + (lowStock ? "#e08c52" : "#888888") + ";");
 
         Button addBtn = new Button("Add to Cart");
         addBtn.setStyle(
@@ -66,28 +66,30 @@ public class CardFactory {
 
         if (p.getStockAvailableNumber() == 0) {
             addBtn.setDisable(true);
-            addBtn.setStyle(addBtn.getStyle() +
-                "-fx-background-color: #cccccc; -fx-text-fill: #888888;");
+            addBtn.setStyle(
+                "-fx-background-color: #cccccc; " +
+                "-fx-background-radius: 20; " +
+                "-fx-text-fill: #888888; " +
+                "-fx-font-family: 'Montserrat SemiBold'; " +
+                "-fx-font-size: 12px; " +
+                "-fx-padding: 6 14;");
         }
 
         card.getChildren().addAll(nameLabel, priceLabel, stockLabel, addBtn);
         return card;
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    // CART ROW  (receipt panel on the right)
-    //
-    //  ┌─────────────────────────────────────────────────────────┐
-    //  │  Product Name                           ₱ subtotal  [✕] │
-    //  │  [−]  [  qty field  ]  [+]                               │
-    //  └─────────────────────────────────────────────────────────┘
-    // ─────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────────
+    // CART ROW  (receipt panel — + and manual input capped at maxStock)
+    // ─────────────────────────────────────────────────────────────────────────
     public static VBox createCartRow(
             CartItem item,
             Runnable  onMinus,
             Runnable  onPlus,
             Consumer<Integer> onQtyTyped,
             Runnable  onRemove) {
+
+        int maxStock = item.getMaxStock();
 
         VBox row = new VBox(6);
         row.setStyle(
@@ -97,7 +99,6 @@ public class CardFactory {
             "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.07), 6, 0, 0, 2);");
         row.setPrefWidth(440);
 
-        // ── top line: name + subtotal + remove ───────────────────────
         Label nameLabel = new Label(item.getProductName());
         nameLabel.setStyle(
             "-fx-font-family: 'Montserrat SemiBold'; " +
@@ -127,9 +128,20 @@ public class CardFactory {
         HBox topLine = new HBox(4, nameLabel, spacer, subtotalLabel, removeBtn);
         topLine.setAlignment(Pos.CENTER_LEFT);
 
-        // ── bottom line: − | qty | + ──────────────────────────────────
         Button minusBtn = makeQtyBtn("−");
+        Button plusBtn  = makeQtyBtn("+");
+
+        // Disable + if already at stock limit
+        plusBtn.setDisable(item.getQuantity() >= maxStock);
+
         minusBtn.setOnAction(e -> onMinus.run());
+
+        // Guard + so it never exceeds stock
+        plusBtn.setOnAction(e -> {
+            if (item.getQuantity() < maxStock) {
+                onPlus.run();
+            }
+        });
 
         TextField qtyField = new TextField(String.valueOf(item.getQuantity()));
         qtyField.setPrefWidth(52);
@@ -142,17 +154,12 @@ public class CardFactory {
             "-fx-border-radius: 8; " +
             "-fx-text-fill: #1c4f43;");
 
-        // commit on Enter or focus-lost
-        qtyField.setOnAction(e -> commitQty(qtyField, onQtyTyped));
+        qtyField.setOnAction(e -> commitQty(qtyField, onQtyTyped, maxStock));
         qtyField.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
-            if (!isFocused) commitQty(qtyField, onQtyTyped);
+            if (!isFocused) commitQty(qtyField, onQtyTyped, maxStock);
         });
 
-        Button plusBtn = makeQtyBtn("+");
-        plusBtn.setOnAction(e -> onPlus.run());
-
-        // unit price hint
-        Label unitPrice = new Label("@ ₱" + df.format(item.getPrice()) + " each");
+        Label unitPrice = new Label("@ ₱" + df.format(item.getPrice()) + " each  [max: " + maxStock + "]");
         unitPrice.setStyle("-fx-font-size: 11px; -fx-text-fill: #aaaaaa;");
 
         Region spacer2 = new Region();
@@ -165,9 +172,66 @@ public class CardFactory {
         return row;
     }
 
-    // ─────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────────
+    // INVENTORY ROW
+    // ─────────────────────────────────────────────────────────────────────────
+    public static HBox createInventoryRow(Product p) {
+        HBox row = new HBox();
+        row.setPrefWidth(1656);
+        row.setPrefHeight(56);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setStyle(
+            "-fx-background-color: #EEF4ED; " +
+            "-fx-background-radius: 40; " +
+            "-fx-padding: 0 16; " +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 4, 0, 0, 2);");
+
+        Label nameLabel = makeRowLabel(p.getName(), 290, true);
+
+        String id = p.getSerialCode() != null ? p.getSerialCode()
+                  : p.getId() != null         ? p.getId()
+                  : "—";
+        Label idLabel = makeRowLabel(id, 230, false);
+
+        Label categoryLabel = makeRowLabel(
+            p.getCounterName() != null ? p.getCounterName() : "—", 180, false);
+
+        Label supplierLabel = makeRowLabel(
+            p.getFoodDesc() != null ? p.getFoodDesc() : "—", 177, false);
+
+        Label storageLabel = makeRowLabel(
+            p.getMainPrinterPortName() != null ? p.getMainPrinterPortName() : "—", 223, false);
+
+        int stock   = p.getStockAvailableNumber();
+        boolean low = stock > 0 && stock < 5;
+        boolean out = stock == 0;
+        Label qtyLabel = makeRowLabel(String.valueOf(stock), 264, false);
+        qtyLabel.setStyle(qtyLabel.getStyle() +
+            "-fx-text-fill: " + (out ? "#e05252" : low ? "#e08c52" : "#1c4f43") + ";");
+
+        Label priceLabel = makeRowLabel("₱" + df.format(p.getPrice()), 150, true);
+        priceLabel.setStyle(priceLabel.getStyle() + "-fx-text-fill: #649e8f;");
+
+        row.getChildren().addAll(
+            nameLabel, idLabel, categoryLabel,
+            supplierLabel, storageLabel, qtyLabel, priceLabel
+        );
+        return row;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     // HELPERS
-    // ─────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────────
+    private static Label makeRowLabel(String text, double width, boolean semibold) {
+        Label lbl = new Label(text != null ? text : "—");
+        lbl.setPrefWidth(width);
+        lbl.setStyle(
+            "-fx-font-family: 'Montserrat " + (semibold ? "SemiBold" : "Regular") + "'; " +
+            "-fx-font-size: 14px; " +
+            "-fx-text-fill: #1c4f43;");
+        return lbl;
+    }
+
     private static Button makeQtyBtn(String text) {
         Button btn = new Button(text);
         btn.setPrefSize(30, 30);
@@ -180,13 +244,16 @@ public class CardFactory {
         return btn;
     }
 
-    private static void commitQty(TextField field, Consumer<Integer> onQtyTyped) {
+    // maxStock param added — clamps typed value before passing it up
+    private static void commitQty(TextField field, Consumer<Integer> onQtyTyped, int maxStock) {
         try {
             int val = Integer.parseInt(field.getText().trim());
-            if (val >= 1) onQtyTyped.accept(val);
-            else field.setText("1");
+            val = Math.max(1, Math.min(val, maxStock)); // clamp [1, maxStock]
+            field.setText(String.valueOf(val));          // reflect clamped value in field
+            onQtyTyped.accept(val);
         } catch (NumberFormatException ex) {
             field.setText("1");
+            onQtyTyped.accept(1);
         }
     }
 }

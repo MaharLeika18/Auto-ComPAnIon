@@ -21,6 +21,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
+import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 
 public class PaiController {
@@ -70,6 +71,20 @@ public class PaiController {
         initializing = false;
         loadMetrics();
     }
+@FXML
+private void goToPaiStock(MouseEvent event) {
+    try {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/autocompanion/pos/fx/pai/PaiStock.fxml"));
+        Parent root = loader.load();
+
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        Scene scene = new Scene(root);
+        stage.setScene(scene);
+        stage.show();
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
 
     // ─────────────────────────────────────────────────────────────────────────
     // FILTER CHANGE — all checkboxes route here via onAction="#onFilterChange"
@@ -203,6 +218,19 @@ public class PaiController {
             e.printStackTrace();
         }
     }
+@FXML
+private void goToPai(MouseEvent event) {
+    try {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/autocompanion/pos/fx/Pai.fxml"));
+        Parent root = loader.load();
+
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        stage.setScene(new Scene(root));
+        stage.show();
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
 
     // ─────────────────────────────────────────────────────────────────────────
     // HELPERS
